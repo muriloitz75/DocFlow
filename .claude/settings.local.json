@@ -14,7 +14,13 @@
       "PowerShell(Start-Sleep 3; try { $r = Invoke-WebRequest -Uri \"http://127.0.0.1:5000/image/dakernet-leaves-6625.gif\" -UseBasicParsing -TimeoutSec 5; \"Status: $\\($r.StatusCode\\) | Bytes: $\\($r.RawContentLength\\)\" } catch { \"Erro: $_\" })",
       "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" log --oneline -3 2>&1)",
       "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" status 2>&1)",
-      "PowerShell(gh auth status 2>&1)"
+      "PowerShell(gh auth status 2>&1)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" remote -v)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" status)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" remote set-url origin https://github.com/muriloitz75/Converter.git)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" add app.py interface.html start.py start-interface.bat test_app.py README.md .gitignore image/)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" push origin main 2>&1)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" add app.py interface.html start.py start-interface.bat README.md)"
     ]
   }
 }
