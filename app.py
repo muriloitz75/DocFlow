@@ -1,6 +1,6 @@
 """Backend Flask da interface web do MarkItDown."""
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import os
@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import sys
 from uuid import uuid4
+from functools import wraps
 
 # Adicionar o diretório do markitdown ao path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,23 @@ sys.path.insert(0, os.path.join(BASE_DIR, "packages", "markitdown", "src"))
 from markitdown import MarkItDown
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "docflow-secret-key-123456")
+
+# Configurações de autenticação
+APP_USER = os.environ.get("APP_USER", "admin")
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "admin")
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if app.config.get("TESTING"):
+            return f(*args, **kwargs)
+        if not session.get("logged_in"):
+            return jsonify({"success": False, "error": "Autenticação requerida."}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 # Configurações
 UPLOAD_ROOT = os.path.join(tempfile.gettempdir(), "markitdown-web")
@@ -682,6 +700,7 @@ def serve_image(filename):
 
 
 @app.route("/api/convert", methods=["POST"])
+@login_required
 def convert():
     """Converter arquivo para Markdown"""
     temp_dir = None
@@ -761,6 +780,34 @@ def health():
         "maxUploadMb": app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024),
         "formats": sorted(ALLOWED_EXTENSIONS),
     })
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login():
+    """Realizar login do usuário"""
+    data = request.get_json() or {}
+    username = data.get("username")
+    password = data.get("password")
+    
+    if username == APP_USER and password == APP_PASSWORD:
+        session["logged_in"] = True
+        session.permanent = True
+        return jsonify({"success": True, "message": "Autenticado com sucesso."})
+    
+    return jsonify({"success": False, "message": "Usuário ou senha incorretos."}), 401
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout():
+    """Realizar logout do usuário"""
+    session.clear()
+    return jsonify({"success": True, "message": "Sessão encerrada com sucesso."})
+
+
+@app.route("/api/auth/status", methods=["GET"])
+def auth_status():
+    """Verificar se o usuário está autenticado"""
+    return jsonify({"authenticated": session.get("logged_in", False)})
 
 
 def get_local_ip():

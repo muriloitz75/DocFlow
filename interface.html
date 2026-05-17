@@ -751,6 +751,136 @@
                 padding: 34px 24px;
             }
         }
+
+        /* Estilos do Modal de Login */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(23, 21, 18, 0.45);
+            backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .login-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .login-card {
+            width: min(400px, 90%);
+            background: var(--panel);
+            border: 2px solid var(--ink);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .login-overlay.visible .login-card {
+            transform: translateY(0);
+        }
+
+        .login-header {
+            text-align: center;
+        }
+
+        .login-title {
+            margin: 0 0 6px;
+            font-family: var(--display);
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .login-subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .login-input {
+            width: 100%;
+            height: 46px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            padding: 0 14px;
+            background: #fffdfa;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .login-input:focus {
+            border-color: var(--ink);
+            box-shadow: 0 0 0 3px var(--focus);
+        }
+
+        .login-btn {
+            height: 48px;
+            border: 2px solid var(--ink);
+            border-radius: 8px;
+            background: var(--ink);
+            color: var(--panel);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 0 var(--ink);
+            transform: translateY(-2px);
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            background: var(--charcoal);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 0 0 var(--ink);
+        }
+
+        .login-error {
+            color: var(--ruby);
+            font-size: 13px;
+            text-align: center;
+            min-height: 18px;
+            margin: 0;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -763,9 +893,12 @@
                     <div class="brand-meta">Conversor local de documentos</div>
                 </div>
             </div>
-            <div class="system-pill" id="healthPill">
-                <span class="system-dot"></span>
-                <span id="healthText">Verificando servidor</span>
+            <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
+                <div class="system-pill" id="healthPill">
+                    <span class="system-dot"></span>
+                    <span id="healthText">Verificando servidor</span>
+                </div>
+                <button class="tool-btn" id="logoutBtn" type="button" style="display: none; border: 1px solid var(--line); border-radius: 8px; min-height: 34px; padding: 0 12px; background: #fffdf8; color: var(--ruby); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" title="Encerrar sessão">Sair</button>
             </div>
         </header>
 
@@ -841,6 +974,28 @@
         <div class="status-line" id="statusLine">Selecione um arquivo para iniciar.</div>
     </main>
 
+    <!-- Modal de Autenticação -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <h2 class="login-title">DocFlow</h2>
+                <p class="login-subtitle">Acesso restrito</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="usernameInput" class="input-label">Usuário</label>
+                    <input type="text" id="usernameInput" class="login-input" required placeholder="Digite o usuário">
+                </div>
+                <div class="input-group">
+                    <label for="passwordInput" class="input-label">Senha</label>
+                    <input type="password" id="passwordInput" class="login-input" required placeholder="Digite a senha">
+                </div>
+                <p id="loginError" class="login-error"></p>
+                <button type="submit" id="loginBtnSubmit" class="login-btn">Entrar</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const uploadZone = document.getElementById("uploadZone");
         const fileInput = document.getElementById("fileInput");
@@ -853,6 +1008,15 @@
         const copyBtn = document.getElementById("copyBtn");
         const downloadBtn = document.getElementById("downloadBtn");
         const shareBtn = document.getElementById("shareBtn");
+
+        // Elementos de autenticação
+        const loginOverlay = document.getElementById("loginOverlay");
+        const loginForm = document.getElementById("loginForm");
+        const usernameInput = document.getElementById("usernameInput");
+        const passwordInput = document.getElementById("passwordInput");
+        const loginError = document.getElementById("loginError");
+        const loginBtnSubmit = document.getElementById("loginBtnSubmit");
+        const logoutBtn = document.getElementById("logoutBtn");
         const outputArea = document.getElementById("outputArea");
         const statusLine = document.getElementById("statusLine");
         const healthText = document.getElementById("healthText");
@@ -1379,6 +1543,12 @@
                     method: "POST",
                     body: formData
                 });
+
+                if (response.status === 401) {
+                    showLoginScreen();
+                    throw new Error("Sessão expirada. Faça login novamente.");
+                }
+
                 const data = await response.json().catch(() => ({}));
 
                 if (!response.ok || !data.success) {
@@ -1495,17 +1665,99 @@
             }
         });
 
-        fetch("/api/health")
-            .then((response) => response.json())
-            .then((data) => {
-                maxUploadBytes = Number(data.maxUploadMb || 100) * 1024 * 1024;
-                maxUpload.textContent = `${data.maxUploadMb || 100} MB`;
-                healthText.textContent = "Servidor pronto";
-            })
-            .catch(() => {
-                healthText.textContent = "Servidor offline";
-                setStatus("Não foi possível verificar o servidor.", "error");
-            });
+        function checkServerHealth() {
+            fetch("/api/health")
+                .then((response) => response.json())
+                .then((data) => {
+                    maxUploadBytes = Number(data.maxUploadMb || 100) * 1024 * 1024;
+                    maxUpload.textContent = `${data.maxUploadMb || 100} MB`;
+                    healthText.textContent = "Servidor pronto";
+                })
+                .catch(() => {
+                    healthText.textContent = "Servidor offline";
+                    setStatus("Não foi possível verificar o servidor.", "error");
+                });
+        }
+
+        // Funções de gerenciamento de autenticação
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch("/api/auth/status");
+                const data = await response.json();
+                if (data.authenticated) {
+                    showMainApp();
+                    checkServerHealth();
+                } else {
+                    showLoginScreen();
+                }
+            } catch (error) {
+                console.error("Erro ao verificar autenticação", error);
+                showLoginScreen();
+            }
+        }
+
+        function showLoginScreen() {
+            loginOverlay.classList.add("visible");
+            logoutBtn.style.display = "none";
+            passwordInput.value = "";
+            loginError.textContent = "";
+        }
+
+        function showMainApp() {
+            loginOverlay.classList.remove("visible");
+            logoutBtn.style.display = "inline-flex";
+        }
+
+        // Eventos de Autenticação
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            loginError.textContent = "";
+            loginBtnSubmit.disabled = true;
+            loginBtnSubmit.textContent = "Entrando...";
+
+            try {
+                const response = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: usernameInput.value,
+                        password: passwordInput.value
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMainApp();
+                    checkServerHealth();
+                    setStatus("Autenticado com sucesso.", "success");
+                } else {
+                    loginError.textContent = data.message || "Usuário ou senha incorretos.";
+                }
+            } catch (error) {
+                loginError.textContent = "Erro de conexão com o servidor.";
+            } finally {
+                loginBtnSubmit.disabled = false;
+                loginBtnSubmit.textContent = "Entrar";
+            }
+        });
+
+        logoutBtn.addEventListener("click", async () => {
+            try {
+                const response = await fetch("/api/auth/logout", { method: "POST" });
+                if (response.ok) {
+                    showLoginScreen();
+                    resetOutput();
+                    setStatus("Sessão encerrada.", "success");
+                }
+            } catch (error) {
+                setStatus("Não foi possível encerrar a sessão.", "error");
+            }
+        });
+
+        // Inicializar verificação
+        checkAuthStatus();
     </script>
 </body>
 </html>
