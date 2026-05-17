@@ -57,7 +57,7 @@ Limite de upload: **100 MB** por arquivo.
 ```powershell
 # 1. Clone o repositório
 git clone <url-do-repositorio>
-cd markitdown
+cd DocFlow
 
 # 2. Crie o ambiente virtual
 python -m venv .venv
@@ -75,7 +75,6 @@ pip install -e "packages/markitdown[all]"
 ## Como executar
 
 ```powershell
-cd markitdown
 .venv\Scripts\python.exe app.py
 ```
 
@@ -96,7 +95,7 @@ O `start.py` verifica as dependências, inicia o servidor e abre o navegador aut
 ## Estrutura do projeto
 
 ```
-markitdown/
+DocFlow/
 ├── app.py              # Backend Flask — API REST e lógica de transformação
 ├── interface.html      # Frontend single-page (HTML + CSS + JS)
 ├── start.py            # Launcher com abertura automática do navegador
