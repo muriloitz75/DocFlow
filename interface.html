@@ -752,6 +752,50 @@
             }
         }
 
+        /* Estilo do Botão de Logout Premium */
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fffdf8;
+            color: var(--muted);
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--ruby);
+            background: #fff5f5;
+            color: var(--ruby);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(178, 59, 71, 0.12);
+        }
+
+        .logout-btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+            background: #ffe3e3;
+        }
+
+        .logout-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            transition: transform 0.25s ease;
+        }
+
+        .logout-btn:hover svg {
+            transform: translateX(2px);
+        }
+
         /* Estilos do Modal de Login */
         .login-overlay {
             position: fixed;
@@ -898,7 +942,12 @@
                     <span class="system-dot"></span>
                     <span id="healthText">Verificando servidor</span>
                 </div>
-                <button class="tool-btn" id="logoutBtn" type="button" style="display: none; border: 1px solid var(--line); border-radius: 8px; min-height: 34px; padding: 0 12px; background: #fffdf8; color: var(--ruby); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" title="Encerrar sessão">Sair</button>
+                <button class="logout-btn" id="logoutBtn" type="button" style="display: none;" title="Encerrar sessão">
+                    <span>Sair</span>
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z"/>
+                    </svg>
+                </button>
             </div>
         </header>
 
