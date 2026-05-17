@@ -166,3 +166,8 @@ cython_debug/
 src/.DS_Store
 .DS_Store
 .cursorrules
+
+# Local web-interface test/runtime scratch folders
+test_uploads/
+.test_uploads/
+tmp*/
