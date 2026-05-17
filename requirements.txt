@@ -20,4 +20,3 @@ SpeechRecognition>=3.16.1
 youtube-transcript-api>=1.0.3
 azure-ai-documentintelligence>=1.0.2
 azure-identity>=1.25.3
-./packages/markitdown

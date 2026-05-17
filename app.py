@@ -12,7 +12,7 @@ from uuid import uuid4
 
 # Adicionar o diretório do markitdown ao path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(BASE_DIR, "packages"))
+sys.path.insert(0, os.path.join(BASE_DIR, "packages", "markitdown", "src"))
 
 from markitdown import MarkItDown
 
