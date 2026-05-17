@@ -1,0 +1,47 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: M
+      - generic [ref=e6]:
+        - heading "MarkItDown Studio" [level=1] [ref=e7]
+        - generic [ref=e8]: Conversor local para Markdown
+    - generic [ref=e11]: Servidor pronto
+  - generic [ref=e12]:
+    - complementary [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Entrada" [level=2] [ref=e15]
+        - generic [ref=e16]: 100 MB
+      - button "Selecionar arquivo" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: +
+        - generic [ref=e19]:
+          - paragraph [ref=e20]: Solte o arquivo
+          - paragraph [ref=e21]: PDF, Office, HTML, dados estruturados, imagens, áudio, EPUB e ZIP.
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Nenhum arquivo selecionado
+          - generic [ref=e25]: Aguardando entrada
+        - generic [ref=e26]: "--"
+      - generic [ref=e27]:
+        - generic [ref=e28]: Modo de saída
+        - tablist "Modo de saída" [ref=e29]:
+          - button "Padrão" [ref=e30] [cursor=pointer]
+          - button "Compacto" [ref=e31] [cursor=pointer]
+          - button "ABNT" [ref=e32] [cursor=pointer]
+      - generic [ref=e33]:
+        - button "Converter" [disabled] [ref=e34]
+        - button "X" [disabled] [ref=e35]
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - heading "Resultado" [level=2] [ref=e38]
+        - generic [ref=e39]: markdown
+      - generic [ref=e40]:
+        - generic [ref=e41]: 0 caracteres
+        - generic [ref=e42]: 0 linhas
+        - generic [ref=e43]: sem arquivo
+        - button "Copiar" [disabled] [ref=e44]
+        - button "Baixar" [disabled] [ref=e45]
+        - button "Compartilhar" [disabled] [ref=e46]
+      - generic [ref=e49]:
+        - strong [ref=e50]: Pronto para converter
+        - text: O Markdown aparecerá aqui.
+  - generic [ref=e51]: Selecione um arquivo para iniciar.

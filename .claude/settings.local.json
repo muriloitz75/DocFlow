@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\")",
+      "Bash(c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\\\\.venv\\\\Scripts\\\\python.exe -c \"import flask, markitdown; print\\('OK'\\)\")",
+      "PowerShell(& \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import flask, markitdown; print\\('OK'\\)\" 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\\\\.venv\\\\Scripts\\\\python.exe\" -c \"from flask import Flask; app = Flask\\(__name__\\); print\\('Flask OK'\\)\")",
+      "PowerShell(Set-Location \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\"; & \".venv\\\\Scripts\\\\python.exe\" app.py 2>&1 &)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:5000/api/health\" -UseBasicParsing -TimeoutSec 5 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://127.0.0.1:5000/api/health\" -UseBasicParsing -TimeoutSec 5 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://127.0.0.1:5000/image/dakernet-leaves-6625.gif\" -UseBasicParsing -TimeoutSec 5 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://127.0.0.1:5000/image/dakernet-leaves-6625.gif\" -UseBasicParsing -TimeoutSec 5 2>&1 | Select-Object StatusCode, StatusDescription, @{N='Size';E={$_.RawContentLength}})",
+      "PowerShell(Start-Sleep 2; Invoke-WebRequest -Uri \"http://127.0.0.1:5000/image/dakernet-leaves-6625.gif\" -UseBasicParsing -TimeoutSec 5 | Select-Object StatusCode, @{N='Bytes';E={$_.RawContentLength}})",
+      "PowerShell(Start-Sleep 3; try { $r = Invoke-WebRequest -Uri \"http://127.0.0.1:5000/image/dakernet-leaves-6625.gif\" -UseBasicParsing -TimeoutSec 5; \"Status: $\\($r.StatusCode\\) | Bytes: $\\($r.RawContentLength\\)\" } catch { \"Erro: $_\" })",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" log --oneline -3 2>&1)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Murilo\\\\Desktop\\\\MD\\\\markitdown\" status 2>&1)",
+      "PowerShell(gh auth status 2>&1)"
+    ]
+  }
+}
