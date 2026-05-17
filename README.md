@@ -34,14 +34,15 @@ Limite de upload: **100 MB** por arquivo.
 
 ### Formatos de saída
 
-- **Markdown** — arquivo `.md` com o texto estruturado
-- **HTML** — arquivo `.html` completo com CSS embutido, texto justificado e estilos tipográficos
+- **Markdown** — arquivo `.md` com o texto estruturado.
+- **HTML** — arquivo `.html` completo com CSS embutido, texto justificado e estilos tipográficos elegantes.
+- **JSON** — arquivo `.json` com a estrutura analítica completa do documento analisada no cliente, contendo metadados (nome do arquivo, modo, contagem de caracteres e linhas) e um array de blocos tipados (`heading`, `paragraph`, `list_item`, `code_block`, `table_row`, `blockquote`, `divider`).
 
 ### Ações disponíveis
 
-- **Copiar** — copia o conteúdo (Markdown ou HTML) para a área de transferência
-- **Baixar** — gera o arquivo `.md` ou `.html` para download
-- **Compartilhar** — usa a API nativa do navegador para compartilhar o conteúdo
+- **Copiar** — copia o conteúdo ativo (Markdown, HTML ou JSON) para a área de transferência.
+- **Baixar** — gera o arquivo `.md`, `.html` ou `.json` correspondente para download imediato.
+- **Compartilhar** — usa a API nativa de compartilhamento (`navigator.share`) do navegador para compartilhar o conteúdo ativo.
 
 ---
 
@@ -177,6 +178,24 @@ O `app.py` contém lógica dedicada para documentos legais municipais:
 ```
 
 Os testes cobrem os endpoints da API, os modos de conversão e as funções de limpeza de Markdown, sem dependência de `pytest`.
+
+---
+
+## Deploy e Produção (Railway)
+
+O projeto está totalmente preparado e configurado para deploy imediato no **Railway**. Os seguintes arquivos gerenciam essa infraestrutura:
+
+- **`Procfile`** — define o comando de inicialização do servidor de produção utilizando o **Gunicorn** (servidor WSGI robusto de nível industrial):
+  ```text
+  web: gunicorn --bind 0.0.0.0:$PORT app:app
+  ```
+- **`runtime.txt`** — fixa a versão do Python no Railway para `python-3.11.9`.
+- **`requirements.txt`** — lista todas as dependências externas puras e independentes de caminhos locais, garantindo cacheamento ultra-rápido no Railpack.
+
+### Processo de Build automático no Railway:
+1. O Railway detecta a configuração do Python automaticamente.
+2. Instala pacotes do sistema como **`ffmpeg`** (utilizado pelo `pydub`).
+3. Instala as dependências e executa o servidor de produção respondendo a requisições de forma robusta e otimizada.
 
 ---
 
