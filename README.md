@@ -1,4 +1,4 @@
-# MarkItDown Studio
+# DocFlow
 
 Interface web local para conversão de documentos em **Markdown** ou **HTML**, construída sobre a biblioteca [MarkItDown](https://github.com/microsoft/markitdown) da Microsoft.
 
@@ -6,7 +6,7 @@ Interface web local para conversão de documentos em **Markdown** ou **HTML**, c
 
 ## Visão geral
 
-O MarkItDown Studio oferece uma interface gráfica no navegador para converter arquivos de diversos formatos para texto estruturado, com tratamento especial para documentos jurídicos brasileiros (leis, decretos, regulamentos municipais).
+O DocFlow oferece uma interface gráfica no navegador para converter arquivos de diversos formatos para texto estruturado, com tratamento especial para documentos jurídicos brasileiros (leis, decretos, regulamentos municipais).
 
 ## Funcionalidades
 

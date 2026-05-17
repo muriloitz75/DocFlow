@@ -1,11 +1,11 @@
 @echo off
-REM MarkItDown Web Interface - Inicializador
-REM Este script inicia a interface gráfica do MarkItDown
+REM DocFlow - Inicializador
+REM Este script inicia a interface gráfica do DocFlow
 
-title MarkItDown Web Interface
+title DocFlow
 echo.
 echo ╔════════════════════════════════════════╗
-echo ║   MarkItDown Web Interface v1.0       ║
+echo ║   DocFlow v1.0                        ║
 echo ║   Iniciando servidor...                ║
 echo ╚════════════════════════════════════════╝
 echo.

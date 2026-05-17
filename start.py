@@ -16,7 +16,7 @@ def main():
     
     print("""
     ============================================
-        MarkItDown Studio
+        DocFlow
         Iniciando interface local
     ============================================
     """)
