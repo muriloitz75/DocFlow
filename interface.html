@@ -808,6 +808,7 @@
                     <div class="segmented" id="formatSegmented" role="tablist" aria-label="Formato de saída">
                         <button class="segment active" type="button" data-format="markdown">Markdown</button>
                         <button class="segment" type="button" data-format="html">HTML</button>
+                        <button class="segment" type="button" data-format="json">JSON</button>
                     </div>
                 </div>
 
@@ -902,7 +903,7 @@
             charMetric.textContent = `${content.length.toLocaleString("pt-BR")} caracteres`;
             lineMetric.textContent = `${lineCount.toLocaleString("pt-BR")} linhas`;
             fileMetric.textContent = filename;
-            const fmt = selectedFormat === "html" ? "html" : "markdown";
+            const fmt = selectedFormat === "html" ? "html" : selectedFormat === "json" ? "json" : "markdown";
             if (selectedOption === "abnt") {
                 outputMode.textContent = `${fmt} abnt`;
             } else {
@@ -1126,11 +1127,152 @@
             return blocks.join("\n");
         }
 
+        function markdownToJson(markdownText, filename, mode) {
+            const blocks = [];
+            const lines = markdownText.split(/\r?\n/);
+            let inCode = false;
+            let codeLines = [];
+            let codeLang = "";
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                // Code block fence
+                const fence = trimmed.match(/^```(\w*)/);
+                if (fence) {
+                    if (inCode) {
+                        inCode = false;
+                        blocks.push({
+                            type: "code_block",
+                            language: codeLang,
+                            content: codeLines.join("\n")
+                        });
+                        codeLines = [];
+                        codeLang = "";
+                    } else {
+                        inCode = true;
+                        codeLang = fence[1] || "";
+                    }
+                    continue;
+                }
+
+                if (inCode) {
+                    codeLines.push(line);
+                    continue;
+                }
+
+                if (!trimmed) {
+                    continue;
+                }
+
+                // Horizontal rule
+                if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
+                    blocks.push({
+                        type: "divider"
+                    });
+                    continue;
+                }
+
+                // Headings
+                const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+                if (heading) {
+                    blocks.push({
+                        type: "heading",
+                        level: heading[1].length,
+                        text: heading[2]
+                    });
+                    continue;
+                }
+
+                // Blockquotes
+                if (trimmed.startsWith("> ")) {
+                    blocks.push({
+                        type: "blockquote",
+                        text: trimmed.slice(2).trim()
+                    });
+                    continue;
+                } else if (trimmed === ">") {
+                    blocks.push({
+                        type: "blockquote",
+                        text: ""
+                    });
+                    continue;
+                }
+
+                // Ordered lists
+                const orderedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+                if (orderedMatch) {
+                    blocks.push({
+                        type: "list_item",
+                        ordered: true,
+                        index: parseInt(orderedMatch[1], 10),
+                        text: orderedMatch[2]
+                    });
+                    continue;
+                }
+
+                // Unordered lists
+                const unorderedMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+                if (unorderedMatch) {
+                    blocks.push({
+                        type: "list_item",
+                        ordered: false,
+                        text: unorderedMatch[1]
+                    });
+                    continue;
+                }
+
+                // Tables
+                if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+                    if (/^[|:\s-]+$/.test(trimmed)) {
+                        continue; // table separator
+                    }
+                    const cells = trimmed.slice(1, -1).split("|").map(c => c.trim());
+                    blocks.push({
+                        type: "table_row",
+                        cells: cells
+                    });
+                    continue;
+                }
+
+                // Paragraph
+                blocks.push({
+                    type: "paragraph",
+                    text: trimmed
+                });
+            }
+
+            if (inCode && codeLines.length) {
+                blocks.push({
+                    type: "code_block",
+                    language: codeLang,
+                    content: codeLines.join("\n")
+                });
+            }
+
+            return {
+                document: {
+                    filename: filename,
+                    mode: mode,
+                    format: "json",
+                    total_characters: markdownText.length,
+                    total_lines: lines.length
+                },
+                blocks: blocks,
+                raw_markdown: markdownText
+            };
+        }
+
         function applyFormat(content, mode) {
             if (selectedFormat === "html") {
                 outputArea.classList.remove("markdown-preview", "abnt-preview");
                 outputArea.classList.add("html-preview");
                 outputArea.innerHTML = markdownToHtml(content);
+            } else if (selectedFormat === "json") {
+                outputArea.classList.remove("html-preview", "abnt-preview");
+                outputArea.classList.add("markdown-preview");
+                const jsonObject = markdownToJson(content, selectedFile ? selectedFile.name : "sem arquivo", mode);
+                outputArea.textContent = JSON.stringify(jsonObject, null, 2);
             } else if (mode === "abnt") {
                 outputArea.classList.remove("html-preview", "markdown-preview");
                 outputArea.classList.add("abnt-preview");
@@ -1250,7 +1392,7 @@
 
                 const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
                 const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
-                const fmtLabel = selectedFormat === "html" ? " → HTML" : "";
+                const fmtLabel = selectedFormat === "html" ? " → HTML" : selectedFormat === "json" ? " → JSON" : "";
                 setStatus(`Conversão concluída em modo ${modeLabel}${fmtLabel}.${suffix}`, "success");
             } catch (error) {
                 resetOutput();
@@ -1276,9 +1418,17 @@
 
         copyBtn.addEventListener("click", async () => {
             try {
-                const text = selectedFormat === "html" ? markdownToHtml(convertedContent) : convertedContent;
+                let text;
+                if (selectedFormat === "html") {
+                    text = markdownToHtml(convertedContent);
+                } else if (selectedFormat === "json") {
+                    const jsonObj = markdownToJson(convertedContent, selectedFile ? selectedFile.name : "sem arquivo", selectedOption);
+                    text = JSON.stringify(jsonObj, null, 2);
+                } else {
+                    text = convertedContent;
+                }
                 await navigator.clipboard.writeText(text);
-                const label = selectedFormat === "html" ? "HTML" : "Markdown";
+                const label = selectedFormat === "html" ? "HTML" : selectedFormat === "json" ? "JSON" : "Markdown";
                 setStatus(`${label} copiado para a área de transferência.`, "success");
             } catch (error) {
                 setStatus("Não foi possível copiar o conteúdo.", "error");
@@ -1296,6 +1446,12 @@
                 mimeType = "text/html;charset=utf-8";
                 ext = "html";
                 statusMsg = "Arquivo HTML gerado.";
+            } else if (selectedFormat === "json") {
+                const jsonObj = markdownToJson(convertedContent, selectedFile.name, selectedOption);
+                content = JSON.stringify(jsonObj, null, 2);
+                mimeType = "application/json;charset=utf-8";
+                ext = "json";
+                statusMsg = "Arquivo JSON gerado.";
             } else {
                 content = convertedContent;
                 mimeType = "text/markdown;charset=utf-8";
@@ -1321,11 +1477,17 @@
             }
 
             try {
-                const shareText = selectedFormat === "html"
-                    ? markdownToHtml(convertedContent).slice(0, 1000)
-                    : convertedContent.slice(0, 1000);
+                let shareText;
+                if (selectedFormat === "html") {
+                    shareText = markdownToHtml(convertedContent).slice(0, 1000);
+                } else if (selectedFormat === "json") {
+                    const jsonObj = markdownToJson(convertedContent, selectedFile ? selectedFile.name : "sem arquivo", selectedOption);
+                    shareText = JSON.stringify(jsonObj, null, 2).slice(0, 1000);
+                } else {
+                    shareText = convertedContent.slice(0, 1000);
+                }
                 await navigator.share({
-                    title: selectedFormat === "html" ? "HTML convertido" : "Markdown convertido",
+                    title: selectedFormat === "html" ? "HTML convertido" : selectedFormat === "json" ? "JSON convertido" : "Markdown convertido",
                     text: shareText
                 });
             } catch (error) {
