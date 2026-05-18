@@ -1006,10 +1006,7 @@
                     </div>
                 </div>
 
-                <div class="url-zone" style="margin: 0 16px 16px; display: flex; flex-direction: column; gap: 8px;">
-                    <label class="settings-label" style="margin-bottom: 0;">Ou URL da Página</label>
-                    <input type="url" id="urlInput" class="url-input" placeholder="https://exemplo.com/pagina">
-                </div>
+
 
                 <div class="file-strip" id="fileStrip">
                     <div>
@@ -1125,7 +1122,6 @@
         const outputMode = document.getElementById("outputMode");
         const segmentButtons = document.querySelectorAll("#modeSegmented .segment");
         const formatButtons = document.querySelectorAll("#formatSegmented .segment");
-        const urlInput = document.getElementById("urlInput");
 
         const allowedExtensions = new Set([
             "pdf", "docx", "xlsx", "xls", "pptx", "html", "htm", "csv", "json",
@@ -1562,7 +1558,6 @@
             }
 
             selectedFile = file;
-            urlInput.value = "";
             fileName.textContent = file.name;
             fileSize.textContent = formatBytes(file.size);
             fileBadge.textContent = ext.toUpperCase();
@@ -1601,30 +1596,7 @@
             selectFile(event.target.files[0]);
         });
 
-        urlInput.addEventListener("input", (e) => {
-            const val = e.target.value.trim();
-            if (val) {
-                selectedFile = null;
-                fileStrip.classList.remove("has-file");
-                uploadZone.classList.remove("has-file");
-                fileName.textContent = "URL da Web";
-                fileSize.textContent = "Aguardando conversão";
-                fileBadge.textContent = "URL";
-                fileStrip.classList.add("has-file");
-                convertBtn.disabled = false;
-                clearBtn.disabled = false;
-                resetOutput();
-            } else {
-                if (!selectedFile) {
-                    convertBtn.disabled = true;
-                    clearBtn.disabled = true;
-                    fileStrip.classList.remove("has-file");
-                    fileName.textContent = "Nenhum arquivo ou URL selecionado";
-                    fileSize.textContent = "Aguardando entrada";
-                    fileBadge.textContent = "--";
-                }
-            }
-        });
+
 
         segmentButtons.forEach((button) => {
             button.addEventListener("click", () => {
@@ -1650,15 +1622,10 @@
         });
 
         convertBtn.addEventListener("click", async () => {
-            const urlValue = urlInput.value.trim();
-            if (!selectedFile && !urlValue) return;
+            if (!selectedFile) return;
 
             const formData = new FormData();
-            if (selectedFile) {
-                formData.append("file", selectedFile);
-            } else {
-                formData.append("url", urlValue);
-            }
+            formData.append("file", selectedFile);
             formData.append("option", selectedOption);
 
             convertBtn.disabled = true;
@@ -1687,7 +1654,7 @@
 
                 convertedContent = data.content || "";
                 applyFormat(convertedContent, data.mode);
-                updateMetrics(convertedContent, data.filename || (selectedFile ? selectedFile.name : urlValue));
+                updateMetrics(convertedContent, data.filename || selectedFile.name);
                 setActions(Boolean(convertedContent));
 
                 const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
@@ -1698,13 +1665,12 @@
                 resetOutput();
                 setStatus(error.message, "error");
             } finally {
-                convertBtn.disabled = !(selectedFile || urlInput.value.trim());
+                convertBtn.disabled = !selectedFile;
             }
         });
 
         clearBtn.addEventListener("click", () => {
             selectedFile = null;
-            urlInput.value = "";
             fileInput.value = "";
             fileName.textContent = "Nenhum arquivo selecionado";
             fileSize.textContent = "Aguardando entrada";
@@ -1737,8 +1703,16 @@
         });
 
         downloadBtn.addEventListener("click", () => {
-            if (!selectedFile) return;
-            const baseName = selectedFile.name.replace(/\.[^/.]+$/, "") || "converted";
+            if (!convertedContent) return;
+            
+            let baseName = "converted";
+            let sourceName = "sem arquivo";
+            
+            if (selectedFile) {
+                baseName = selectedFile.name.replace(/\.[^/.]+$/, "") || "converted";
+                sourceName = selectedFile.name;
+            }
+
             let content, mimeType, ext, statusMsg;
 
             if (selectedFormat === "html") {
@@ -1748,7 +1722,7 @@
                 ext = "html";
                 statusMsg = "Arquivo HTML gerado.";
             } else if (selectedFormat === "json") {
-                const jsonObj = markdownToJson(convertedContent, selectedFile.name, selectedOption);
+                const jsonObj = markdownToJson(convertedContent, sourceName, selectedOption);
                 content = JSON.stringify(jsonObj, null, 2);
                 mimeType = "application/json;charset=utf-8";
                 ext = "json";
@@ -1782,7 +1756,8 @@
                 if (selectedFormat === "html") {
                     shareText = markdownToHtml(convertedContent).slice(0, 1000);
                 } else if (selectedFormat === "json") {
-                    const jsonObj = markdownToJson(convertedContent, selectedFile ? selectedFile.name : "sem arquivo", selectedOption);
+                    const sourceName = selectedFile ? selectedFile.name : "sem arquivo";
+                    const jsonObj = markdownToJson(convertedContent, sourceName, selectedOption);
                     shareText = JSON.stringify(jsonObj, null, 2).slice(0, 1000);
                 } else {
                     shareText = convertedContent.slice(0, 1000);
