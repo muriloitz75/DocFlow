@@ -31,12 +31,14 @@
         }
 
         html {
-            min-height: 100%;
+            height: 100%;
+            overflow: hidden;
             background: var(--paper);
         }
 
         body {
-            min-height: 100vh;
+            height: 100%;
+            overflow: hidden;
             margin: 0;
             color: var(--ink);
             font-family: var(--body);
@@ -59,11 +61,11 @@
 
         .shell {
             width: min(1440px, 100%);
-            min-height: 100vh;
+            height: 100%;
             margin: 0 auto;
             padding: 24px;
             display: grid;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto minmax(0, 1fr) auto;
             gap: 18px;
         }
 
@@ -166,6 +168,7 @@
         .control-panel {
             display: grid;
             grid-template-rows: auto auto auto 1fr;
+            overflow-y: auto;
         }
 
         .panel-head {
@@ -328,6 +331,10 @@
         }
 
         .segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             min-height: 38px;
             border-radius: 6px;
             background: transparent;
@@ -340,6 +347,16 @@
             overflow: hidden;
             text-overflow: ellipsis;
             transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .segment svg {
+            flex-shrink: 0;
+            opacity: 0.8;
+            transition: opacity 160ms ease;
+        }
+
+        .segment.active svg {
+            opacity: 1;
         }
 
         .segment.active {
@@ -394,7 +411,7 @@
 
         .output-panel {
             display: grid;
-            grid-template-rows: auto auto minmax(420px, 1fr);
+            grid-template-rows: auto auto minmax(0, 1fr);
             min-height: 0;
         }
 
@@ -406,6 +423,25 @@
             border-bottom: 1px solid var(--line);
             padding: 10px 16px;
             background: rgba(235, 229, 216, 0.52);
+        }
+
+        .url-input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fffdf8;
+            padding: 0 14px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .url-input:focus {
+            border-color: var(--moss);
+            box-shadow: 0 0 0 3px var(--focus);
         }
 
         .metric {
@@ -445,7 +481,6 @@
         .preview {
             display: block;
             height: 100%;
-            max-height: calc(100vh - 260px);
             min-height: 0;
             margin: 0;
             padding: 34px 42px;
@@ -955,7 +990,7 @@
             <aside class="panel control-panel">
                 <div class="panel-head">
                     <h2 class="panel-title">Entrada</h2>
-                    <span class="panel-kicker" id="maxUpload">100 MB</span>
+                    <span class="panel-kicker" id="maxUpload">500 MB</span>
                 </div>
 
                 <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Selecionar arquivo">
@@ -969,6 +1004,11 @@
                         <p class="upload-main">Solte o arquivo</p>
                         <p class="upload-sub">PDF, Office, HTML, dados estruturados, imagens, áudio, EPUB e ZIP.</p>
                     </div>
+                </div>
+
+                <div class="url-zone" style="margin: 0 16px 16px; display: flex; flex-direction: column; gap: 8px;">
+                    <label class="settings-label" style="margin-bottom: 0;">Ou URL da Página</label>
+                    <input type="url" id="urlInput" class="url-input" placeholder="https://exemplo.com/pagina">
                 </div>
 
                 <div class="file-strip" id="fileStrip">
@@ -988,9 +1028,18 @@
                     </div>
                     <label class="settings-label" style="margin-top:14px;">Formato de saída</label>
                     <div class="segmented" id="formatSegmented" role="tablist" aria-label="Formato de saída">
-                        <button class="segment active" type="button" data-format="markdown">Markdown</button>
-                        <button class="segment" type="button" data-format="html">HTML</button>
-                        <button class="segment" type="button" data-format="json">JSON</button>
+                        <button class="segment active" type="button" data-format="markdown" title="Markdown">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.7c0 .63.52 1.15 1.15 1.15h13.7c.63 0 1.15-.52 1.15-1.15v-7.7C16 3.52 15.48 3 14.85 3zM9 11H7V5.88L5.5 7.6 4 5.88V11H2V5h2l1.5 1.9L7 5h2v6zm5-1.5L11.5 12 9 9.5h2V5h2v4.5h2L14 9.5z"/></svg>
+                            <span>MD</span>
+                        </button>
+                        <button class="segment" type="button" data-format="html" title="HTML">
+                            <svg width="13" height="15" viewBox="0 0 384 512" fill="currentColor"><path d="M0 32l34.9 395.8L191.5 480l157.6-52.2L384 32H0zm308.2 127.9H124.4l4.1 49.4h175.6l-13.6 148.4-97.9 27v.3h-1.1l-98.7-27.3-6-75.8h47.7L138 320l53.5 14.5 53.7-14.5 6-62.2H84.3L71.5 112.2h241.1l-4.4 47.7z"/></svg>
+                            <span>HTML</span>
+                        </button>
+                        <button class="segment" type="button" data-format="json" title="JSON">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h2v2H5v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5h2v2H5c-1.1 0-2-.9-2-2v-4a2 2 0 0 0-2-2 2 2 0 0 0 2-2V5c0-1.1.9-2 2-2zm14 0h-2v2h2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5h-2v2h2c1.1 0 2-.9 2-2v-4a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5c0-1.1-.9-2-2-2z"/></svg>
+                            <span>JSON</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1076,6 +1125,7 @@
         const outputMode = document.getElementById("outputMode");
         const segmentButtons = document.querySelectorAll("#modeSegmented .segment");
         const formatButtons = document.querySelectorAll("#formatSegmented .segment");
+        const urlInput = document.getElementById("urlInput");
 
         const allowedExtensions = new Set([
             "pdf", "docx", "xlsx", "xls", "pptx", "html", "htm", "csv", "json",
@@ -1087,7 +1137,7 @@
         let selectedOption = "standard";
         let selectedFormat = "markdown";
         let convertedContent = "";
-        let maxUploadBytes = 100 * 1024 * 1024;
+        let maxUploadBytes = 500 * 1024 * 1024;
 
         function extensionOf(name) {
             const parts = name.split(".");
@@ -1512,6 +1562,7 @@
             }
 
             selectedFile = file;
+            urlInput.value = "";
             fileName.textContent = file.name;
             fileSize.textContent = formatBytes(file.size);
             fileBadge.textContent = ext.toUpperCase();
@@ -1550,6 +1601,31 @@
             selectFile(event.target.files[0]);
         });
 
+        urlInput.addEventListener("input", (e) => {
+            const val = e.target.value.trim();
+            if (val) {
+                selectedFile = null;
+                fileStrip.classList.remove("has-file");
+                uploadZone.classList.remove("has-file");
+                fileName.textContent = "URL da Web";
+                fileSize.textContent = "Aguardando conversão";
+                fileBadge.textContent = "URL";
+                fileStrip.classList.add("has-file");
+                convertBtn.disabled = false;
+                clearBtn.disabled = false;
+                resetOutput();
+            } else {
+                if (!selectedFile) {
+                    convertBtn.disabled = true;
+                    clearBtn.disabled = true;
+                    fileStrip.classList.remove("has-file");
+                    fileName.textContent = "Nenhum arquivo ou URL selecionado";
+                    fileSize.textContent = "Aguardando entrada";
+                    fileBadge.textContent = "--";
+                }
+            }
+        });
+
         segmentButtons.forEach((button) => {
             button.addEventListener("click", () => {
                 segmentButtons.forEach((item) => item.classList.remove("active"));
@@ -1574,10 +1650,15 @@
         });
 
         convertBtn.addEventListener("click", async () => {
-            if (!selectedFile) return;
+            const urlValue = urlInput.value.trim();
+            if (!selectedFile && !urlValue) return;
 
             const formData = new FormData();
-            formData.append("file", selectedFile);
+            if (selectedFile) {
+                formData.append("file", selectedFile);
+            } else {
+                formData.append("url", urlValue);
+            }
             formData.append("option", selectedOption);
 
             convertBtn.disabled = true;
@@ -1606,7 +1687,7 @@
 
                 convertedContent = data.content || "";
                 applyFormat(convertedContent, data.mode);
-                updateMetrics(convertedContent, data.filename || selectedFile.name);
+                updateMetrics(convertedContent, data.filename || (selectedFile ? selectedFile.name : urlValue));
                 setActions(Boolean(convertedContent));
 
                 const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
@@ -1617,12 +1698,13 @@
                 resetOutput();
                 setStatus(error.message, "error");
             } finally {
-                convertBtn.disabled = !selectedFile;
+                convertBtn.disabled = !(selectedFile || urlInput.value.trim());
             }
         });
 
         clearBtn.addEventListener("click", () => {
             selectedFile = null;
+            urlInput.value = "";
             fileInput.value = "";
             fileName.textContent = "Nenhum arquivo selecionado";
             fileSize.textContent = "Aguardando entrada";
@@ -1718,8 +1800,8 @@
             fetch("/api/health")
                 .then((response) => response.json())
                 .then((data) => {
-                    maxUploadBytes = Number(data.maxUploadMb || 100) * 1024 * 1024;
-                    maxUpload.textContent = `${data.maxUploadMb || 100} MB`;
+                    maxUploadBytes = Number(data.maxUploadMb || 500) * 1024 * 1024;
+                    maxUpload.textContent = `${data.maxUploadMb || 500} MB`;
                     healthText.textContent = "Servidor pronto";
                 })
                 .catch(() => {

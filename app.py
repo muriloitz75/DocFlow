@@ -47,7 +47,7 @@ ALLOWED_EXTENSIONS = {
 }
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_ROOT
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
 app.config["JSON_SORT_KEYS"] = False
 
 # Inicializar MarkItDown
@@ -702,35 +702,43 @@ def serve_image(filename):
 @app.route("/api/convert", methods=["POST"])
 @login_required
 def convert():
-    """Converter arquivo para Markdown"""
+    """Converter arquivo ou URL para Markdown"""
     temp_dir = None
     try:
-        # Validar arquivo
-        if "file" not in request.files:
-            return jsonify({"success": False, "error": "Nenhum arquivo fornecido."}), 400
-        
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"success": False, "error": "Arquivo não selecionado."}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({
-                "success": False,
-                "error": f"Formato não suportado: {file.filename}",
-            }), 400
-        
+        url = request.form.get("url")
         option = request.form.get("option", "standard")
-        filename = secure_filename(file.filename) or f"upload-{uuid4().hex}"
-
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
-        os.makedirs(temp_dir, exist_ok=False)
-        temp_path = os.path.join(temp_dir, filename)
-        file.save(temp_path)
         
-        result = md_converter.convert(temp_path)
-        content = result.text_content
-        extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
+        if url:
+            result = md_converter.convert(url)
+            content = result.text_content
+            filename = url
+            extension = ""
+        else:
+            # Validar arquivo
+            if "file" not in request.files:
+                return jsonify({"success": False, "error": "Nenhum arquivo ou URL fornecido."}), 400
+            
+            file = request.files["file"]
+            if file.filename == "":
+                return jsonify({"success": False, "error": "Arquivo não selecionado."}), 400
+            
+            if not allowed_file(file.filename):
+                return jsonify({
+                    "success": False,
+                    "error": f"Formato não suportado: {file.filename}",
+                }), 400
+            
+            filename = secure_filename(file.filename) or f"upload-{uuid4().hex}"
+
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
+            os.makedirs(temp_dir, exist_ok=False)
+            temp_path = os.path.join(temp_dir, filename)
+            file.save(temp_path)
+            
+            result = md_converter.convert(temp_path)
+            content = result.text_content
+            extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
         if extension == "pdf":
             content = clean_pdf_headers_footers(content)
