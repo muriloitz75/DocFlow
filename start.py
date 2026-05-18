@@ -24,7 +24,7 @@ def main():
     # Configurações
     venv_python = Path('.venv/Scripts/python.exe')
     app_file = 'app.py'
-    url = 'http://localhost:5000'
+    url = 'http://127.0.0.1:5000'
     
     if not venv_python.exists():
         print("Erro: ambiente virtual não encontrado.")
@@ -58,10 +58,7 @@ def main():
     try:
         # Iniciar Flask
         flask_process = subprocess.Popen(
-            [str(venv_python), app_file],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            [str(venv_python), app_file]
         )
         
         # Aguardar o servidor iniciar
