@@ -1132,7 +1132,7 @@
             setLoading("Convertendo arquivo...");
             outputArea.classList.remove("abnt-preview", "html-preview");
             outputArea.classList.add("markdown-preview");
-            outputArea.innerHTML = '<span class="empty-state"><img src="/image/dakernet-leaves-6625.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;border:2px solid var(--ink);box-shadow:4px 4px 0px var(--ink);"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
+            outputArea.innerHTML = '<span class="empty-state"><img src="/image/dakernet-leaves-6625.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
 
             try {
                 const response = await fetch("/api/convert", { method: "POST", body: formData });
