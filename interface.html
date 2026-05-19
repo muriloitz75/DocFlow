@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg: #e6e4df;
@@ -495,6 +496,43 @@
             border: 1px solid var(--ink);
             padding: 2px 4px;
             font-size: 0.8em;
+        }
+
+        .preview.html-preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1.5em;
+        }
+        .preview.html-preview th, .preview.html-preview td {
+            border: var(--border);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .preview.html-preview th {
+            background: var(--ink);
+            color: var(--surface);
+        }
+        .preview.html-preview blockquote {
+            border-left: 4px solid var(--accent);
+            margin: 1.5em 0;
+            padding-left: 16px;
+            font-style: italic;
+            color: var(--muted);
+        }
+        .preview.html-preview pre {
+            background: var(--ink);
+            color: var(--surface);
+            padding: 16px;
+            overflow-x: auto;
+            border-radius: 0;
+            box-shadow: 4px 4px 0px var(--accent);
+            margin-bottom: 1.5em;
+        }
+        .preview.html-preview pre code {
+            background: transparent;
+            border: none;
+            color: inherit;
+            padding: 0;
         }
 
         .empty-state {
@@ -987,148 +1025,18 @@
         }
 
         function markdownToHtml(markdown) {
-            function escHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-            function inlineFmt(text) {
-                let s = escHtml(text);
-                s = s.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-                s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-                s = s.replace(/__(.+?)__/g, "<strong>$1</strong>");
-                s = s.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
-                s = s.replace(/_([^_\n]+)_/g, "<em>$1</em>");
-                s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
-                s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-                return s;
-            }
-
-            const lines = markdown.split(/\r?\n/);
-            const blocks = [];
-            let paraLines = [], listItems = [], listOrdered = false;
-            let codeLines = [], inCode = false, codeLang = "";
-            let tableRows = [], inTable = false;
-
-            function flushPara() {
-                if (paraLines.length) { blocks.push(`<p>${inlineFmt(paraLines.join(" "))}</p>`); paraLines = []; }
-            }
-            function flushList() {
-                if (listItems.length) {
-                    const tag = listOrdered ? "ol" : "ul";
-                    blocks.push(`<${tag}>${listItems.map(i => `<li>${inlineFmt(i)}</li>`).join("")}</${tag}>`);
-                    listItems = [];
-                }
-            }
-            function flushCode() {
-                if (codeLines.length) {
-                    const attr = codeLang ? ` class="language-${escHtml(codeLang)}"` : "";
-                    blocks.push(`<pre><code${attr}>${escHtml(codeLines.join("\n"))}</code></pre>`);
-                    codeLines = []; codeLang = "";
-                }
-            }
-            function flushTable() {
-                if (!tableRows.length) return;
-                const dataRows = tableRows.filter(r => r !== null);
-                if (!dataRows.length) { tableRows = []; inTable = false; return; }
-                const hasSep = tableRows[1] === null;
-                const hdr = dataRows[0];
-                const body = dataRows.slice(1);
-                const thead = hasSep ? `<thead><tr>${hdr.map(c => `<th>${inlineFmt(c.trim())}</th>`).join("")}</tr></thead>` : "";
-                const tbodyRows = hasSep ? body : dataRows;
-                const tbody = tbodyRows.length ? `<tbody>${tbodyRows.map(r => `<tr>${r.map(c => `<td>${inlineFmt(c.trim())}</td>`).join("")}</tr>`).join("")}</tbody>` : "";
-                blocks.push(`<table>${thead}${tbody}</table>`);
-                tableRows = []; inTable = false;
-            }
-
-            for (const raw of lines) {
-                const trimmed = raw.trim();
-                const fence = trimmed.match(/^```(\w*)/);
-                if (fence) {
-                    if (inCode) { inCode = false; flushCode(); }
-                    else { flushPara(); flushList(); flushTable(); inCode = true; codeLang = fence[1] || ""; }
-                    continue;
-                }
-                if (inCode) { codeLines.push(raw); continue; }
-                if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
-                    flushPara(); flushList(); flushTable();
-                    blocks.push("<hr>"); continue;
-                }
-                const hm = trimmed.match(/^(#{1,6})\s+(.+)$/);
-                if (hm) {
-                    flushPara(); flushList(); flushTable();
-                    blocks.push(`<h${hm[1].length}>${inlineFmt(hm[2])}</h${hm[1].length}>`); continue;
-                }
-                if (trimmed.startsWith("> ") || trimmed === ">") {
-                    flushPara(); flushList(); flushTable();
-                    blocks.push(`<blockquote><p>${inlineFmt(trimmed.slice(2))}</p></blockquote>`); continue;
-                }
-                if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
-                    flushPara(); flushList();
-                    const cells = trimmed.slice(1, -1).split("|");
-                    tableRows.push(cells.every(c => /^[-: ]+$/.test(c)) ? null : cells);
-                    inTable = true; continue;
-                } else if (inTable) { flushTable(); }
-                if (!trimmed) { flushPara(); flushList(); continue; }
-                const om = trimmed.match(/^(\d+)\.\s+(.+)$/);
-                if (om) {
-                    flushPara();
-                    if (!listOrdered && listItems.length) flushList();
-                    listOrdered = true; listItems.push(om[2]); continue;
-                }
-                const bm = trimmed.match(/^[-*+]\s+(.+)$/);
-                if (bm) {
-                    flushPara();
-                    if (listOrdered && listItems.length) flushList();
-                    listOrdered = false; listItems.push(bm[1]); continue;
-                }
-                if (listItems.length) flushList();
-                paraLines.push(trimmed);
-            }
-            flushPara(); flushList(); flushCode(); flushTable();
-            return blocks.join("\n");
+            marked.setOptions({
+                gfm: true,
+                breaks: true
+            });
+            return marked.parse(markdown);
         }
 
         function markdownToJson(markdownText, filename, mode) {
-            const blocks = [];
-            const lines = markdownText.split(/\r?\n/);
-            let inCode = false;
-            let codeLines = [];
-            let codeLang = "";
-
-            for (const line of lines) {
-                const trimmed = line.trim();
-                const fence = trimmed.match(/^```(\w*)/);
-                if (fence) {
-                    if (inCode) {
-                        inCode = false;
-                        blocks.push({ type: "code_block", language: codeLang, content: codeLines.join("\n") });
-                        codeLines = []; codeLang = "";
-                    } else {
-                        inCode = true;
-                        codeLang = fence[1] || "";
-                    }
-                    continue;
-                }
-                if (inCode) { codeLines.push(line); continue; }
-                if (!trimmed) continue;
-                if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) { blocks.push({ type: "divider" }); continue; }
-                const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
-                if (heading) { blocks.push({ type: "heading", level: heading[1].length, text: heading[2] }); continue; }
-                if (trimmed.startsWith("> ")) { blocks.push({ type: "blockquote", text: trimmed.slice(2).trim() }); continue; }
-                else if (trimmed === ">") { blocks.push({ type: "blockquote", text: "" }); continue; }
-                const orderedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-                if (orderedMatch) { blocks.push({ type: "list_item", ordered: true, index: parseInt(orderedMatch[1], 10), text: orderedMatch[2] }); continue; }
-                const unorderedMatch = trimmed.match(/^[-*+]\s+(.+)$/);
-                if (unorderedMatch) { blocks.push({ type: "list_item", ordered: false, text: unorderedMatch[1] }); continue; }
-                if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
-                    if (/^[|:\s-]+$/.test(trimmed)) continue;
-                    const cells = trimmed.slice(1, -1).split("|").map(c => c.trim());
-                    blocks.push({ type: "table_row", cells: cells });
-                    continue;
-                }
-                blocks.push({ type: "paragraph", text: trimmed });
-            }
-            if (inCode && codeLines.length) blocks.push({ type: "code_block", language: codeLang, content: codeLines.join("\n") });
+            const tokens = marked.lexer(markdownText);
             return {
-                document: { filename: filename, mode: mode, format: "json", total_characters: markdownText.length, total_lines: lines.length },
-                blocks: blocks,
+                document: { filename: filename, mode: mode, format: "json", total_characters: markdownText.length },
+                ast: tokens,
                 raw_markdown: markdownText
             };
         }
@@ -1224,7 +1132,7 @@
             setLoading("Convertendo arquivo...");
             outputArea.classList.remove("abnt-preview", "html-preview");
             outputArea.classList.add("markdown-preview");
-            outputArea.innerHTML = '<span class="empty-state"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
+            outputArea.innerHTML = '<span class="empty-state"><img src="/image/dakernet-leaves-6625.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;border:2px solid var(--ink);box-shadow:4px 4px 0px var(--ink);"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
 
             try {
                 const response = await fetch("/api/convert", { method: "POST", body: formData });
