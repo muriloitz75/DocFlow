@@ -42,5 +42,5 @@
         - button "Compartilhar" [disabled] [ref=e45]
       - generic [ref=e48]:
         - strong [ref=e49]: Pronto para converter
-        - text: O Markdown aparecerá aqui.
+        - text: O markdown, html ou json aparecerá aqui.
   - generic [ref=e50]: Selecione um arquivo para iniciar.
