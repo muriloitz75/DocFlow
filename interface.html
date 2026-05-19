@@ -149,6 +149,11 @@
             box-shadow: 0 0 0 4px rgba(76, 107, 82, 0.14);
         }
 
+        .system-pill.offline .system-dot {
+            background: #b84c4c;
+            box-shadow: 0 0 0 4px rgba(184, 76, 76, 0.14);
+        }
+
         .workspace {
             display: grid;
             grid-template-columns: minmax(310px, 0.56fr) minmax(560px, 1.44fr);
@@ -1115,6 +1120,7 @@
         const outputArea = document.getElementById("outputArea");
         const statusLine = document.getElementById("statusLine");
         const healthText = document.getElementById("healthText");
+        const healthPill = document.getElementById("healthPill");
         const maxUpload = document.getElementById("maxUpload");
         const charMetric = document.getElementById("charMetric");
         const lineMetric = document.getElementById("lineMetric");
@@ -1778,9 +1784,11 @@
                     maxUploadBytes = Number(data.maxUploadMb || 500) * 1024 * 1024;
                     maxUpload.textContent = `${data.maxUploadMb || 500} MB`;
                     healthText.textContent = "Servidor pronto";
+                    healthPill.classList.remove("offline");
                 })
                 .catch(() => {
                     healthText.textContent = "Servidor offline";
+                    healthPill.classList.add("offline");
                     setStatus("Não foi possível verificar o servidor.", "error");
                 });
         }
@@ -1795,9 +1803,13 @@
                     checkServerHealth();
                 } else {
                     showLoginScreen();
+                    checkServerHealth();
                 }
             } catch (error) {
                 console.error("Erro ao verificar autenticação", error);
+                healthText.textContent = "Servidor offline";
+                healthPill.classList.add("offline");
+                setStatus("Servidor inacessível. Verifique se a aplicação está rodando.", "error");
                 showLoginScreen();
             }
         }

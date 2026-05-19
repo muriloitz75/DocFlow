@@ -255,6 +255,35 @@ class WebInterfaceTestCase(unittest.TestCase):
         )
         self.assertNotIn("econômica do Tributária", result)
 
+    def test_strip_generated_heading_number_with_dot(self):
+        self.assertEqual(webapp._strip_generated_heading_number("1. Introdução"), "Introdução")
+        self.assertEqual(webapp._strip_generated_heading_number("1.1. Objetivos"), "Objetivos")
+        self.assertEqual(webapp._strip_generated_heading_number("1 Introdução"), "Introdução")
+
+    def test_normalize_abnt_markdown_preserves_already_numbered_headings(self):
+        content = "# 1 Introdução\n\n## 1.1 Objetivo Geral\n\nTexto."
+        result = webapp.normalize_abnt_markdown(content)
+        self.assertEqual(result, "# 1 INTRODUÇÃO\n\n## 1.1 OBJETIVO GERAL\n\nTexto.")
+
+    def test_secure_filename_preserves_non_ascii_extensions(self):
+        response = self.post_file(b"Texto simples de teste", "документ.txt")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertTrue(response.json["filename"].endswith(".txt"))
+
+    def test_large_file_error_handler_message(self):
+        old_limit = webapp.app.config.get("MAX_CONTENT_LENGTH")
+        webapp.app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
+        try:
+            with webapp.app.app_context():
+                response = webapp.handle_large_file(None)
+                data = response[0].get_json()
+                self.assertEqual(response[1], 413)
+                self.assertIn("limite atual é 200 MB", data["error"])
+        finally:
+            if old_limit is not None:
+                webapp.app.config["MAX_CONTENT_LENGTH"] = old_limit
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -125,6 +125,7 @@ def normalize_abnt_markdown(content):
                 level = len(marker)
                 title = stripped[level:].strip()
                 if title:
+                    title = _strip_generated_heading_number(title)
                     append_numbered_heading(level, title)
                     continue
 
@@ -160,7 +161,7 @@ def _normalize_text_line(line):
 
 
 def _strip_generated_heading_number(text):
-    return re.sub(r"^\d+(?:\.\d+)*\s+", "", text).strip()
+    return re.sub(r"^\d+(?:\.\d+)*\.?\s+", "", text).strip()
 
 
 def _heading_from_line(line):
@@ -674,9 +675,10 @@ def clean_pdf_headers_footers(content):
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(_error):
+    limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
     return jsonify({
         "success": False,
-        "error": "Arquivo muito grande. O limite atual é 100 MB.",
+        "error": f"Arquivo muito grande. O limite atual é {limit_mb} MB.",
     }), 413
 
 
@@ -721,7 +723,10 @@ def convert():
                 "error": f"Formato não suportado: {file.filename}",
             }), 400
         
-        filename = secure_filename(file.filename) or f"upload-{uuid4().hex}"
+        orig_ext = file.filename.rsplit(".", 1)[1].lower() if "." in file.filename else ""
+        filename = secure_filename(file.filename)
+        if not filename or "." not in filename:
+            filename = f"upload-{uuid4().hex}.{orig_ext}" if orig_ext else f"upload-{uuid4().hex}"
 
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
