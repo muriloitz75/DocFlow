@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.join(BASE_DIR, "packages", "markitdown", "src"))
 from markitdown import MarkItDown
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "docflow-secret-key-123456")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "docflow-secret-key-123456"
 
 # Configurações de autenticação
-APP_USER = os.environ.get("APP_USER", "admin")
-APP_PASSWORD = os.environ.get("APP_PASSWORD", "admin")
+APP_USER = os.environ.get("APP_USER") or "admin"
+APP_PASSWORD = os.environ.get("APP_PASSWORD") or "admin"
 
 
 def login_required(f):
