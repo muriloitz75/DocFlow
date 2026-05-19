@@ -1832,7 +1832,13 @@
                         password: passwordInput.value
                     })
                 });
-                const data = await response.json();
+
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (jsonErr) {
+                    console.error("Erro ao decodificar JSON da resposta:", jsonErr);
+                }
 
                 if (response.ok && data.success) {
                     showMainApp();
@@ -1842,6 +1848,7 @@
                     loginError.textContent = data.message || "Usuário ou senha incorretos.";
                 }
             } catch (error) {
+                console.error("Erro na requisição de login:", error);
                 loginError.textContent = "Erro de conexão com o servidor.";
             } finally {
                 loginBtnSubmit.disabled = false;
