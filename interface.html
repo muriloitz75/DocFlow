@@ -705,6 +705,47 @@
             overflow: hidden;
         }
 
+        /* FLOATING TOC HANDLE */
+        .toc-toggle-handle {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 50px;
+            background: var(--ink);
+            color: var(--surface);
+            border: var(--border);
+            border-left: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 1px 1px 0px var(--accent);
+            transition: transform 0.2s, background 0.2s, opacity 0.2s;
+            opacity: 0.8;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .toc-toggle-handle:hover {
+            opacity: 1;
+            background: var(--accent);
+            color: var(--surface);
+            box-shadow: 2px 2px 0px var(--ink);
+        }
+
+        .toc-toggle-handle svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        .toc-toggle-handle:hover svg {
+            transform: translateX(2px);
+        }
+
         .toc-panel {
             position: absolute;
             top: 0;
@@ -1253,6 +1294,9 @@
                 </div>
 
                 <div class="output-wrapper">
+                    <button class="toc-toggle-handle" id="tocToggleHandle" type="button" title="Abrir sumário" style="display: none;">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
                     <nav class="toc-panel" id="tocPanel">
                         <div class="toc-header">
                             <span class="toc-title">
@@ -1336,6 +1380,7 @@
         const tocList = document.getElementById("tocList");
         const tocBadge = document.getElementById("tocBadge");
         const tocCloseBtn = document.getElementById("tocCloseBtn");
+        const tocToggleHandle = document.getElementById("tocToggleHandle");
 
         const loginOverlay = document.getElementById("loginOverlay");
         const loginForm = document.getElementById("loginForm");
@@ -1410,6 +1455,13 @@
             shareBtn.disabled = !enabled;
             searchToggleBtn.disabled = !enabled;
             tocToggleBtn.disabled = !enabled;
+            if (tocToggleHandle) {
+                tocToggleHandle.style.display = enabled ? "flex" : "none";
+                if (enabled) {
+                    tocToggleHandle.style.opacity = tocPanel.classList.contains("visible") ? "0" : "0.8";
+                    tocToggleHandle.style.pointerEvents = tocPanel.classList.contains("visible") ? "none" : "auto";
+                }
+            }
         }
 
         function resetOutput() {
@@ -2256,10 +2308,18 @@
 
         function openToc() {
             tocPanel.classList.add("visible");
+            if (tocToggleHandle) {
+                tocToggleHandle.style.opacity = "0";
+                tocToggleHandle.style.pointerEvents = "none";
+            }
         }
 
         function closeToc() {
             tocPanel.classList.remove("visible");
+            if (tocToggleHandle) {
+                tocToggleHandle.style.opacity = "0.8";
+                tocToggleHandle.style.pointerEvents = "auto";
+            }
         }
 
         tocToggleBtn.addEventListener("click", () => {
@@ -2268,6 +2328,10 @@
         });
 
         tocCloseBtn.addEventListener("click", closeToc);
+
+        if (tocToggleHandle) {
+            tocToggleHandle.addEventListener("click", openToc);
+        }
 
         checkAuthStatus();
     </script>
