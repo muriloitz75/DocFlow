@@ -778,9 +778,17 @@
             transition: transform 0.1s, box-shadow 0.1s;
         }
 
+        .toc-close-btn svg {
+            transition: transform 0.2s ease;
+        }
+
         .toc-close-btn:hover {
             transform: translate(-1px, -1px);
             box-shadow: 2px 2px 0px var(--accent);
+        }
+
+        .toc-close-btn:hover svg {
+            transform: translateX(-2px);
         }
 
         .toc-list {
@@ -1252,7 +1260,9 @@
                                 Sumário
                                 <span class="toc-badge" id="tocBadge">0</span>
                             </span>
-                            <button class="toc-close-btn" id="tocCloseBtn" type="button" title="Fechar sumário">✕</button>
+                            <button class="toc-close-btn" id="tocCloseBtn" type="button" title="Recolher sumário">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:middle"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                            </button>
                         </div>
                         <ul class="toc-list" id="tocList"></ul>
                     </nav>
@@ -2233,6 +2243,9 @@
                     }
                 }
             }
+
+            // Recolhe o sumário automaticamente para visualização limpa do tópico localizado
+            closeToc();
         }
 
         function setActiveTocItem(index) {
