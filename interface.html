@@ -696,6 +696,157 @@
             background: rgba(255, 62, 0, 0.2);
         }
 
+        /* TOC PANEL */
+        .output-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .toc-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            background: var(--surface);
+            border-right: var(--border);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 12px rgba(0,0,0,0);
+        }
+
+        .toc-panel.visible {
+            transform: translateX(0);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.08);
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: var(--border);
+            background: var(--bg);
+        }
+
+        .toc-title {
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toc-title svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--accent);
+        }
+
+        .toc-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 800;
+            background: var(--accent);
+            color: var(--surface);
+            padding: 2px 6px;
+        }
+
+        .toc-close-btn {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: var(--border);
+            background: var(--ink);
+            color: var(--surface);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            box-shadow: 1px 1px 0px var(--accent);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .toc-close-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--accent);
+        }
+
+        .toc-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+            list-style: none;
+        }
+
+        .toc-item {
+            display: block;
+            padding: 8px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ink);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: background 0.1s, border-color 0.1s;
+            text-decoration: none;
+            word-break: break-word;
+        }
+
+        .toc-item:hover {
+            background: var(--bg);
+            border-left-color: var(--accent);
+        }
+
+        .toc-item.active {
+            background: var(--bg);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .toc-item[data-level="1"] {
+            font-weight: 800;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .toc-item[data-level="2"] {
+            padding-left: 28px;
+        }
+
+        .toc-item[data-level="3"] {
+            padding-left: 40px;
+            font-size: 11px;
+        }
+
+        .toc-item[data-level="4"],
+        .toc-item[data-level="5"],
+        .toc-item[data-level="6"] {
+            padding-left: 52px;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .toc-empty {
+            padding: 24px 16px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
         .preview {
             flex: 1;
             overflow-x: auto;
@@ -1067,6 +1218,9 @@
                     <span class="metric" id="lineMetric">0 linhas</span>
                     <span class="metric" id="fileMetric">sem arquivo</span>
                     <span class="toolbar-spacer"></span>
+                    <button class="tool-btn" id="tocToggleBtn" type="button" disabled title="Sumário do documento">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/></svg>Sumário
+                    </button>
                     <button class="tool-btn" id="searchToggleBtn" type="button" disabled title="Buscar no texto (Ctrl+F)">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Buscar
                     </button>
@@ -1090,7 +1244,20 @@
                     <button class="search-close-btn" id="searchCloseBtn" type="button" title="Fechar busca (Esc)">✕</button>
                 </div>
 
-                <pre class="preview markdown-preview" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
+                <div class="output-wrapper">
+                    <nav class="toc-panel" id="tocPanel">
+                        <div class="toc-header">
+                            <span class="toc-title">
+                                <svg viewBox="0 0 24 24"><path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/></svg>
+                                Sumário
+                                <span class="toc-badge" id="tocBadge">0</span>
+                            </span>
+                            <button class="toc-close-btn" id="tocCloseBtn" type="button" title="Fechar sumário">✕</button>
+                        </div>
+                        <ul class="toc-list" id="tocList"></ul>
+                    </nav>
+                    <pre class="preview markdown-preview" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
+                </div>
             </section>
 
             <!-- Popover de seleção flutuante -->
@@ -1154,6 +1321,11 @@
         const searchPrevBtn = document.getElementById("searchPrevBtn");
         const searchNextBtn = document.getElementById("searchNextBtn");
         const searchCloseBtn = document.getElementById("searchCloseBtn");
+        const tocToggleBtn = document.getElementById("tocToggleBtn");
+        const tocPanel = document.getElementById("tocPanel");
+        const tocList = document.getElementById("tocList");
+        const tocBadge = document.getElementById("tocBadge");
+        const tocCloseBtn = document.getElementById("tocCloseBtn");
 
         const loginOverlay = document.getElementById("loginOverlay");
         const loginForm = document.getElementById("loginForm");
@@ -1227,6 +1399,7 @@
             downloadBtn.disabled = !enabled;
             shareBtn.disabled = !enabled;
             searchToggleBtn.disabled = !enabled;
+            tocToggleBtn.disabled = !enabled;
         }
 
         function resetOutput() {
@@ -1242,6 +1415,10 @@
             searchCount.textContent = "";
             searchPrevBtn.disabled = true;
             searchNextBtn.disabled = true;
+            // Fecha o sumário ao resetar
+            tocPanel.classList.remove("visible");
+            tocList.innerHTML = "";
+            tocBadge.textContent = "0";
         }
 
         function escapeHtml(value) {
@@ -1260,6 +1437,7 @@
             let list = [];
             let code = [];
             let inCode = false;
+            let headingIdx = 0;
 
             function flushParagraph() {
                 if (paragraph.length) {
@@ -1309,7 +1487,8 @@
                     flushParagraph();
                     flushList();
                     const level = Math.min(3, heading[1].length);
-                    blocks.push(`<h${level}>${escapeHtml(heading[2])}</h${level}>`);
+                    const hId = `toc-heading-${headingIdx++}`;
+                    blocks.push(`<h${level} id="${hId}">${escapeHtml(heading[2])}</h${level}>`);
                     return;
                 }
                 const bullet = trimmed.match(/^[-*]\s+(.+)$/);
@@ -1348,6 +1527,7 @@
                 outputArea.classList.remove("markdown-preview", "abnt-preview");
                 outputArea.classList.add("html-preview");
                 outputArea.innerHTML = markdownToHtml(content);
+                addHeadingIds();
             } else if (selectedFormat === "json") {
                 outputArea.classList.remove("html-preview", "abnt-preview");
                 outputArea.classList.add("markdown-preview");
@@ -1360,8 +1540,48 @@
             } else {
                 outputArea.classList.remove("html-preview", "abnt-preview");
                 outputArea.classList.add("markdown-preview");
-                outputArea.textContent = content;
+                renderMarkdownPlainWithIds(content);
             }
+            // Atualiza o sumário sempre que o conteúdo muda
+            buildToc();
+        }
+
+        function addHeadingIds() {
+            const headings = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6");
+            headings.forEach((h, i) => {
+                if (!h.id) h.id = `toc-heading-${i}`;
+            });
+        }
+
+        function renderMarkdownPlainWithIds(content) {
+            const lines = content.split(/\r?\n/);
+            const fragment = document.createDocumentFragment();
+            let headingIdx = 0;
+
+            const legalHeadingRegex = /^(LIVRO|TÍTULO|TITULO|CAPÍTULO|CAPITULO|SEÇÃO|SEÇAO|SECAO|SUBSEÇÃO|SUBSEÇAO|SUBSECAO)\s+([IVXLCDM]+|[0-9]+|COMPLEMENTAR)\b/i;
+
+            lines.forEach((line, i) => {
+                if (i > 0) fragment.appendChild(document.createTextNode("\n"));
+                const trimmed = line.trim();
+                
+                const matchHash = trimmed.match(/^(#{1,6})\s+(.+)$/);
+                const matchLegal = !matchHash && trimmed.match(legalHeadingRegex);
+
+                if (matchHash || matchLegal) {
+                    const span = document.createElement("span");
+                    span.id = `toc-heading-${headingIdx++}`;
+                    span.textContent = line;
+                    span.style.fontWeight = "800";
+                    span.style.display = "inline-block";
+                    span.style.margin = "8px 0 4px 0";
+                    fragment.appendChild(span);
+                } else {
+                    fragment.appendChild(document.createTextNode(line));
+                }
+            });
+
+            outputArea.textContent = "";
+            outputArea.appendChild(fragment);
         }
 
         function selectFile(file) {
@@ -1888,6 +2108,153 @@
                 }
             }
         });
+        // ===== SUMÁRIO / ÍNDICE DO DOCUMENTO =====
+        let tocHeadings = [];
+
+        function buildToc() {
+            tocHeadings = [];
+            tocList.innerHTML = "";
+
+            // Se o outputArea estiver vazio ou com o empty state, reseta e sai
+            if (!convertedContent || outputArea.querySelector(".empty-state")) {
+                tocBadge.textContent = "0";
+                return;
+            }
+
+            const legalHeadingRegex = /^(LIVRO|TÍTULO|TITULO|CAPÍTULO|CAPITULO|SEÇÃO|SEÇAO|SECAO|SUBSEÇÃO|SUBSEÇAO|SUBSECAO)\s+([IVXLCDM]+|[0-9]+|COMPLEMENTAR)\b/i;
+
+            // Busca todos os elementos que representam títulos na visualização atual
+            const allElements = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-']");
+            const headingElements = [];
+
+            allElements.forEach((el) => {
+                let level = 1;
+                if (el.tagName.startsWith("H") && el.tagName.length === 2) {
+                    level = parseInt(el.tagName.substring(1), 10);
+                } else if (el.id.startsWith("toc-heading-")) {
+                    const text = el.textContent.trim();
+                    const matchHash = text.match(/^(#{1,6})\s+/);
+                    if (matchHash) {
+                        level = matchHash[1].length;
+                    } else {
+                        // Título legal sem hashes (ex: CAPÍTULO I)
+                        const matchLegal = text.match(legalHeadingRegex);
+                        if (matchLegal) {
+                            const word = matchLegal[1].toUpperCase();
+                            if (word.startsWith("LIVRO")) level = 1;
+                            else if (word.startsWith("TITULO") || word.startsWith("TÍTULO")) level = 2;
+                            else if (word.startsWith("CAPITULO") || word.startsWith("CAPÍTULO")) level = 3;
+                            else if (word.startsWith("SECAO") || word.startsWith("SEÇÃO") || word.startsWith("SEÇAO")) level = 4;
+                            else level = 5;
+                        }
+                    }
+                }
+
+                let text = el.textContent.trim();
+                // Limpa marcações de Markdown da exibição do sumário
+                if (el.id.startsWith("toc-heading-") && !el.tagName.startsWith("H")) {
+                    text = text.replace(/^#{1,6}\s+/, "");
+                }
+                text = text.replace(/[*_`~]/g, "");
+
+                headingElements.push({
+                    element: el,
+                    level: level,
+                    text: text
+                });
+            });
+
+            tocBadge.textContent = String(headingElements.length);
+
+            if (headingElements.length === 0) {
+                tocList.innerHTML = '<li class="toc-empty">Nenhum título encontrado</li>';
+                return;
+            }
+
+            headingElements.forEach((h, i) => {
+                // Sincroniza o ID no DOM com o índice exato do sumário para garantir a navegação
+                h.element.id = `toc-heading-${i}`;
+
+                tocHeadings.push({
+                    level: h.level,
+                    text: h.text
+                });
+
+                const li = document.createElement("li");
+                li.className = "toc-item";
+                li.setAttribute("data-level", String(h.level));
+                li.setAttribute("data-index", String(i));
+                li.textContent = h.text;
+                li.title = h.text;
+
+                li.addEventListener("click", () => {
+                    navigateToHeading(i);
+                });
+
+                tocList.appendChild(li);
+            });
+        }
+
+        function navigateToHeading(index) {
+            // Tenta encontrar o heading no DOM pelo ID
+            const el = document.getElementById(`toc-heading-${index}`);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+                // Destaque temporário
+                el.style.transition = "background 0.3s";
+                el.style.background = "rgba(255, 62, 0, 0.15)";
+                setTimeout(() => { el.style.background = ""; }, 1500);
+
+                // Marca item ativo no TOC
+                setActiveTocItem(index);
+            } else {
+                // Fallback: busca pelo texto no outputArea
+                const headingText = tocHeadings[index]?.text;
+                if (!headingText) return;
+
+                const textNodes = [];
+                const walker = document.createTreeWalker(outputArea, NodeFilter.SHOW_TEXT, null);
+                let n;
+                while (n = walker.nextNode()) textNodes.push(n);
+
+                for (const node of textNodes) {
+                    if (node.textContent.includes(headingText)) {
+                        const range = document.createRange();
+                        range.selectNodeContents(node);
+                        const rect = range.getBoundingClientRect();
+                        const containerRect = outputArea.getBoundingClientRect();
+                        outputArea.scrollTo({
+                            top: outputArea.scrollTop + (rect.top - containerRect.top) - 20,
+                            behavior: "smooth"
+                        });
+                        setActiveTocItem(index);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function setActiveTocItem(index) {
+            tocList.querySelectorAll(".toc-item").forEach(item => {
+                item.classList.toggle("active", item.getAttribute("data-index") === String(index));
+            });
+        }
+
+        function openToc() {
+            tocPanel.classList.add("visible");
+        }
+
+        function closeToc() {
+            tocPanel.classList.remove("visible");
+        }
+
+        tocToggleBtn.addEventListener("click", () => {
+            if (tocPanel.classList.contains("visible")) closeToc();
+            else openToc();
+        });
+
+        tocCloseBtn.addEventListener("click", closeToc);
 
         checkAuthStatus();
     </script>
