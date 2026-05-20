@@ -461,6 +461,241 @@
             box-shadow: none;
         }
 
+        /* SEARCH BAR */
+        .search-bar {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 16px;
+            border-bottom: var(--border);
+            background: var(--surface);
+        }
+
+        .search-bar.visible {
+            display: flex;
+        }
+
+        .search-input-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            border: var(--border);
+            background: var(--bg);
+            padding: 0 8px;
+            gap: 6px;
+            box-shadow: 2px 2px 0px var(--ink);
+        }
+
+        .search-input-wrap svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 8px 0;
+            color: var(--ink);
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+            opacity: 0.6;
+        }
+
+        .search-count {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            white-space: nowrap;
+            min-width: 50px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .search-nav-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            box-shadow: 1px 1px 0px var(--ink);
+            transition: transform 0.1s, box-shadow 0.1s;
+            flex-shrink: 0;
+        }
+
+        .search-nav-btn:hover:not(:disabled) {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--ink);
+        }
+
+        .search-nav-btn:active:not(:disabled) {
+            transform: translate(1px, 1px);
+            box-shadow: 0px 0px 0px var(--ink);
+        }
+
+        .search-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .search-nav-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--ink);
+        }
+
+        .search-close-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: var(--border);
+            background: var(--ink);
+            color: var(--surface);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 1px 1px 0px var(--accent);
+            transition: transform 0.1s, box-shadow 0.1s;
+            flex-shrink: 0;
+        }
+
+        .search-close-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--accent);
+        }
+
+        .search-close-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0px 0px 0px var(--accent);
+        }
+
+        mark.search-highlight {
+            background: rgba(255, 62, 0, 0.25);
+            color: inherit;
+            padding: 1px 0;
+            border-bottom: 2px solid var(--accent);
+            border-radius: 0;
+        }
+
+        mark.search-highlight.active {
+            background: var(--accent);
+            color: var(--surface);
+            border-bottom-color: var(--ink);
+            box-shadow: 0 0 0 2px var(--ink);
+        }
+
+        /* SELECTION POPOVER */
+        .selection-popover {
+            position: fixed;
+            display: none;
+            align-items: center;
+            gap: 0;
+            z-index: 900;
+            background: var(--ink);
+            border: var(--border);
+            box-shadow: 4px 4px 0px var(--accent);
+            pointer-events: auto;
+            animation: popover-in 0.15s ease-out;
+        }
+
+        .selection-popover.visible {
+            display: flex;
+        }
+
+        @keyframes popover-in {
+            from { opacity: 0; transform: translateY(6px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .popover-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: transparent;
+            color: var(--surface);
+            border: none;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.1s;
+        }
+
+        .popover-btn:hover {
+            background: var(--accent);
+        }
+
+        .popover-btn + .popover-btn {
+            border-left: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .popover-btn svg {
+            width: 13px;
+            height: 13px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        .popover-char-count {
+            padding: 0 10px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+            border-left: 1px solid rgba(255,255,255,0.15);
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+        }
+
+        .popover-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--ink);
+            color: var(--surface);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: var(--border);
+            box-shadow: 4px 4px 0px var(--accent);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .popover-toast.show {
+            opacity: 1;
+        }
+
+        ::selection {
+            background: rgba(255, 62, 0, 0.2);
+        }
+
         .preview {
             flex: 1;
             overflow-x: auto;
@@ -832,13 +1067,47 @@
                     <span class="metric" id="lineMetric">0 linhas</span>
                     <span class="metric" id="fileMetric">sem arquivo</span>
                     <span class="toolbar-spacer"></span>
+                    <button class="tool-btn" id="searchToggleBtn" type="button" disabled title="Buscar no texto (Ctrl+F)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Buscar
+                    </button>
                     <button class="tool-btn" id="copyBtn" type="button" disabled>Copiar</button>
                     <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
                     <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
                 </div>
 
+                <div class="search-bar" id="searchBar">
+                    <div class="search-input-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Buscar no texto..." autocomplete="off">
+                    </div>
+                    <span class="search-count" id="searchCount"></span>
+                    <button class="search-nav-btn" id="searchPrevBtn" type="button" disabled title="Anterior (Shift+Enter)">
+                        <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                    </button>
+                    <button class="search-nav-btn" id="searchNextBtn" type="button" disabled title="Próximo (Enter)">
+                        <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    </button>
+                    <button class="search-close-btn" id="searchCloseBtn" type="button" title="Fechar busca (Esc)">✕</button>
+                </div>
+
                 <pre class="preview markdown-preview" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
             </section>
+
+            <!-- Popover de seleção flutuante -->
+            <div class="selection-popover" id="selectionPopover">
+                <button class="popover-btn" id="popoverCopyBtn" type="button" title="Copiar trecho selecionado">
+                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    Copiar
+                </button>
+                <button class="popover-btn" id="popoverShareBtn" type="button" title="Compartilhar trecho selecionado">
+                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                    Compartilhar
+                </button>
+                <span class="popover-char-count" id="popoverCharCount"></span>
+            </div>
+
+            <!-- Toast de feedback -->
+            <div class="popover-toast" id="popoverToast"></div>
         </section>
 
         <div class="status-line" id="statusLine">Selecione um arquivo para iniciar.</div>
@@ -878,6 +1147,13 @@
         const copyBtn = document.getElementById("copyBtn");
         const downloadBtn = document.getElementById("downloadBtn");
         const shareBtn = document.getElementById("shareBtn");
+        const searchToggleBtn = document.getElementById("searchToggleBtn");
+        const searchBar = document.getElementById("searchBar");
+        const searchInput = document.getElementById("searchInput");
+        const searchCount = document.getElementById("searchCount");
+        const searchPrevBtn = document.getElementById("searchPrevBtn");
+        const searchNextBtn = document.getElementById("searchNextBtn");
+        const searchCloseBtn = document.getElementById("searchCloseBtn");
 
         const loginOverlay = document.getElementById("loginOverlay");
         const loginForm = document.getElementById("loginForm");
@@ -950,6 +1226,7 @@
             copyBtn.disabled = !enabled;
             downloadBtn.disabled = !enabled;
             shareBtn.disabled = !enabled;
+            searchToggleBtn.disabled = !enabled;
         }
 
         function resetOutput() {
@@ -959,6 +1236,12 @@
             outputArea.innerHTML = '<span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span>';
             updateMetrics("", "sem arquivo");
             setActions(false);
+            // Fecha a busca ao resetar o output
+            searchBar.classList.remove("visible");
+            searchInput.value = "";
+            searchCount.textContent = "";
+            searchPrevBtn.disabled = true;
+            searchNextBtn.disabled = true;
         }
 
         function escapeHtml(value) {
@@ -1136,6 +1419,12 @@
                 if (convertedContent) {
                     applyFormat(convertedContent, selectedOption);
                     updateMetrics(convertedContent, selectedFile ? selectedFile.name : "sem arquivo");
+                    // Re-aplica a busca se estiver ativa
+                    if (searchBar.classList.contains("visible") && searchInput.value.trim()) {
+                        searchMarks = [];
+                        searchCurrentIndex = -1;
+                        performSearch(searchInput.value.trim());
+                    }
                 }
             });
         });
@@ -1317,6 +1606,287 @@
                 const response = await fetch("/api/auth/logout", { method: "POST" });
                 if (response.ok) { showLoginScreen(); resetOutput(); setStatus("Sessão encerrada.", "success"); }
             } catch (error) { setStatus("Não foi possível encerrar a sessão.", "error"); }
+        });
+
+        // ===== BUSCA NO PREVIEW =====
+        let searchMarks = [];
+        let searchCurrentIndex = -1;
+
+        function openSearch() {
+            searchBar.classList.add("visible");
+            searchInput.focus();
+            searchInput.select();
+        }
+
+        function closeSearch() {
+            searchBar.classList.remove("visible");
+            searchInput.value = "";
+            clearSearchHighlights();
+            searchCount.textContent = "";
+            searchPrevBtn.disabled = true;
+            searchNextBtn.disabled = true;
+            searchCurrentIndex = -1;
+        }
+
+        function clearSearchHighlights() {
+            searchMarks.forEach(mark => {
+                const parent = mark.parentNode;
+                if (parent) {
+                    parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                    parent.normalize();
+                }
+            });
+            searchMarks = [];
+        }
+
+        function getTextNodesIn(node) {
+            const textNodes = [];
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+            let n;
+            while (n = walker.nextNode()) textNodes.push(n);
+            return textNodes;
+        }
+
+        function performSearch(query) {
+            clearSearchHighlights();
+            searchCurrentIndex = -1;
+
+            if (!query || !convertedContent) {
+                searchCount.textContent = "";
+                searchPrevBtn.disabled = true;
+                searchNextBtn.disabled = true;
+                return;
+            }
+
+            const textNodes = getTextNodesIn(outputArea);
+            const lowerQuery = query.toLowerCase();
+
+            textNodes.forEach(node => {
+                const text = node.textContent;
+                const lowerText = text.toLowerCase();
+                if (!lowerText.includes(lowerQuery)) return;
+
+                const fragment = document.createDocumentFragment();
+                let lastIdx = 0;
+                let idx = lowerText.indexOf(lowerQuery, 0);
+
+                while (idx !== -1) {
+                    if (idx > lastIdx) {
+                        fragment.appendChild(document.createTextNode(text.substring(lastIdx, idx)));
+                    }
+                    const mark = document.createElement("mark");
+                    mark.className = "search-highlight";
+                    mark.textContent = text.substring(idx, idx + query.length);
+                    fragment.appendChild(mark);
+                    searchMarks.push(mark);
+                    lastIdx = idx + query.length;
+                    idx = lowerText.indexOf(lowerQuery, lastIdx);
+                }
+
+                if (lastIdx < text.length) {
+                    fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+                }
+
+                node.parentNode.replaceChild(fragment, node);
+            });
+
+            const total = searchMarks.length;
+            if (total > 0) {
+                searchPrevBtn.disabled = false;
+                searchNextBtn.disabled = false;
+                searchCurrentIndex = 0;
+                searchMarks[0].classList.add("active");
+                searchMarks[0].scrollIntoView({ behavior: "smooth", block: "center" });
+                searchCount.textContent = `1 / ${total}`;
+            } else {
+                searchPrevBtn.disabled = true;
+                searchNextBtn.disabled = true;
+                searchCount.textContent = "0 / 0";
+            }
+        }
+
+        function navigateSearch(direction) {
+            if (searchMarks.length === 0) return;
+            searchMarks[searchCurrentIndex].classList.remove("active");
+            searchCurrentIndex = (searchCurrentIndex + direction + searchMarks.length) % searchMarks.length;
+            searchMarks[searchCurrentIndex].classList.add("active");
+            searchMarks[searchCurrentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+            searchCount.textContent = `${searchCurrentIndex + 1} / ${searchMarks.length}`;
+        }
+
+        let searchDebounce = null;
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => performSearch(searchInput.value.trim()), 200);
+        });
+
+        searchInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                if (e.shiftKey) navigateSearch(-1);
+                else navigateSearch(1);
+            }
+            if (e.key === "Escape") {
+                e.preventDefault();
+                closeSearch();
+            }
+        });
+
+        searchToggleBtn.addEventListener("click", () => {
+            if (searchBar.classList.contains("visible")) closeSearch();
+            else openSearch();
+        });
+
+        searchPrevBtn.addEventListener("click", () => navigateSearch(-1));
+        searchNextBtn.addEventListener("click", () => navigateSearch(1));
+        searchCloseBtn.addEventListener("click", closeSearch);
+
+        document.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "f" && !loginOverlay.classList.contains("visible")) {
+                if (convertedContent) {
+                    e.preventDefault();
+                    openSearch();
+                }
+            }
+        });
+
+        // ===== COMPARTILHAR TRECHO SELECIONADO =====
+        const selectionPopover = document.getElementById("selectionPopover");
+        const popoverCopyBtn = document.getElementById("popoverCopyBtn");
+        const popoverShareBtn = document.getElementById("popoverShareBtn");
+        const popoverCharCount = document.getElementById("popoverCharCount");
+        const popoverToast = document.getElementById("popoverToast");
+
+        let currentSelectedText = "";
+        let popoverHideTimeout = null;
+
+        function showPopoverToast(message) {
+            popoverToast.textContent = message;
+            popoverToast.classList.add("show");
+            setTimeout(() => popoverToast.classList.remove("show"), 2200);
+        }
+
+        function positionPopover(rect) {
+            const popW = selectionPopover.offsetWidth;
+            const popH = selectionPopover.offsetHeight;
+
+            // Posiciona acima da seleção se possível, senão abaixo
+            let top = rect.top - popH - 8;
+            let left = rect.left + (rect.width / 2) - (popW / 2);
+
+            if (top < 8) {
+                top = rect.bottom + 8;
+            }
+
+            // Mantém dentro da viewport
+            left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+            top = Math.max(8, Math.min(top, window.innerHeight - popH - 8));
+
+            selectionPopover.style.top = `${top}px`;
+            selectionPopover.style.left = `${left}px`;
+        }
+
+        function showSelectionPopover() {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed || !convertedContent) {
+                hideSelectionPopover();
+                return;
+            }
+
+            const text = sel.toString().trim();
+            if (!text || text.length < 2) {
+                hideSelectionPopover();
+                return;
+            }
+
+            // Verifica se a seleção está dentro do outputArea
+            let node = sel.anchorNode;
+            let insideOutput = false;
+            while (node) {
+                if (node === outputArea) { insideOutput = true; break; }
+                node = node.parentNode;
+            }
+            if (!insideOutput) {
+                hideSelectionPopover();
+                return;
+            }
+
+            currentSelectedText = text;
+            const charLabel = text.length.toLocaleString("pt-BR");
+            popoverCharCount.textContent = `${charLabel} car.`;
+
+            selectionPopover.classList.add("visible");
+
+            const range = sel.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            positionPopover(rect);
+        }
+
+        function hideSelectionPopover() {
+            selectionPopover.classList.remove("visible");
+            currentSelectedText = "";
+        }
+
+        document.addEventListener("selectionchange", () => {
+            clearTimeout(popoverHideTimeout);
+            popoverHideTimeout = setTimeout(showSelectionPopover, 200);
+        });
+
+        // Esconde ao clicar fora
+        document.addEventListener("mousedown", (e) => {
+            if (!selectionPopover.contains(e.target)) {
+                // Dá um delay curto para permitir nova seleção
+                setTimeout(() => {
+                    const sel = window.getSelection();
+                    if (!sel || sel.isCollapsed) hideSelectionPopover();
+                }, 100);
+            }
+        });
+
+        popoverCopyBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!currentSelectedText) return;
+            try {
+                await navigator.clipboard.writeText(currentSelectedText);
+                showPopoverToast("Trecho copiado!");
+            } catch {
+                showPopoverToast("Não foi possível copiar.");
+            }
+            // Mantém a seleção visual
+        });
+
+        popoverShareBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!currentSelectedText) return;
+
+            const docName = selectedFile ? selectedFile.name : "Documento";
+            const shareData = {
+                title: `Trecho de ${docName}`,
+                text: currentSelectedText.length > 2000
+                    ? currentSelectedText.substring(0, 2000) + "…"
+                    : currentSelectedText,
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                    showPopoverToast("Trecho compartilhado!");
+                } catch (err) {
+                    if (err.name !== "AbortError") {
+                        showPopoverToast("Compartilhamento cancelado.");
+                    }
+                }
+            } else {
+                // Fallback: copia para a área de transferência
+                try {
+                    await navigator.clipboard.writeText(currentSelectedText);
+                    showPopoverToast("Copiado! (compartilhamento indisponível)");
+                } catch {
+                    showPopoverToast("Não foi possível compartilhar.");
+                }
+            }
         });
 
         checkAuthStatus();
