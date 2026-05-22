@@ -137,6 +137,7 @@ def normalize_abnt_markdown(content):
 
 LEGAL_HEADING_PATTERNS = [
     (1, re.compile(r"^LIVRO\s+(?:[IVXLCDM]+|COMPLEMENTAR|PRIMEIRO|SEGUNDO|TERCEIRO|QUARTO|[ÚU]NICO)\b", re.I)),
+    (2, re.compile(r"^(?:DAS\s+)?DISPOSI[ÇC](?:[ÃA]O|[ÕO]ES)\b", re.I)),
     (2, re.compile(r"^T[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (3, re.compile(r"^CAP[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (4, re.compile(r"^SE[ÇC][ÃA]O\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
@@ -394,7 +395,7 @@ def _is_continuation_candidate(previous, current):
     clean_current = re.sub(r"^[\*_]+|[\*_]+$", "", current).strip()
     
     # Proibir mesclagem se a linha seguinte começar com termos ou símbolos estruturais de leis
-    if re.match(r"^(?:Art\.?|\u00a7|Par[\u00e1a]grafo\s+[\u00fau]nico)\b", clean_current, flags=re.I):
+    if re.match(r"^(?:Art\.?|\u00a7|Par[\u00e1a]grafo\s+[\u00fau]nico)(?:\s|$)", clean_current, flags=re.I):
         if not CITATION_PATTERN.match(clean_current):
             return False
     if re.match(r"^[IVXLCDM]+\b", clean_current, flags=re.I):
@@ -515,8 +516,9 @@ def polish_legal_markdown_model2(content):
             if descriptor_parts:
                 candidate_descriptor = " ".join(descriptor_parts)
                 candidate_descriptor = re.sub(r"\s+", " ", candidate_descriptor).strip()
-                if _is_heading_descriptor(candidate_descriptor) and f" - {candidate_descriptor}" not in title:
-                    title = f"{title} - {candidate_descriptor}"
+                clean_candidate = re.sub(r"^\*+|\*+$", "", candidate_descriptor).strip()
+                if _is_heading_descriptor(candidate_descriptor) and f" - {clean_candidate}" not in title:
+                    title = f"{title} - {clean_candidate}"
                     index = temp_idx - 1
 
             append_blank()
