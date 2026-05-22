@@ -969,7 +969,7 @@
             overflow-y: auto;
             padding: 32px;
             font-family: var(--font-mono);
-            font-size: 14px;
+            font-size: calc(14px * var(--preview-zoom, 1));
             line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-word;
@@ -978,7 +978,7 @@
         /* Specific preview modes */
         .preview.abnt-preview {
             font-family: "Times New Roman", Times, serif;
-            font-size: 16px;
+            font-size: calc(16px * var(--preview-zoom, 1));
             text-align: justify;
             max-width: 800px;
             margin: 0 auto;
@@ -992,7 +992,7 @@
         
         .preview.html-preview {
             font-family: "Instrument Serif", Georgia, serif;
-            font-size: 20px;
+            font-size: calc(20px * var(--preview-zoom, 1));
             line-height: 1.5;
             max-width: 800px;
             margin: 0 auto;
@@ -1262,6 +1262,57 @@
             box-shadow: 0px 0px 0px var(--ink);
         }
 
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            border: var(--border);
+            background: var(--surface);
+            box-shadow: 2px 2px 0px var(--ink);
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.1s, box-shadow 0.1s;
+        }
+
+        .zoom-btn {
+            background: transparent;
+            cursor: pointer;
+            padding: 6px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s, color 0.1s;
+        }
+
+        .zoom-btn:hover {
+            background: var(--ink);
+            color: var(--surface);
+        }
+
+        .zoom-btn:active {
+            background: var(--accent);
+            color: var(--surface);
+        }
+
+        .zoom-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .zoom-val {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 0 8px;
+            user-select: none;
+            border-left: var(--border);
+            border-right: var(--border);
+            min-width: 52px;
+            text-align: center;
+        }
+
         .workspace.maximized {
             grid-template-columns: 1fr;
             gap: 0;
@@ -1377,6 +1428,14 @@
                     <span class="metric" id="lineMetric">0 linhas</span>
                     <span class="metric" id="fileMetric">sem arquivo</span>
                     <span class="toolbar-spacer"></span>
+                    
+                    <!-- Controles de Zoom -->
+                    <div class="zoom-controls" id="zoomControls" style="margin-right: 8px;">
+                        <button class="zoom-btn" id="zoomOutBtn" type="button" title="Reduzir zoom" disabled>－</button>
+                        <span class="zoom-val" id="zoomVal">100%</span>
+                        <button class="zoom-btn" id="zoomInBtn" type="button" title="Aumentar zoom" disabled>＋</button>
+                    </div>
+
                     <button class="tool-btn" id="tocToggleBtn" type="button" disabled title="Sumário do documento">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/></svg>Sumário
                     </button>
@@ -1516,6 +1575,10 @@
         const tocBadge = document.getElementById("tocBadge");
         const tocCloseBtn = document.getElementById("tocCloseBtn");
         const tocToggleHandle = document.getElementById("tocToggleHandle");
+        const zoomControls = document.getElementById("zoomControls");
+        const zoomOutBtn = document.getElementById("zoomOutBtn");
+        const zoomInBtn = document.getElementById("zoomInBtn");
+        const zoomVal = document.getElementById("zoomVal");
 
         const loginOverlay = document.getElementById("loginOverlay");
         const loginForm = document.getElementById("loginForm");
@@ -1547,6 +1610,7 @@
         let selectedOption = "standard";
         let selectedFormat = "markdown";
         let convertedContent = "";
+        let currentZoom = 1.0;
         let maxUploadBytes = 500 * 1024 * 1024;
 
         function extensionOf(name) {
@@ -1597,6 +1661,12 @@
                     tocToggleHandle.style.pointerEvents = tocPanel.classList.contains("visible") ? "none" : "auto";
                 }
             }
+            if (zoomControls) {
+                zoomControls.style.opacity = enabled ? "1" : "0.5";
+                zoomControls.style.pointerEvents = enabled ? "auto" : "none";
+                zoomOutBtn.disabled = !enabled || currentZoom <= 0.5;
+                zoomInBtn.disabled = !enabled || currentZoom >= 2.0;
+            }
         }
 
         function resetOutput() {
@@ -1605,6 +1675,16 @@
             outputArea.classList.add("markdown-preview");
             outputArea.innerHTML = '<span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span>';
             updateMetrics("", "sem arquivo");
+            
+            // Reset zoom
+            currentZoom = 1.0;
+            if (outputArea) {
+                outputArea.style.removeProperty("--preview-zoom");
+            }
+            if (zoomVal) {
+                zoomVal.textContent = "100%";
+            }
+
             setActions(false);
             // Fecha a busca ao resetar o output
             searchBar.classList.remove("visible");
@@ -1616,6 +1696,20 @@
             tocPanel.classList.remove("visible");
             tocList.innerHTML = "";
             tocBadge.textContent = "0";
+        }
+
+        function updateZoom(factor) {
+            currentZoom = Math.max(0.5, Math.min(2.0, factor));
+            outputArea.style.setProperty("--preview-zoom", currentZoom);
+            if (zoomVal) {
+                zoomVal.textContent = `${Math.round(currentZoom * 100)}%`;
+            }
+            if (zoomOutBtn) {
+                zoomOutBtn.disabled = currentZoom <= 0.5;
+            }
+            if (zoomInBtn) {
+                zoomInBtn.disabled = currentZoom >= 2.0;
+            }
         }
 
         function escapeHtml(value) {
@@ -2765,6 +2859,19 @@
                 
                 // Dispara o evento de redimensionamento para recalcular layouts se necessário
                 window.dispatchEvent(new Event('resize'));
+            });
+        }
+
+        // ===== CONTROLES DE ZOOM =====
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener("click", () => {
+                updateZoom(currentZoom - 0.1);
+            });
+        }
+
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener("click", () => {
+                updateZoom(currentZoom + 0.1);
             });
         }
 
