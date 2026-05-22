@@ -411,14 +411,65 @@
             overflow: hidden;
         }
 
-        .toolbar {
+        .output-head {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
+            gap: 12px;
+            padding: 8px 16px;
+            border-bottom: var(--border);
+            background: var(--bg);
+        }
+
+        .head-left {
+            display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: var(--border);
-            padding: 12px 16px;
-            background: var(--bg);
+            flex-wrap: wrap;
+        }
+
+        .head-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1400px) {
+            .output-head {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 10px 16px;
+            }
+            .head-left, .head-right {
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .head-right {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .action-group {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .action-group .tool-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 6px 8px;
+            }
         }
 
         .metric {
@@ -1411,10 +1462,33 @@
             </aside>
 
             <section class="panel output-panel">
-                <div class="panel-head">
-                    <h2 class="panel-title">Resultado</h2>
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="panel-head output-head">
+                    <div class="head-left">
+                        <h2 class="panel-title">Resultado</h2>
                         <span class="panel-kicker" id="outputMode">markdown</span>
+                        <span class="metric" id="fileMetric">sem arquivo</span>
+                    </div>
+
+                    <div class="head-right">
+                        <span class="metric" id="charMetric">0 caracteres</span>
+                        <span class="metric" id="lineMetric">0 linhas</span>
+                        
+                        <!-- Controles de Zoom -->
+                        <div class="zoom-controls" id="zoomControls">
+                            <button class="zoom-btn" id="zoomOutBtn" type="button" title="Reduzir zoom" disabled>－</button>
+                            <span class="zoom-val" id="zoomVal">100%</span>
+                            <button class="zoom-btn" id="zoomInBtn" type="button" title="Aumentar zoom" disabled>＋</button>
+                        </div>
+
+                        <div class="action-group">
+                            <button class="tool-btn" id="searchToggleBtn" type="button" disabled title="Buscar no texto (Ctrl+F)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Buscar
+                            </button>
+                            <button class="tool-btn" id="copyBtn" type="button" disabled>Copiar</button>
+                            <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
+                            <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
+                        </div>
+
                         <button class="panel-action-btn" id="maximizePanelBtn" type="button" title="Maximizar tela de resultado">
                             <svg id="maximizePanelIcon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                                 <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
@@ -1422,28 +1496,6 @@
                             <span id="maximizePanelText">Maximizar</span>
                         </button>
                     </div>
-                </div>
-
-                <div class="toolbar">
-                    <span class="metric" id="charMetric">0 caracteres</span>
-                    <span class="metric" id="lineMetric">0 linhas</span>
-                    <span class="metric" id="fileMetric">sem arquivo</span>
-                    <span class="toolbar-spacer"></span>
-                    
-                    <!-- Controles de Zoom -->
-                    <div class="zoom-controls" id="zoomControls" style="margin-right: 8px;">
-                        <button class="zoom-btn" id="zoomOutBtn" type="button" title="Reduzir zoom" disabled>－</button>
-                        <span class="zoom-val" id="zoomVal">100%</span>
-                        <button class="zoom-btn" id="zoomInBtn" type="button" title="Aumentar zoom" disabled>＋</button>
-                    </div>
-
-
-                    <button class="tool-btn" id="searchToggleBtn" type="button" disabled title="Buscar no texto (Ctrl+F)">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Buscar
-                    </button>
-                    <button class="tool-btn" id="copyBtn" type="button" disabled>Copiar</button>
-                    <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
-                    <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
                 </div>
 
                 <div class="search-bar" id="searchBar">
