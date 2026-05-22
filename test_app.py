@@ -271,6 +271,60 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertTrue(response.json["success"])
         self.assertTrue(response.json["filename"].endswith(".txt"))
 
+    def test_is_sentencecase_descriptor_detects_sentence_case_descriptors(self):
+        self.assertTrue(webapp._is_sentencecase_descriptor("Da inscrição e alteração cadastral"))
+        self.assertTrue(webapp._is_sentencecase_descriptor("Do recolhimento do ISSQN"))
+        self.assertFalse(webapp._is_sentencecase_descriptor("Art. 58. Ficam obrigados"))
+        self.assertFalse(webapp._is_sentencecase_descriptor("§ 1º Para fins de recolhimento"))
+        self.assertFalse(webapp._is_sentencecase_descriptor("Este é um parágrafo normal que termina com ponto."))
+
+    def test_model2_combines_legal_heading_with_sentence_case_descriptor(self):
+        content = "SEÇÃO II\nDa inscrição e alteração cadastral\nArt. 58. Ficam obrigados."
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn("#### SEÇÃO II - Da inscrição e alteração cadastral", result)
+
+    def test_model2_combines_legal_heading_with_long_sentence_case_descriptor_no_blank_line(self):
+        content = (
+            "SUBSEÇÃO I\n"
+            "Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), "
+            "da Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)\n"
+            "Art. 65. A Nota Fiscal de Serviços..."
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn(
+            "##### SUBSEÇÃO I - Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), "
+            "da Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)",
+            result
+        )
+
+    def test_model2_combines_legal_heading_with_long_sentence_case_descriptor_with_blank_line(self):
+        content = (
+            "SUBSEÇÃO I\n\n"
+            "Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), "
+            "da Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)\n\n"
+            "Art. 65. A Nota Fiscal de Serviços..."
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn(
+            "##### SUBSEÇÃO I - Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), "
+            "da Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)",
+            result
+        )
+
+    def test_model2_combines_legal_heading_with_multiline_descriptor(self):
+        content = (
+            "SUBSEÇÃO I\n"
+            "Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), da\n"
+            "Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)\n"
+            "Art. 65. A Nota Fiscal de Serviços..."
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn(
+            "##### SUBSEÇÃO I - Da Nota Fiscal de Serviços Eletrônica (NFS-e), do Recibo Provisório de Serviços (RPS), da "
+            "Nota Fiscal de Fatura (NFF) e do Cupom Fiscal de Serviços eletrônico (CFS-e)",
+            result
+        )
+
     def test_large_file_error_handler_message(self):
         old_limit = webapp.app.config.get("MAX_CONTENT_LENGTH")
         webapp.app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024

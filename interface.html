@@ -764,6 +764,12 @@
             position: relative;
             min-height: 0;
             overflow: hidden;
+            transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-left: 0;
+        }
+
+        .output-wrapper.toc-open {
+            padding-left: 280px;
         }
 
         /* FLOATING TOC HANDLE */
@@ -1462,6 +1468,7 @@
         const searchCloseBtn = document.getElementById("searchCloseBtn");
         const tocToggleBtn = document.getElementById("tocToggleBtn");
         const tocPanel = document.getElementById("tocPanel");
+        const outputWrapper = document.querySelector(".output-wrapper");
         const tocList = document.getElementById("tocList");
         const tocBadge = document.getElementById("tocBadge");
         const tocCloseBtn = document.getElementById("tocCloseBtn");
@@ -1719,7 +1726,8 @@
                     span.id = `toc-heading-${headingIdx++}`;
                     span.textContent = line;
                     span.style.fontWeight = "800";
-                    span.style.display = "inline-block";
+                    span.style.display = "block";
+                    span.style.width = "100%";
                     span.style.margin = "8px 0 4px 0";
                     fragment.appendChild(span);
                 } else {
@@ -2480,6 +2488,7 @@
 
         // ===== SUMÁRIO / ÍNDICE DO DOCUMENTO =====
         let tocHeadings = [];
+        let isScrollingToHeading = false;
 
         function buildToc() {
             tocHeadings = [];
@@ -2566,6 +2575,7 @@
         }
 
         function navigateToHeading(index) {
+            isScrollingToHeading = true;
             // Tenta encontrar o heading no DOM pelo ID
             const el = document.getElementById(`toc-heading-${index}`);
             if (el) {
@@ -2581,7 +2591,10 @@
             } else {
                 // Fallback: busca pelo texto no outputArea
                 const headingText = tocHeadings[index]?.text;
-                if (!headingText) return;
+                if (!headingText) {
+                    isScrollingToHeading = false;
+                    return;
+                }
 
                 const textNodes = [];
                 const walker = document.createTreeWalker(outputArea, NodeFilter.SHOW_TEXT, null);
@@ -2604,6 +2617,11 @@
                 }
             }
 
+            // Reseta a flag de scroll após o término da transição suave
+            setTimeout(() => {
+                isScrollingToHeading = false;
+            }, 850);
+
             // Recolhe o sumário automaticamente para visualização limpa do tópico localizado
             closeToc();
         }
@@ -2616,6 +2634,9 @@
 
         function openToc() {
             tocPanel.classList.add("visible");
+            if (outputWrapper) {
+                outputWrapper.classList.add("toc-open");
+            }
             if (tocToggleHandle) {
                 tocToggleHandle.style.opacity = "0";
                 tocToggleHandle.style.pointerEvents = "none";
@@ -2624,6 +2645,9 @@
 
         function closeToc() {
             tocPanel.classList.remove("visible");
+            if (outputWrapper) {
+                outputWrapper.classList.remove("toc-open");
+            }
             if (tocToggleHandle) {
                 tocToggleHandle.style.opacity = "0.8";
                 tocToggleHandle.style.pointerEvents = "auto";
@@ -2640,6 +2664,42 @@
         if (tocToggleHandle) {
             tocToggleHandle.addEventListener("click", openToc);
         }
+
+        // ===== MONITORAMENTO DE SCROLL (SCROLL SPY) =====
+        outputArea.addEventListener("scroll", () => {
+            if (isScrollingToHeading || !convertedContent || outputArea.querySelector(".empty-state")) return;
+
+            const headings = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-']");
+            if (headings.length === 0) return;
+
+            const containerRect = outputArea.getBoundingClientRect();
+            let activeIndex = 0;
+
+            for (let i = 0; i < headings.length; i++) {
+                const headingRect = headings[i].getBoundingClientRect();
+                const offset = headingRect.top - containerRect.top;
+                
+                // Se o título estiver no topo ou acima (com margem de tolerância)
+                if (offset <= 40) {
+                    activeIndex = i;
+                } else {
+                    break;
+                }
+            }
+
+            // Atualiza o estado ativo no sumário
+            const tocItems = tocList.querySelectorAll(".toc-item");
+            tocItems.forEach(item => {
+                const itemIndex = item.getAttribute("data-index");
+                const isActive = itemIndex === String(activeIndex);
+                item.classList.toggle("active", isActive);
+                
+                // Scrolla suavemente o item do sumário se estiver fora de visão no painel
+                if (isActive && tocPanel.classList.contains("visible")) {
+                    item.scrollIntoView({ behavior: "nearest", block: "nearest" });
+                }
+            });
+        });
 
         checkAuthStatus();
     </script>

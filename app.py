@@ -209,7 +209,8 @@ def _is_titlecase_descriptor(line):
         return False
 
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ0-9]+", text)
-    if not 1 <= len(words) <= 12:
+    # Títulos/descritores podem ser longos se listarem várias opções (máximo 60 palavras)
+    if not 1 <= len(words) <= 60:
         return False
 
     meaningful = [word for word in words if len(word) > 2]
@@ -220,8 +221,33 @@ def _is_titlecase_descriptor(line):
     return starters / len(meaningful) >= 0.55
 
 
+def _is_sentencecase_descriptor(line):
+    text = _normalize_text_line(line)
+    if len(text) < 4 or _heading_from_line(text):
+        return False
+    if any(pattern.match(text) for pattern in STRUCTURAL_LINE_PATTERNS[1:]):
+        return False
+    if re.search(r"[.;:]$", text):
+        return False
+
+    # Deve começar com uma letra maiúscula (incluindo acentos portugueses)
+    if not re.match(r"^[A-ZÀ-ÚÇ]", text):
+        return False
+
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ0-9]+", text)
+    # Títulos/descritores podem ser longos se listarem várias opções (máximo 60 palavras)
+    if not 1 <= len(words) <= 60:
+        return False
+
+    return True
+
+
 def _is_heading_descriptor(line):
-    return _is_all_caps_descriptor(line) or _is_titlecase_descriptor(line)
+    return (
+        _is_all_caps_descriptor(line)
+        or _is_titlecase_descriptor(line)
+        or _is_sentencecase_descriptor(line)
+    )
 
 
 def _starts_structural_block(line):
@@ -397,15 +423,29 @@ def polish_legal_markdown_model2(content):
         heading = _heading_from_line(line)
         if heading:
             level, title = heading
+            descriptor_parts = []
             next_index = index + 1
             while next_index < len(lines) and not _normalize_text_line(lines[next_index]):
                 next_index += 1
 
-            if next_index < len(lines):
-                descriptor = _normalize_text_line(lines[next_index])
-                if _is_heading_descriptor(descriptor) and f" - {descriptor}" not in title:
-                    title = f"{title} - {descriptor}"
-                    index = next_index
+            temp_idx = next_index
+            while temp_idx < len(lines):
+                line_text = _normalize_text_line(lines[temp_idx])
+                if not line_text:
+                    break
+                if _starts_structural_block(line_text):
+                    break
+                if re.search(r"[.;:]$", line_text):
+                    break
+                descriptor_parts.append(line_text)
+                temp_idx += 1
+
+            if descriptor_parts:
+                candidate_descriptor = " ".join(descriptor_parts)
+                candidate_descriptor = re.sub(r"\s+", " ", candidate_descriptor).strip()
+                if _is_heading_descriptor(candidate_descriptor) and f" - {candidate_descriptor}" not in title:
+                    title = f"{title} - {candidate_descriptor}"
+                    index = temp_idx - 1
 
             append_blank()
             output.append(f"{'#' * level} {title}")
@@ -461,12 +501,30 @@ def format_pdf_markdown_model2(content):
         heading = _heading_from_line(line)
         if heading:
             level, title = heading
+            descriptor_parts = []
             next_index = index + 1
-            if next_index < len(source_lines):
-                descriptor = _normalize_text_line(source_lines[next_index])
-                if _is_heading_descriptor(descriptor):
-                    title = f"{title} - {descriptor}"
-                    index = next_index
+            while next_index < len(source_lines) and not _normalize_text_line(source_lines[next_index]):
+                next_index += 1
+
+            temp_idx = next_index
+            while temp_idx < len(source_lines):
+                line_text = _normalize_text_line(source_lines[temp_idx])
+                if not line_text:
+                    break
+                if _starts_structural_block(line_text):
+                    break
+                if re.search(r"[.;:]$", line_text):
+                    break
+                descriptor_parts.append(line_text)
+                temp_idx += 1
+
+            if descriptor_parts:
+                candidate_descriptor = " ".join(descriptor_parts)
+                candidate_descriptor = re.sub(r"\s+", " ", candidate_descriptor).strip()
+                if _is_heading_descriptor(candidate_descriptor):
+                    title = f"{title} - {candidate_descriptor}"
+                    index = temp_idx - 1
+
             append_block(f"{'#' * level} {title}")
             index += 1
             continue
