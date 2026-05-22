@@ -1236,6 +1236,41 @@
             margin-bottom: 12px;
         }
 
+        .panel-action-btn {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: var(--border);
+            padding: 4px 8px;
+            background: var(--surface);
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--ink);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .panel-action-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--ink);
+        }
+
+        .panel-action-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--ink);
+        }
+
+        .workspace.maximized {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .workspace.maximized .control-panel {
+            display: none !important;
+        }
+
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
             .shell { padding: 12px; }
@@ -1326,7 +1361,15 @@
             <section class="panel output-panel">
                 <div class="panel-head">
                     <h2 class="panel-title">Resultado</h2>
-                    <span class="panel-kicker" id="outputMode">markdown</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="panel-kicker" id="outputMode">markdown</span>
+                        <button class="panel-action-btn" id="maximizePanelBtn" type="button" title="Maximizar tela de resultado">
+                            <svg id="maximizePanelIcon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                            </svg>
+                            <span id="maximizePanelText">Maximizar</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="toolbar">
@@ -2700,6 +2743,30 @@
                 }
             });
         });
+
+        // ===== MAXIMIZAR / MINIMIZAR PAINEL DE RESULTADO =====
+        const maximizePanelBtn = document.getElementById("maximizePanelBtn");
+        const maximizePanelIcon = document.getElementById("maximizePanelIcon");
+        const maximizePanelText = document.getElementById("maximizePanelText");
+        const workspace = document.querySelector(".workspace");
+
+        if (maximizePanelBtn) {
+            maximizePanelBtn.addEventListener("click", () => {
+                const isMaximized = workspace.classList.toggle("maximized");
+                if (isMaximized) {
+                    maximizePanelBtn.title = "Minimizar tela de resultado";
+                    maximizePanelText.textContent = "Minimizar";
+                    maximizePanelIcon.innerHTML = `<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>`;
+                } else {
+                    maximizePanelBtn.title = "Maximizar tela de resultado";
+                    maximizePanelText.textContent = "Maximizar";
+                    maximizePanelIcon.innerHTML = `<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>`;
+                }
+                
+                // Dispara o evento de redimensionamento para recalcular layouts se necessário
+                window.dispatchEvent(new Event('resize'));
+            });
+        }
 
         checkAuthStatus();
     </script>
