@@ -1410,21 +1410,38 @@
                     <span class="panel-kicker" id="maxUpload">500 MB</span>
                 </div>
 
-                <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Selecionar arquivo">
-                    <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.xls,.pptx,.html,.htm,.csv,.json,.xml,.png,.jpg,.jpeg,.gif,.bmp,.mp3,.wav,.txt,.md,.epub,.zip">
-                    <div class="upload-symbol">+</div>
-                    <div>
-                        <p class="upload-main">Solte o arquivo</p>
-                        <p class="upload-sub">PDF, Office, HTML, Imagens, Áudio</p>
+                <div style="margin-bottom: 16px;">
+                    <div class="segmented" id="inputTypeSegmented" role="tablist" aria-label="Tipo de entrada">
+                        <button class="segment active" type="button" data-type="file" style="flex: 1;">Arquivo</button>
+                        <button class="segment" type="button" data-type="url" style="flex: 1;">URL</button>
                     </div>
                 </div>
 
-                <div class="file-strip" id="fileStrip">
-                    <div>
-                        <div class="file-name" id="fileName">Nenhum arquivo selecionado</div>
-                        <div class="file-size" id="fileSize">Aguardando entrada</div>
+                <div class="upload-container-wrapper" id="fileInputContainer">
+                    <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Selecionar arquivo">
+                        <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.xls,.pptx,.html,.htm,.csv,.json,.xml,.png,.jpg,.jpeg,.gif,.bmp,.mp3,.wav,.txt,.md,.epub,.zip">
+                        <div class="upload-symbol">+</div>
+                        <div>
+                            <p class="upload-main">Solte o arquivo</p>
+                            <p class="upload-sub">PDF, Office, HTML, Imagens, Áudio</p>
+                        </div>
                     </div>
-                    <div class="file-badge" id="fileBadge">--</div>
+
+                    <div class="file-strip" id="fileStrip">
+                        <div>
+                            <div class="file-name" id="fileName">Nenhum arquivo selecionado</div>
+                            <div class="file-size" id="fileSize">Aguardando entrada</div>
+                        </div>
+                        <div class="file-badge" id="fileBadge">--</div>
+                    </div>
+                </div>
+
+                <div class="url-zone" id="urlZoneContainer" style="display: none; border: var(--border); background: var(--surface); padding: 20px; box-shadow: 4px 4px 0px var(--ink); flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                    <label class="settings-label" style="margin-bottom: 0;">Endereço URL</label>
+                    <div style="display: flex; border: var(--border); background: var(--surface); box-shadow: 2px 2px 0px var(--ink);">
+                        <input type="url" id="urlInput" placeholder="https://exemplo.com/documento.html" style="flex: 1; padding: 12px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); background: transparent; border: none; outline: none; width: 100%;">
+                    </div>
+                    <p class="upload-sub" style="opacity: 0.7; margin: 0; font-size: 11px;">Insira a URL de um site, artigo ou lei pública para converter.</p>
                 </div>
 
                 <div class="settings">
@@ -1651,6 +1668,12 @@
         const segmentButtons = document.querySelectorAll("#modeSegmented .segment");
         const formatButtons = document.querySelectorAll("#formatSegmented .segment");
 
+        const inputTypeSegmented = document.getElementById("inputTypeSegmented");
+        const fileInputContainer = document.getElementById("fileInputContainer");
+        const urlZoneContainer = document.getElementById("urlZoneContainer");
+        const urlInput = document.getElementById("urlInput");
+        const inputTypeButtons = document.querySelectorAll("#inputTypeSegmented .segment");
+
         const allowedExtensions = new Set([
             "pdf", "docx", "xlsx", "xls", "pptx", "html", "htm", "csv", "json",
             "xml", "png", "jpg", "jpeg", "gif", "bmp", "mp3", "wav", "txt",
@@ -1658,11 +1681,35 @@
         ]);
 
         let selectedFile = null;
+        let activeInputType = "file"; // 'file' ou 'url'
         let selectedOption = "standard";
         let selectedFormat = "markdown";
         let convertedContent = "";
         let currentZoom = 1.0;
         let maxUploadBytes = 500 * 1024 * 1024;
+
+        function getActiveFilename() {
+            if (activeInputType === "file") {
+                return selectedFile ? selectedFile.name : "sem arquivo";
+            } else {
+                const urlVal = urlInput.value.trim();
+                if (urlVal) {
+                    try {
+                        const urlObj = new URL(urlVal);
+                        return urlObj.pathname.split('/').pop() || "webpage";
+                    } catch(e) {
+                        return "webpage";
+                    }
+                }
+                return "sem arquivo";
+            }
+        }
+
+        function getActiveBaseName() {
+            const fn = getActiveFilename();
+            if (fn === "sem arquivo") return "converted";
+            return fn.replace(/\.[^/.]+$/, "") || "converted";
+        }
 
         function extensionOf(name) {
             const parts = name.split(".");
@@ -1873,7 +1920,7 @@
             } else if (selectedFormat === "json") {
                 outputArea.classList.remove("html-preview", "abnt-preview");
                 outputArea.classList.add("markdown-preview");
-                const jsonObject = markdownToJson(content, selectedFile ? selectedFile.name : "sem arquivo", mode);
+                const jsonObject = markdownToJson(content, getActiveFilename(), mode);
                 outputArea.textContent = JSON.stringify(jsonObject, null, 2);
             } else if (mode === "abnt") {
                 outputArea.classList.remove("html-preview", "markdown-preview");
@@ -1968,7 +2015,7 @@
                 segmentButtons.forEach((item) => item.classList.remove("active"));
                 button.classList.add("active");
                 selectedOption = button.dataset.option;
-                if (convertedContent && selectedFile) {
+                if (convertedContent && getActiveFilename() !== "sem arquivo") {
                     setStatus("Modo alterado. Converta novamente para atualizar o resultado.");
                 }
             });
@@ -1981,7 +2028,7 @@
                 selectedFormat = button.dataset.format;
                 if (convertedContent) {
                     applyFormat(convertedContent, selectedOption);
-                    updateMetrics(convertedContent, selectedFile ? selectedFile.name : "sem arquivo");
+                    updateMetrics(convertedContent, getActiveFilename());
                     // Re-aplica a busca se estiver ativa
                     if (searchBar.classList.contains("visible") && searchInput.value.trim()) {
                         searchMarks = [];
@@ -1992,15 +2039,72 @@
             });
         });
 
+        inputTypeButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                inputTypeButtons.forEach((btn) => btn.classList.remove("active"));
+                button.classList.add("active");
+                activeInputType = button.dataset.type;
+                
+                if (activeInputType === "file") {
+                    fileInputContainer.style.display = "block";
+                    urlZoneContainer.style.display = "none";
+                    convertBtn.disabled = !selectedFile;
+                    clearBtn.disabled = !selectedFile;
+                    if (selectedFile) {
+                        setStatus("Arquivo carregado. Conversão pronta.", "success");
+                    } else {
+                        setStatus("Selecione um arquivo para iniciar.");
+                    }
+                } else {
+                    fileInputContainer.style.display = "none";
+                    urlZoneContainer.style.display = "flex";
+                    const urlVal = urlInput.value.trim();
+                    convertBtn.disabled = !urlVal;
+                    clearBtn.disabled = !urlVal;
+                    if (urlVal) {
+                        setStatus("URL inserida. Conversão pronta.", "success");
+                    } else {
+                        setStatus("Insira uma URL para iniciar.");
+                    }
+                }
+                resetOutput();
+            });
+        });
+
+        urlInput.addEventListener("input", () => {
+            if (activeInputType === "url") {
+                const urlVal = urlInput.value.trim();
+                convertBtn.disabled = !urlVal;
+                clearBtn.disabled = !urlVal;
+            }
+        });
+
         convertBtn.addEventListener("click", async () => {
-            if (!selectedFile) return;
             const formData = new FormData();
-            formData.append("file", selectedFile);
+            let displayName = "documento";
+            
+            if (activeInputType === "file") {
+                if (!selectedFile) return;
+                formData.append("file", selectedFile);
+                displayName = selectedFile.name;
+            } else {
+                const urlVal = urlInput.value.trim();
+                if (!urlVal) return;
+                formData.append("url", urlVal);
+                // Obter nome básico da URL para exibir nas métricas
+                try {
+                    const urlObj = new URL(urlVal);
+                    displayName = urlObj.pathname.split('/').pop() || "webpage";
+                } catch(e) {
+                    displayName = "url";
+                }
+            }
             formData.append("option", selectedOption);
 
             convertBtn.disabled = true;
             setActions(false);
-            setLoading("Convertendo arquivo...");
+            const loadingMsg = activeInputType === "file" ? "Convertendo arquivo..." : "Convertendo conteúdo da URL...";
+            setLoading(loadingMsg);
             outputArea.classList.remove("abnt-preview", "html-preview");
             outputArea.classList.add("markdown-preview");
             outputArea.innerHTML = '<span class="empty-state"><img src="/image/dakernet-leaves-6625.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
@@ -2009,11 +2113,11 @@
                 const response = await fetch("/api/convert", { method: "POST", body: formData });
                 if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
                 const data = await response.json().catch(() => ({}));
-                if (!response.ok || !data.success) { throw new Error(data.error || "Não foi possível converter o arquivo."); }
+                if (!response.ok || !data.success) { throw new Error(data.error || "Não foi possível converter o conteúdo."); }
                 
                 convertedContent = data.content || "";
                 applyFormat(convertedContent, data.mode);
-                updateMetrics(convertedContent, data.filename || selectedFile.name);
+                updateMetrics(convertedContent, data.filename || displayName);
                 setActions(Boolean(convertedContent));
 
                 const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
@@ -2024,29 +2128,38 @@
                 resetOutput();
                 setStatus(error.message, "error");
             } finally {
-                convertBtn.disabled = !selectedFile;
+                if (activeInputType === "file") {
+                    convertBtn.disabled = !selectedFile;
+                } else {
+                    convertBtn.disabled = !urlInput.value.trim();
+                }
             }
         });
 
         clearBtn.addEventListener("click", () => {
-            selectedFile = null;
-            fileInput.value = "";
-            fileName.textContent = "Nenhum arquivo selecionado";
-            fileSize.textContent = "Aguardando entrada";
-            fileBadge.textContent = "--";
-            fileStrip.classList.remove("has-file");
-            uploadZone.classList.remove("has-file");
+            if (activeInputType === "file") {
+                selectedFile = null;
+                fileInput.value = "";
+                fileName.textContent = "Nenhum arquivo selecionado";
+                fileSize.textContent = "Aguardando entrada";
+                fileBadge.textContent = "--";
+                fileStrip.classList.remove("has-file");
+                uploadZone.classList.remove("has-file");
+                setStatus("Selecione um arquivo para iniciar.");
+            } else {
+                urlInput.value = "";
+                setStatus("Insira uma URL para iniciar.");
+            }
             convertBtn.disabled = true;
             clearBtn.disabled = true;
             resetOutput();
-            setStatus("Selecione um arquivo para iniciar.");
         });
 
         copyBtn.addEventListener("click", async () => {
             try {
                 let text;
                 if (selectedFormat === "html") text = markdownToHtml(convertedContent);
-                else if (selectedFormat === "json") text = JSON.stringify(markdownToJson(convertedContent, selectedFile ? selectedFile.name : "sem arquivo", selectedOption), null, 2);
+                else if (selectedFormat === "json") text = JSON.stringify(markdownToJson(convertedContent, getActiveFilename(), selectedOption), null, 2);
                 else text = convertedContent;
                 
                 await navigator.clipboard.writeText(text);
@@ -2057,8 +2170,8 @@
 
         downloadBtn.addEventListener("click", () => {
             if (!convertedContent) return;
-            let baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") || "converted" : "converted";
-            let sourceName = selectedFile ? selectedFile.name : "sem arquivo";
+            let baseName = getActiveBaseName();
+            let sourceName = getActiveFilename();
             let content, mimeType, ext, statusMsg;
 
             if (selectedFormat === "html") {
@@ -2088,7 +2201,7 @@
             try {
                 let shareText;
                 if (selectedFormat === "html") shareText = markdownToHtml(convertedContent).slice(0, 1000);
-                else if (selectedFormat === "json") shareText = JSON.stringify(markdownToJson(convertedContent, selectedFile ? selectedFile.name : "sem arquivo", selectedOption), null, 2).slice(0, 1000);
+                else if (selectedFormat === "json") shareText = JSON.stringify(markdownToJson(convertedContent, getActiveFilename(), selectedOption), null, 2).slice(0, 1000);
                 else shareText = convertedContent.slice(0, 1000);
                 await navigator.share({
                     title: selectedFormat === "html" ? "HTML convertido" : selectedFormat === "json" ? "JSON convertido" : "Markdown convertido",
@@ -2428,7 +2541,7 @@
             e.stopPropagation();
             if (!currentSelectedText) return;
 
-            const docName = selectedFile ? selectedFile.name : "Documento";
+            const docName = getActiveFilename() !== "sem arquivo" ? getActiveFilename() : "Documento";
             const shareData = {
                 title: `Trecho de ${docName}`,
                 text: currentSelectedText.length > 2000
@@ -2518,7 +2631,7 @@
                 try {
                     const dataUrl = canvas.toDataURL("image/png");
                     const link = document.createElement("a");
-                    const docName = selectedFile ? selectedFile.name.split(".")[0] : "documento";
+                    const docName = getActiveBaseName();
                     link.download = `DocFlow-${docName}-trecho.png`;
                     link.href = dataUrl;
                     link.click();

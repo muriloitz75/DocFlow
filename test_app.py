@@ -3,6 +3,7 @@
 import io
 import os
 import unittest
+import unittest.mock
 
 import app as webapp
 
@@ -337,6 +338,61 @@ class WebInterfaceTestCase(unittest.TestCase):
         finally:
             if old_limit is not None:
                 webapp.app.config["MAX_CONTENT_LENGTH"] = old_limit
+
+    @unittest.mock.patch("requests.get")
+    def test_convert_via_url_success(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"<html><body><h1>DocFlow</h1><p>Teste por URL.</p></body></html>"
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "https://exemplo.com/documento.html",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn("DocFlow", response.json["content"])
+        self.assertEqual(response.json["filename"], "documento.html")
+        mock_get.assert_called_once_with(
+            "https://exemplo.com/documento.html",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            timeout=15
+        )
+
+    @unittest.mock.patch("requests.get")
+    def test_convert_via_url_failure(self, mock_get):
+        mock_get.side_effect = Exception("Connection timed out")
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "https://exemplo-com-erro.com/doc.html",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json["success"])
+        self.assertIn("Erro ao baixar a URL", response.json["error"])
+
+    def test_convert_via_url_invalid(self):
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "ftp://link-invalido.com",
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json["success"])
+        self.assertIn("URL inválida", response.json["error"])
 
 
 if __name__ == "__main__":

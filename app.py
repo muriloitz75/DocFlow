@@ -766,31 +766,80 @@ def convert():
     temp_dir = None
     try:
         option = request.form.get("option", "standard")
+        url = request.form.get("url", "").strip()
         
-        # Validar arquivo
-        if "file" not in request.files:
-            return jsonify({"success": False, "error": "Nenhum arquivo fornecido."}), 400
+        if url:
+            if not (url.startswith("http://") or url.startswith("https://")):
+                return jsonify({
+                    "success": False,
+                    "error": "URL inválida. O link deve começar com http:// ou https://",
+                }), 400
             
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"success": False, "error": "Arquivo não selecionado."}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({
-                "success": False,
-                "error": f"Formato não suportado: {file.filename}",
-            }), 400
-        
-        orig_ext = file.filename.rsplit(".", 1)[1].lower() if "." in file.filename else ""
-        filename = secure_filename(file.filename)
-        if not filename or "." not in filename:
-            filename = f"upload-{uuid4().hex}.{orig_ext}" if orig_ext else f"upload-{uuid4().hex}"
-
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
-        os.makedirs(temp_dir, exist_ok=False)
-        temp_path = os.path.join(temp_dir, filename)
-        file.save(temp_path)
+            import requests
+            from urllib.parse import urlparse
+            
+            try:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+                response = requests.get(url, headers=headers, timeout=15)
+                response.raise_for_status()
+            except Exception as req_err:
+                return jsonify({
+                    "success": False,
+                    "error": f"Erro ao baixar a URL: {str(req_err)}",
+                }), 400
+                
+            parsed_url = urlparse(url)
+            url_path = parsed_url.path
+            url_filename = os.path.basename(url_path) if url_path else ""
+            if not url_filename or "." not in url_filename:
+                filename = "documento.html"
+            else:
+                filename = secure_filename(url_filename)
+                if not filename or "." not in filename:
+                    filename = "documento.html"
+            
+            if not allowed_file(filename):
+                filename = filename + ".html"
+                if not allowed_file(filename):
+                    return jsonify({
+                        "success": False,
+                        "error": f"Formato não suportado: {url_filename}",
+                    }), 400
+            
+            orig_ext = filename.rsplit(".", 1)[1].lower() if "." in filename else "html"
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
+            os.makedirs(temp_dir, exist_ok=False)
+            temp_path = os.path.join(temp_dir, filename)
+            
+            with open(temp_path, "wb") as f:
+                f.write(response.content)
+        else:
+            if "file" not in request.files:
+                return jsonify({"success": False, "error": "Nenhum arquivo ou URL fornecido."}), 400
+                
+            file = request.files["file"]
+            if file.filename == "":
+                return jsonify({"success": False, "error": "Arquivo não selecionado."}), 400
+            
+            if not allowed_file(file.filename):
+                return jsonify({
+                    "success": False,
+                    "error": f"Formato não suportado: {file.filename}",
+                }), 400
+            
+            orig_ext = file.filename.rsplit(".", 1)[1].lower() if "." in file.filename else ""
+            filename = secure_filename(file.filename)
+            if not filename or "." not in filename:
+                filename = f"upload-{uuid4().hex}.{orig_ext}" if orig_ext else f"upload-{uuid4().hex}"
+    
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
+            os.makedirs(temp_dir, exist_ok=False)
+            temp_path = os.path.join(temp_dir, filename)
+            file.save(temp_path)
         
         result = md_converter.convert(temp_path)
         content = result.text_content
