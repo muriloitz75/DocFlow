@@ -137,7 +137,7 @@ def normalize_abnt_markdown(content):
 
 LEGAL_HEADING_PATTERNS = [
     (1, re.compile(r"^LIVRO\s+(?:[IVXLCDM]+|COMPLEMENTAR|PRIMEIRO|SEGUNDO|TERCEIRO|QUARTO|[ÚU]NICO)\b", re.I)),
-    (2, re.compile(r"^(?:DAS\s+)?DISPOSI[ÇC](?:[ÃA]O|[ÕO]ES)\b", re.I)),
+    (2, re.compile(r"^(?:DAS\s+)?DISPOSI[ÇC](?:[ÃA]O|[ÕO]ES)\s+(?:PRELIMINAR(?:ES)?|GERA(?:IS|L)|FINA(?:IS|L)|TRANSIT[ÓO]RIA(?:S)?)\b", re.I)),
     (2, re.compile(r"^T[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (3, re.compile(r"^CAP[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (4, re.compile(r"^SE[ÇC][ÃA]O\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
@@ -158,6 +158,20 @@ CITATION_PATTERN = re.compile(
     r'^\s*(?:Arts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|inciso\b|al[\u00edi]nea\b|\s*da\s+Const|dos\b|das\b|s[\u00f4o]bre\b|\bcaput\b)',
     re.IGNORECASE
 )
+
+VALID_ROMANS = {
+    "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+    "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+    "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
+    "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
+    "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII", "XLIX", "L",
+    "LI", "LII", "LIII", "LIV", "LV", "LVI", "LVII", "LVIII", "LIX", "LX",
+    "LXI", "LXII", "LXIII", "LXIV", "LXV", "LXVI", "LXVII", "LXVIII", "LXIX", "LXX",
+    "LXXI", "LXXII", "LXXIII", "LXXIV", "LXXV", "LXXVI", "LXXVII", "LXXVIII", "LXXIX", "LXXX",
+    "LXXXI", "LXXXII", "LXXXIII", "LXXXIV", "LXXXV", "LXXXVI", "LXXXVII", "LXXXVIII", "LXXXIX", "XC",
+    "XCI", "XCII", "XCIII", "XCIV", "XCV", "XCVI", "XCVII", "XCVIII", "XCIX", "C",
+    "M"
+}
 
 
 def split_inline_legal_elements(text):
@@ -312,7 +326,14 @@ def _starts_structural_block(line):
         return True
     if CITATION_PATTERN.match(text):
         return False
-    return any(pattern.match(text) for pattern in STRUCTURAL_LINE_PATTERNS[1:])
+    if any(pattern.match(text) for pattern in STRUCTURAL_LINE_PATTERNS[1:]):
+        return True
+        
+    roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", text, flags=re.I)
+    if roman_match and roman_match.group(1).upper() in VALID_ROMANS:
+        return True
+        
+    return False
 
 
 def _format_article_start(text):
@@ -356,6 +377,25 @@ def _format_paragraph_start(text):
     rest = match.group(2).strip()
     prefix = f"**§ {num_str}º**"
     return f"{prefix} {rest}".strip()
+
+
+def _format_inciso_start(text):
+    inciso_pattern = re.compile(
+        r"^(?:\*\*|\*|)?([IVXLCDM]+)(?:\*\*|\*|)?\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])(.*)$", re.I
+    )
+    match = inciso_pattern.match(text)
+    if not match:
+        return text
+
+    roman_num = match.group(1).upper()
+    if roman_num not in VALID_ROMANS:
+        return text
+
+    rest = match.group(2).strip()
+    if not rest:
+        return text
+        
+    return f"{roman_num} - {rest}".strip()
 
 
 def _join_wrapped_lines(lines):
@@ -530,6 +570,7 @@ def polish_legal_markdown_model2(content):
         if not CITATION_PATTERN.match(line):
             line = _format_article_start(line)
             line = _format_paragraph_start(line)
+            line = _format_inciso_start(line)
         line = re.sub(r"\s+([,.;:!?])", r"\1", line)
         line = _split_official_clauses(line)
         output.append(line)
@@ -625,7 +666,12 @@ def format_pdf_markdown_model2(content):
             append_block(paragraph)
             continue
 
-        if re.match(r"^[IVXLCDM]+\s*[-–—]\s+", line, flags=re.I):
+        is_inciso = False
+        roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", line, flags=re.I)
+        if roman_match and roman_match.group(1).upper() in VALID_ROMANS:
+            is_inciso = True
+            
+        if is_inciso:
             item_lines = [line]
             index += 1
             while index < len(source_lines):
@@ -637,7 +683,9 @@ def format_pdf_markdown_model2(content):
                     break
                 item_lines.append(next_line)
                 index += 1
-            append_block(_join_wrapped_lines(item_lines))
+            item_text = _join_wrapped_lines(item_lines)
+            item_text = _format_inciso_start(item_text)
+            append_block(item_text)
             continue
 
         paragraph_lines = [line]
