@@ -849,14 +849,17 @@ def convert():
         content = result.text_content
         extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
-        if extension == "pdf":
+        # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL
+        is_legal_or_pdf = (extension == "pdf" or bool(request.form.get("url", "").strip()))
+
+        if is_legal_or_pdf:
             content = clean_pdf_headers_footers(content)
             content = format_pdf_markdown_model2(content)
 
         if option == "compact":
             content = compact_markdown(content)
         elif option == "abnt":
-            if extension == "pdf":
+            if is_legal_or_pdf:
                 content = polish_legal_markdown_model2(content)
             else:
                 content = normalize_abnt_markdown(content)
