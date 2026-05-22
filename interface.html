@@ -969,16 +969,17 @@
             overflow-y: auto;
             padding: 32px;
             font-family: var(--font-mono);
-            font-size: calc(14px * var(--preview-zoom, 1));
+            font-size: 14px;
             line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-word;
+            zoom: var(--preview-zoom, 1);
         }
 
         /* Specific preview modes */
         .preview.abnt-preview {
             font-family: "Times New Roman", Times, serif;
-            font-size: calc(16px * var(--preview-zoom, 1));
+            font-size: 16px;
             text-align: justify;
             max-width: 800px;
             margin: 0 auto;
@@ -992,7 +993,7 @@
         
         .preview.html-preview {
             font-family: "Instrument Serif", Georgia, serif;
-            font-size: calc(20px * var(--preview-zoom, 1));
+            font-size: 20px;
             line-height: 1.5;
             max-width: 800px;
             margin: 0 auto;
