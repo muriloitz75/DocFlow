@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Backend Flask da interface web do MarkItDown."""
 
 from flask import Flask, request, jsonify, send_from_directory, session
@@ -135,7 +136,7 @@ def normalize_abnt_markdown(content):
 
 
 LEGAL_HEADING_PATTERNS = [
-    (1, re.compile(r"^LIVRO\s+(?:[IVXLCDM]+|COMPLEMENTAR)\b", re.I)),
+    (1, re.compile(r"^LIVRO\s+(?:[IVXLCDM]+|COMPLEMENTAR|PRIMEIRO|SEGUNDO|TERCEIRO|QUARTO|[ÚU]NICO)\b", re.I)),
     (2, re.compile(r"^T[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (3, re.compile(r"^CAP[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (4, re.compile(r"^SE[ÇC][ÃA]O\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
@@ -151,6 +152,57 @@ STRUCTURAL_LINE_PATTERNS = [
     re.compile(r"^\|"),
     re.compile(r"^```"),
 ]
+
+CITATION_PATTERN = re.compile(
+    r'^\s*(?:Arts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|inciso\b|al[\u00edi]nea\b|\s*da\s+Const|dos\b|das\b|s[\u00f4o]bre\b|\bcaput\b)',
+    re.IGNORECASE
+)
+
+
+def split_inline_legal_elements(text):
+    """Detectar e separar em novas linhas elementos estruturais grudados in-line por notas legislativas."""
+    boundary = r'(?:[).;]|Produ[\u00e7c][\u00e3a]o\s+de\s+efeitos|Vig[\u00eae]ncia|Vide\b)'
+    
+    # Split Art.
+    text = re.sub(
+        rf'({boundary}\s*)([*_]*Art\.\s*\d+)',
+        r'\1\n\n\2',
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    # Split Parágrafo único
+    text = re.sub(
+        rf'({boundary}\s*)([*_]*Par[\u00e1a]grafo\s+[\u00fau]nico)',
+        r'\1\n\n\2',
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    # Split §
+    text = re.sub(
+        rf'({boundary}\s*)([*_]*\u00a7\s*\d+)',
+        r'\1\n\n\2',
+        text
+    )
+    
+    # Split Roman Numerals (ex: I, II, III...)
+    roman_num = r'\b(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\b'
+    text = re.sub(
+        rf'({boundary}\s*)({roman_num}(?:\s*[-–—])?\s+)',
+        r'\1\n\n\2',
+        text
+    )
+    
+    # Split lettered items (ex: a), b), c))
+    text = re.sub(
+        rf'({boundary}\s*)([a-z]\)\s*)',
+        r'\1\n\n\2',
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    return text
 
 
 def _normalize_text_line(line):
@@ -169,15 +221,18 @@ def _heading_from_line(line):
     if not stripped:
         return None
 
-    if stripped.startswith("#"):
-        marker, _, title = stripped.partition(" ")
+    # Strip markdown bold and italic formatting wrappers
+    clean_stripped = re.sub(r"^[\*_]+|[\*_]+$", "", stripped).strip()
+
+    if clean_stripped.startswith("#"):
+        marker, _, title = clean_stripped.partition(" ")
         if set(marker) == {"#"} and 1 <= len(marker) <= 6 and title.strip():
             title = _strip_generated_heading_number(title.strip())
             return len(marker), title
 
     for level, pattern in LEGAL_HEADING_PATTERNS:
-        if pattern.match(stripped):
-            return level, stripped.upper()
+        if pattern.match(clean_stripped):
+            return level, clean_stripped.upper()
 
     return None
 
@@ -254,45 +309,51 @@ def _starts_structural_block(line):
     text = _normalize_text_line(line)
     if _heading_from_line(text):
         return True
+    if CITATION_PATTERN.match(text):
+        return False
     return any(pattern.match(text) for pattern in STRUCTURAL_LINE_PATTERNS[1:])
 
 
 def _format_article_start(text):
-    bold_article_match = re.match(
-        r"^\*\*Art\.\s*(\d+[ºo]?(?:-[A-Z])?)(\.?)\*\*\.?\s*(.*)$",
-        text,
-        flags=re.I,
+    # Regex to match article number and suffix precisely without swallowing letters like 'O' and 'A'
+    # Handles optional opening and closing bold/italic markdown wrappers
+    article_pattern = re.compile(
+        r"^(?:\*\*|\*|)?[Aa]rt\.?\s*(\d+(?:-[A-Z])?)(?:\.?(?:[\u00ba\u00b0\u00aa\u015f]|[oa]\b))?\.?(?:\*\*|\*|)?\s*(.*)$"
     )
-    if bold_article_match:
-        number = bold_article_match.group(1)
-        punctuation = bold_article_match.group(2) or "."
-        rest = bold_article_match.group(3).strip()
-        return f"**Art. {number}{punctuation}** {rest}".strip()
-
-    article_match = re.match(
-        r"^(Art\.?)\s*(\d+[ºo]?(?:-[A-Z])?)(\.?)\s*(.*)$",
-        text,
-        flags=re.I,
-    )
-    if not article_match:
+    match = article_pattern.match(text)
+    if not match:
+        # Check and format Parágrafo único
+        if re.match(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*(.*)$", text, re.I):
+            rest = re.sub(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*", "", text, flags=re.I).strip()
+            return f"**Parágrafo único.** {rest}".strip()
         return text
 
-    number = article_match.group(2)
-    punctuation = article_match.group(3) or "."
-    rest = article_match.group(4).strip()
-    prefix = f"**Art. {number}{punctuation}**"
+    num_str = match.group(1)
+    rest = match.group(2).strip()
+    try:
+        num = int(num_str.split('-')[0])
+    except ValueError:
+        num = 10
+        
+    if num < 10:
+        prefix = f"**Art. {num_str}º**"
+    else:
+        prefix = f"**Art. {num_str}.**"
+        
     return f"{prefix} {rest}".strip()
 
 
 def _format_paragraph_start(text):
-    paragraph_match = re.match(r"^(§\s*\d+[ºo]?)(\.?)\s*(.*)$", text, flags=re.I)
-    if not paragraph_match:
+    paragraph_pattern = re.compile(
+        r"^(?:\*\*|\*|)?\u00a7\s*(\d+)(?:\.?(?:[\u00ba\u00b0\u00aa\u015f]|[oa]\b))?\.?(?:\*\*|\*|)?\s*(.*)$"
+    )
+    match = paragraph_pattern.match(text)
+    if not match:
         return text
 
-    marker = re.sub(r"\s+", " ", paragraph_match.group(1)).strip()
-    punctuation = paragraph_match.group(2)
-    rest = paragraph_match.group(3).strip()
-    prefix = f"**{marker}{punctuation}**"
+    num_str = match.group(1)
+    rest = match.group(2).strip()
+    prefix = f"**§ {num_str}º**"
     return f"{prefix} {rest}".strip()
 
 
@@ -328,9 +389,19 @@ def _is_continuation_candidate(previous, current):
         return False
     if re.match(r"^(?:REGULAMENTO|DECRETO|LEI\s+COMPLEMENTAR)\b", current, flags=re.I):
         return False
-    if re.match(r"^\*\*(?:Art\.|§)", current, flags=re.I):
+        
+    # Limpar marcações de formatação em negrito/itálico para inspecionar o prefixo limpo
+    clean_current = re.sub(r"^[\*_]+|[\*_]+$", "", current).strip()
+    
+    # Proibir mesclagem se a linha seguinte começar com termos ou símbolos estruturais de leis
+    if re.match(r"^(?:Art\.?|\u00a7|Par[\u00e1a]grafo\s+[\u00fau]nico)\b", clean_current, flags=re.I):
+        if not CITATION_PATTERN.match(clean_current):
+            return False
+    if re.match(r"^[IVXLCDM]+\b", clean_current, flags=re.I):
         return False
-    if re.match(r"^(?:[IVXLCDM]+\s*[-–—]|[a-z]\))\s+", current, flags=re.I):
+    if re.match(r"^[a-z]\)", clean_current, flags=re.I):
+        return False
+    if re.match(r"^[-*+•]", clean_current):
         return False
 
     previous_has_terminal = bool(re.search(r"[.!?:;]$", previous))
@@ -391,6 +462,7 @@ def _repair_known_pdf_text_dislocations(content):
 
 def polish_legal_markdown_model2(content):
     """Polimento final para manter documentos legais no padrão modelo 2."""
+    content = split_inline_legal_elements(content)
     lines = compact_markdown(content).splitlines()
     output = []
     index = 0
@@ -453,8 +525,9 @@ def polish_legal_markdown_model2(content):
             index += 1
             continue
 
-        line = _format_article_start(line)
-        line = _format_paragraph_start(line)
+        if not CITATION_PATTERN.match(line):
+            line = _format_article_start(line)
+            line = _format_paragraph_start(line)
         line = re.sub(r"\s+([,.;:!?])", r"\1", line)
         line = _split_official_clauses(line)
         output.append(line)
@@ -468,6 +541,7 @@ def polish_legal_markdown_model2(content):
 
 def format_pdf_markdown_model2(content):
     """Formatar PDFs legais no padrão visual do modelo 2."""
+    content = split_inline_legal_elements(content)
     normalized = compact_markdown(content)
     source_lines = normalized.splitlines()
     output = []
@@ -529,7 +603,8 @@ def format_pdf_markdown_model2(content):
             index += 1
             continue
 
-        if re.match(r"^Art\.?\s*\d+", line, flags=re.I) or re.match(r"^§\s*\d+", line):
+        is_art_or_par = (re.match(r"^Art\.?\s*\d+", line, flags=re.I) or re.match(r"^§\s*\d+", line))
+        if is_art_or_par and not CITATION_PATTERN.match(line):
             paragraph_lines = [line]
             index += 1
             while index < len(source_lines):
@@ -731,6 +806,137 @@ def clean_pdf_headers_footers(content):
     return compact_markdown("\n\n".join(page for page in cleaned_pages if page))
 
 
+def clean_planalto_encoding_glitches(content):
+    glitches = {
+        '\u015f': '\u00ba', # ş -> º
+        '\u015e': '\u00aa', # Ş -> ª
+        '\u0119': '\u00ea', # ę -> ê
+        '\u0118': '\u00ca', # Ę -> Ê
+        '\u0103': '\u00e3', # ă -> ã
+        '\u0102': '\u00c3', # Ă -> Ã
+        '\u0155': '\u00e0', # ŕ -> à
+        '\u0154': '\u00c0', # Ŕ -> À
+        '\u0151': '\u00f5', # ő -> õ
+        '\u0150': '\u00d5', # Ő -> Õ
+    }
+    for glitch, fixed in glitches.items():
+        content = content.replace(glitch, fixed)
+    return content
+
+
+def strip_relative_and_internal_links(content):
+    def repl(match):
+        text = match.group(1)
+        url = match.group(2)
+        if match.group(0).startswith('!'):
+            return match.group(0)
+        
+        is_relative = not (url.startswith("http://") or url.startswith("https://") or url.startswith("mailto:"))
+        is_internal = "planalto.gov.br" in url
+        if is_relative or is_internal:
+            return text
+        return match.group(0)
+    
+    content = re.sub(r'(?<!\!)\[([^\]]+)\]\(([^)]+)\)', repl, content)
+    return content
+
+
+def split_planalto_document(content):
+    lines = content.splitlines()
+    header_lines = []
+    body_lines = []
+    
+    promulgation_pattern = re.compile(
+        r'^\s*(?:\*\*|\*|)?(?:O\s+PRESIDENTE\s+DA\s+REP[ÚU]BLICA|O\s+CONGRESSO\s+NACIONAL|O\s+GOVERNADOR|O\s+PREFEITO|A\s+ASSEMBL[ÉE]IA\s+LEGISLATIVA|A\s+C[ÂA]MARA\s+MUNICIPAL)\b',
+        re.I
+    )
+    
+    promulgation_idx = -1
+    for idx, line in enumerate(lines):
+        if promulgation_pattern.match(line):
+            promulgation_idx = idx
+            break
+            
+    if promulgation_idx != -1:
+        header_lines = lines[:promulgation_idx]
+        body_lines = lines[promulgation_idx:]
+    else:
+        if len(lines) > 3:
+            header_lines = lines[:3]
+            body_lines = lines[3:]
+        else:
+            header_lines = lines
+            body_lines = []
+            
+    return "\n".join(header_lines), "\n".join(body_lines)
+
+
+def generate_premium_header(header_text):
+    # Clean encoding glitches first
+    header_text = clean_planalto_encoding_glitches(header_text)
+    
+    # Strip links
+    header_text = strip_relative_and_internal_links(header_text)
+    
+    # Try to find the title: LEI Nº ... or DECRETO Nº ...
+    title_match = re.search(
+        r'\b(LEI|DECRETO|MEDIDA PROVISÓRIA|LEI COMPLEMENTAR)\s+(?:Nº|Nş|N[°o])\s*([\d.]+)(?:\s*,\s*DE\s+([^|.\n]+))?',
+        header_text,
+        re.I
+    )
+    
+    # Try to find the ementa
+    ementa = ""
+    if "|" in header_text:
+        parts = [p.strip() for p in header_text.split("|")]
+        if len(parts) >= 2:
+            last_cell = parts[-1]
+            if len(last_cell) > 20:
+                ementa = last_cell
+                
+    if not ementa:
+        ementa_match = re.search(r'\b(dispõe|institui|altera|regula|cria|estabelece|autoriza)\b.*$', header_text, re.I)
+        if ementa_match:
+            ementa = ementa_match.group(0)
+            
+    ementa = re.sub(r'\s+', ' ', ementa).strip()
+    
+    # Reconstruct premium header
+    title_str = ""
+    if title_match:
+        type_lbl = title_match.group(1).upper()
+        num_lbl = title_match.group(2)
+        date_lbl = title_match.group(3)
+        if date_lbl:
+            date_lbl = date_lbl.strip(" .")
+            title_str = f"{type_lbl} Nº {num_lbl}, DE {date_lbl}"
+        else:
+            title_str = f"{type_lbl} Nº {num_lbl}"
+    else:
+        title_str = "LEGISLAÇÃO FEDERAL"
+        
+    # Append code descriptor if present (e.g. Código Tributário Nacional)
+    if "código" in header_text.lower():
+        code_match = re.search(r'([cC][óo]digo\s+[A-Za-zÀ-ÿ\s]+)', header_text)
+        if code_match:
+            code_name = code_match.group(1).strip()
+            title_str = f"{title_str} ({code_name})"
+            
+    premium_header_lines = [
+        f"# {title_str}",
+        "",
+        "> **Presidência da República**",
+        "> *Secretaria-Geral - Subchefia para Assuntos Jurídicos*",
+        ">"
+    ]
+    
+    if ementa:
+        premium_header_lines.append(f"> **Ementa:** {ementa}")
+        
+    premium_header_lines.append("")
+    return "\n".join(premium_header_lines)
+
+
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(_error):
     limit_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
@@ -818,8 +1024,27 @@ def convert():
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
             
-            with open(temp_path, "wb") as f:
-                f.write(response.content)
+            # planalto and other Brazilian government pages are typically served in ISO-8859-1 or CP1252
+            # Let's decode it correctly and write as UTF-8 to prevent any parsing encoding issues
+            encoding = response.encoding
+            if "planalto.gov.br" in url.lower():
+                encoding = "cp1252"
+            elif not encoding or encoding.lower() in ('iso-8859-1', 'latin-1'):
+                encoding = "cp1252"
+                
+            try:
+                html_str = response.content.decode(encoding, errors='replace')
+            except Exception:
+                html_str = response.content.decode('cp1252', errors='replace')
+                
+            # Inject <meta charset="utf-8"> to force MarkItDown/BeautifulSoup to parse it as UTF-8
+            if "<head>" in html_str.lower():
+                html_str = re.sub(r'(<head\b[^>]*>)', r'\1<meta charset="utf-8">', html_str, flags=re.I)
+            else:
+                html_str = '<meta charset="utf-8">' + html_str
+                
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(html_str)
         else:
             if "file" not in request.files:
                 return jsonify({"success": False, "error": "Nenhum arquivo ou URL fornecido."}), 400
@@ -849,12 +1074,29 @@ def convert():
         content = result.text_content
         extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
-        # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL
-        is_legal_or_pdf = (extension == "pdf" or bool(request.form.get("url", "").strip()))
+        # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL/HTML
+        is_legal_or_pdf = (extension == "pdf" or bool(request.form.get("url", "").strip()) or extension in ("html", "htm"))
 
         if is_legal_or_pdf:
-            content = clean_pdf_headers_footers(content)
-            content = format_pdf_markdown_model2(content)
+            is_planalto = "presid" in content.lower() and ("casa civil" in content.lower() or "subchefia" in content.lower())
+            if is_planalto:
+                # Clean encoding glitches and strip relative/internal links on the entire document first
+                content = clean_planalto_encoding_glitches(content)
+                content = strip_relative_and_internal_links(content)
+                
+                # Split and extract header
+                header_text, body_text = split_planalto_document(content)
+                premium_header = generate_premium_header(header_text)
+                
+                # Format body using the standard legal formatter
+                body_text = clean_pdf_headers_footers(body_text)
+                formatted_body = format_pdf_markdown_model2(body_text)
+                
+                # Reassemble the beautiful document
+                content = premium_header + "\n\n" + formatted_body
+            else:
+                content = clean_pdf_headers_footers(content)
+                content = format_pdf_markdown_model2(content)
 
         if option == "compact":
             content = compact_markdown(content)

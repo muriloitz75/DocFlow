@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Testes leves da interface Flask, sem dependência de pytest."""
 
 import io
@@ -175,7 +176,7 @@ class WebInterfaceTestCase(unittest.TestCase):
 
         result = webapp.format_pdf_markdown_model2(content)
 
-        self.assertIn("**Art. 1º.** Este decreto regulamenta a lei municipal.", result)
+        self.assertIn("**Art. 1º** Este decreto regulamenta a lei municipal.", result)
 
     def test_model2_reflows_wrapped_pdf_paragraphs(self):
         content = (
@@ -187,7 +188,7 @@ class WebInterfaceTestCase(unittest.TestCase):
         result = webapp.format_pdf_markdown_model2(content)
 
         self.assertIn(
-            "**Art. 2º.** O sujeito passivo da obrigação tributária deverá observar "
+            "**Art. 2º** O sujeito passivo da obrigação tributária deverá observar "
             "os prazos previstos neste regulamento e manter a documentação organizada.",
             result,
         )
@@ -421,6 +422,33 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json["success"])
         self.assertIn("URL inválida", response.json["error"])
+
+    def test_citation_protection_does_not_format_references(self):
+        content = (
+            "Esta Lei regula, com fundamento na Emenda Constitucional n. 18, de 1º de dezembro de 1965, "
+            "o sistema tributário nacional e estabelece, com fundamento no\n\n"
+            "Art. 5º, inciso XV, alínea b, da Constituição Federal as normas gerais de direito tributário"
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertNotIn("**Art. 5º**", result)
+        self.assertIn("no Art. 5º, inciso XV", result)
+
+    def test_model2_does_not_merge_structural_elements_after_parenthesis(self):
+        content = (
+            "cobrar impostos e a contribuição de que trata o inciso V do art. 195 da Constituição Federalsobre: (Redação dada pela Lei Complementar nº 214, de 2025) Produção de efeitos\n\n"
+            "c)o patrimônio, a renda ou serviços dos partidos políticos..."
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn("c)o patrimônio", result)
+
+    def test_inline_structural_element_splitting(self):
+        content = (
+            "Art. 18-A. Para fins da incidência do imposto de que trata o inciso II do caput do art. 155 da "
+            "Constituição Federal, os combustíveis... (Incluído pela Lei Complementar nº 194, de 2022) "
+            "Parágrafo único. Para efeito do disposto neste artigo:"
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertIn("**Parágrafo único.** Para efeito", result)
 
 
 if __name__ == "__main__":
