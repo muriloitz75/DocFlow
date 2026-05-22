@@ -769,11 +769,15 @@ def convert():
         url = request.form.get("url", "").strip()
         
         if url:
+            # Se não começar com http:// ou https://, mas também não contiver outro protocolo (://), assume https://
             if not (url.startswith("http://") or url.startswith("https://")):
-                return jsonify({
-                    "success": False,
-                    "error": "URL inválida. O link deve começar com http:// ou https://",
-                }), 400
+                if "://" not in url:
+                    url = "https://" + url
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "URL inválida. O link deve começar com http:// ou https://",
+                    }), 400
             
             import requests
             from urllib.parse import urlparse

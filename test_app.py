@@ -368,6 +368,34 @@ class WebInterfaceTestCase(unittest.TestCase):
         )
 
     @unittest.mock.patch("requests.get")
+    def test_convert_via_url_auto_prepend_protocol(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"<html><body><h1>DocFlow Protocol-less</h1></body></html>"
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "www.planalto.gov.br/ccivil_03/leis/l5172compilado.htm",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn("DocFlow Protocol-less", response.json["content"])
+        self.assertEqual(response.json["filename"], "l5172compilado.htm")
+        mock_get.assert_called_once_with(
+            "https://www.planalto.gov.br/ccivil_03/leis/l5172compilado.htm",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            timeout=15
+        )
+
+    @unittest.mock.patch("requests.get")
     def test_convert_via_url_failure(self, mock_get):
         mock_get.side_effect = Exception("Connection timed out")
 

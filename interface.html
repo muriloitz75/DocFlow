@@ -2079,6 +2079,15 @@
             }
         });
 
+        urlInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                if (!convertBtn.disabled) {
+                    convertBtn.click();
+                }
+            }
+        });
+
         convertBtn.addEventListener("click", async () => {
             const formData = new FormData();
             let displayName = "documento";
@@ -2088,8 +2097,14 @@
                 formData.append("file", selectedFile);
                 displayName = selectedFile.name;
             } else {
-                const urlVal = urlInput.value.trim();
+                let urlVal = urlInput.value.trim();
                 if (!urlVal) return;
+                
+                // Auto-preenche o protocolo se o usuário não digitou nenhum
+                if (!urlVal.match(/^[a-zA-Z]+:\/\//)) {
+                    urlVal = "https://" + urlVal;
+                }
+                
                 formData.append("url", urlVal);
                 // Obter nome básico da URL para exibir nas métricas
                 try {
