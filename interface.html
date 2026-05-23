@@ -1958,8 +1958,8 @@
                 nodesToReplace.push(node);
             }
             
-            const artRegex = /(Art\.\s*\d+(?:-[A-Za-z])?\.?|§\s*\d+(?:º|o)?|Parágrafo único\.?)/gi;
-            const incisoRegex = /\b([IVXLCDM]+)\s*[-–—]/g;
+            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:-[A-Za-z])?\.?|§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
+            const incisoRegex = /^(\s*(?:\*\*|__)?)([IVXLCDM]+)(\s*[-–—])/;
             
             nodesToReplace.forEach(textNode => {
                 const text = textNode.nodeValue;
@@ -1967,13 +1967,13 @@
                 let changed = false;
                 
                 if (artRegex.test(text)) {
-                    newHtml = newHtml.replace(artRegex, '<span class="highlight-article">$1</span>');
+                    newHtml = newHtml.replace(artRegex, '$1<span class="highlight-article">$2</span>');
                     changed = true;
                 }
                 
                 if (incisoRegex.test(text)) {
-                    newHtml = newHtml.replace(incisoRegex, function(match, p1) {
-                        return match.replace(p1, `<span class="highlight-inciso">${p1}</span>`);
+                    newHtml = newHtml.replace(incisoRegex, function(match, p1, p2, p3) {
+                        return p1 + `<span class="highlight-inciso">${p2}</span>` + p3;
                     });
                     changed = true;
                 }
