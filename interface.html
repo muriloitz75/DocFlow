@@ -780,6 +780,17 @@
             transform: translate(-1px, -1px);
         }
 
+        /* FORMATACAO DE TEXTO JURIDICO */
+        .highlight-article {
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .highlight-inciso {
+            color: #2563eb;
+            font-weight: 700;
+        }
+
         .popover-toast {
             position: fixed;
             bottom: 80px;
@@ -1931,8 +1942,48 @@
                 outputArea.classList.add("markdown-preview");
                 renderMarkdownPlainWithIds(content);
             }
+            if (selectedFormat !== "json") {
+                highlightLegalNodes(outputArea);
+            }
             // Atualiza o sumário sempre que o conteúdo muda
             buildToc();
+        }
+
+        function highlightLegalNodes(rootNode) {
+            const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, null, false);
+            const nodesToReplace = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.parentNode && (node.parentNode.nodeName === 'SCRIPT' || node.parentNode.nodeName === 'STYLE')) continue;
+                nodesToReplace.push(node);
+            }
+            
+            const artRegex = /(Art\.\s*\d+(?:-[A-Za-z])?\.?|§\s*\d+(?:º|o)?|Parágrafo único\.?)/gi;
+            const incisoRegex = /\b([IVXLCDM]+)\s*[-–—]/g;
+            
+            nodesToReplace.forEach(textNode => {
+                const text = textNode.nodeValue;
+                let newHtml = escapeHtml(text);
+                let changed = false;
+                
+                if (artRegex.test(text)) {
+                    newHtml = newHtml.replace(artRegex, '<span class="highlight-article">$1</span>');
+                    changed = true;
+                }
+                
+                if (incisoRegex.test(text)) {
+                    newHtml = newHtml.replace(incisoRegex, function(match, p1) {
+                        return match.replace(p1, `<span class="highlight-inciso">${p1}</span>`);
+                    });
+                    changed = true;
+                }
+                
+                if (changed) {
+                    const span = document.createElement("span");
+                    span.innerHTML = newHtml;
+                    textNode.parentNode.replaceChild(span, textNode);
+                }
+            });
         }
 
         function addHeadingIds() {
