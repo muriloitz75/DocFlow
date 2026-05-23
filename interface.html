@@ -2126,7 +2126,12 @@
                 button.classList.add("active");
                 activeInputType = button.dataset.type;
                 
+                const htmlFormatBtn = document.querySelector('#formatSegmented .segment[data-format="html"]');
+                const abntModeBtn = document.querySelector('#modeSegmented .segment[data-option="abnt"]');
+                const mdFormatBtn = document.querySelector('#formatSegmented .segment[data-format="markdown"]');
+
                 if (activeInputType === "file") {
+                    if (htmlFormatBtn) htmlFormatBtn.style.display = "";
                     fileInputContainer.style.display = "block";
                     urlZoneContainer.style.display = "none";
                     convertBtn.disabled = !selectedFile;
@@ -2137,6 +2142,13 @@
                         setStatus("Selecione um arquivo para iniciar.");
                     }
                 } else {
+                    if (htmlFormatBtn) htmlFormatBtn.style.display = "none";
+                    if (selectedFormat === "html" && mdFormatBtn) {
+                        mdFormatBtn.click();
+                    }
+                    if (abntModeBtn) {
+                        abntModeBtn.click();
+                    }
                     fileInputContainer.style.display = "none";
                     urlZoneContainer.style.display = "flex";
                     const urlVal = urlInput.value.trim();
