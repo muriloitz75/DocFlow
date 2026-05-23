@@ -796,6 +796,11 @@
             font-weight: 700;
         }
 
+        .highlight-alinea {
+            color: #9333ea;
+            font-weight: 700;
+        }
+
         .popover-toast {
             position: fixed;
             bottom: 80px;
@@ -1966,6 +1971,7 @@
             const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:-[A-Za-z])?\.?)/i;
             const parRegex = /^(\s*(?:\*\*|__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
             const incisoRegex = /^(\s*(?:\*\*|__)?)([IVXLCDM]+)(\s*[-–—])/;
+            const alineaRegex = /^(\s*(?:\*\*|__)?)([a-z])(\))/;
             
             nodesToReplace.forEach(textNode => {
                 const text = textNode.nodeValue;
@@ -1983,6 +1989,11 @@
                 if (incisoRegex.test(text)) {
                     newHtml = newHtml.replace(incisoRegex, function(match, p1, p2, p3) {
                         return p1 + `<span class="highlight-inciso">${p2}</span>` + p3;
+                    });
+                    changed = true;
+                } else if (alineaRegex.test(text)) {
+                    newHtml = newHtml.replace(alineaRegex, function(match, p1, p2, p3) {
+                        return p1 + `<span class="highlight-alinea">${p2}</span>` + p3;
                     });
                     changed = true;
                 }
