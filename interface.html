@@ -1497,6 +1497,7 @@
                     <button class="primary-btn" id="convertBtn" type="button" disabled>Converter</button>
                     <button class="icon-btn" id="clearBtn" type="button" disabled title="Limpar seleção">X</button>
                 </div>
+                <button id="loadDocsBtn" type="button" style="margin-top: 12px; width: 100%; border: var(--border); background: var(--surface); padding: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-family: var(--font-mono); font-size: 11px; box-shadow: 2px 2px 0px var(--ink); transition: transform 0.1s, box-shadow 0.1s;">Carregar Salvos</button>
             </aside>
 
             <section class="panel output-panel">
@@ -1525,6 +1526,7 @@
                             <button class="tool-btn" id="copyBtn" type="button" disabled>Copiar</button>
                             <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
                             <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
+                            <button class="tool-btn" id="saveDocBtn" type="button" disabled title="Salvar estado atual">Salvar</button>
                         </div>
 
                         <button class="panel-action-btn" id="maximizePanelBtn" type="button" title="Maximizar tela de resultado">
@@ -2205,6 +2207,7 @@
                 applyFormat(convertedContent, data.mode);
                 updateMetrics(convertedContent, data.filename || displayName);
                 setActions(Boolean(convertedContent));
+                if (saveDocBtn) saveDocBtn.disabled = !Boolean(convertedContent);
 
                 const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
                 const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
@@ -3120,6 +3123,143 @@
             zoomInBtn.addEventListener("click", () => {
                 updateZoom(currentZoom + 0.1);
             });
+        }
+
+        // ===== SALVAR E CARREGAR DOCUMENTOS =====
+        const saveDocBtn = document.getElementById("saveDocBtn");
+        const loadDocsBtn = document.getElementById("loadDocsBtn");
+        const loadDocsModal = document.createElement("div");
+        loadDocsModal.className = "login-overlay";
+        loadDocsModal.innerHTML = `
+            <div class="login-box" style="max-width: 500px; width: 90%;">
+                <div class="login-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>Documentos Salvos</h2>
+                    <button id="closeLoadModalBtn" style="background:transparent; border:none; font-weight:bold; cursor:pointer; font-size:16px;">X</button>
+                </div>
+                <div class="login-body" style="max-height: 400px; overflow-y: auto;">
+                    <ul id="savedDocsList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                        <li style="text-align:center; opacity:0.5; font-size:12px;">Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(loadDocsModal);
+
+        const savedDocsList = document.getElementById("savedDocsList");
+        const closeLoadModalBtn = document.getElementById("closeLoadModalBtn");
+
+        saveDocBtn.addEventListener("click", async () => {
+            if (!convertedContent) return;
+            
+            const originalBtnText = saveDocBtn.textContent;
+            saveDocBtn.textContent = "Salvando...";
+            saveDocBtn.disabled = true;
+            
+            try {
+                const response = await fetch("/api/saved_docs", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        filename: getActiveFilename(),
+                        mode: selectedOption,
+                        markdown: convertedContent,
+                        html: outputArea.innerHTML
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    setStatus("Documento e marcações salvos com sucesso!", "success");
+                } else {
+                    setStatus("Erro ao salvar: " + (data.error || "Desconhecido"), "error");
+                }
+            } catch (err) {
+                setStatus("Erro de conexão ao salvar documento.", "error");
+            } finally {
+                saveDocBtn.textContent = originalBtnText;
+                saveDocBtn.disabled = false;
+            }
+        });
+
+        loadDocsBtn.addEventListener("click", async () => {
+            loadDocsModal.classList.add("visible");
+            savedDocsList.innerHTML = '<li style="text-align:center; opacity:0.5; font-size:12px;">Buscando...</li>';
+            
+            try {
+                const response = await fetch("/api/saved_docs");
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    savedDocsList.innerHTML = "";
+                    if (data.documents.length === 0) {
+                        savedDocsList.innerHTML = '<li style="text-align:center; opacity:0.5; font-size:12px;">Nenhum documento salvo.</li>';
+                        return;
+                    }
+                    
+                    data.documents.forEach(doc => {
+                        const li = document.createElement("li");
+                        li.style.cssText = "border: var(--border); padding: 12px; cursor: pointer; transition: background 0.2s;";
+                        li.onmouseover = () => li.style.background = "#d8d6d0";
+                        li.onmouseout = () => li.style.background = "transparent";
+                        
+                        const dateStr = new Date(doc.timestamp).toLocaleString("pt-BR");
+                        li.innerHTML = `
+                            <div style="font-weight: bold; font-family: var(--font-sans); font-size: 14px;">${doc.filename}</div>
+                            <div style="font-size: 11px; opacity: 0.7; font-family: var(--font-mono); margin-top: 4px;">Modo: ${doc.mode} | Salvo em: ${dateStr}</div>
+                        `;
+                        
+                        li.addEventListener("click", () => loadDocument(doc.id));
+                        savedDocsList.appendChild(li);
+                    });
+                } else {
+                    savedDocsList.innerHTML = '<li style="color:var(--accent);">Erro ao carregar lista.</li>';
+                }
+            } catch (err) {
+                savedDocsList.innerHTML = '<li style="color:var(--accent);">Erro de conexão.</li>';
+            }
+        });
+
+        closeLoadModalBtn.addEventListener("click", () => {
+            loadDocsModal.classList.remove("visible");
+        });
+
+        async function loadDocument(docId) {
+            loadDocsModal.classList.remove("visible");
+            setStatus("Carregando documento salvo...");
+            setActions(false);
+            
+            try {
+                const response = await fetch(`/api/saved_docs/${docId}`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const doc = data.document;
+                    convertedContent = doc.markdown;
+                    selectedOption = doc.mode;
+                    
+                    // Atualiza a visualização sem re-processar o markdown (preserva o innerHTML salvo com os <mark>)
+                    outputArea.className = "preview html-preview"; // Assume que está formatado com HTML completo
+                    outputArea.innerHTML = doc.html;
+                    
+                    // Restaura botões
+                    modeSegmented.querySelectorAll(".segment").forEach(btn => {
+                        btn.classList.toggle("active", btn.dataset.option === selectedOption);
+                    });
+                    
+                    // Atualiza métricas
+                    updateMetrics(convertedContent, doc.original_filename);
+                    setActions(true);
+                    if (saveDocBtn) saveDocBtn.disabled = false;
+                    
+                    // Reconstrói sumário baseado no que foi restaurado do DOM
+                    buildToc();
+                    
+                    setStatus("Documento restaurado com sucesso!", "success");
+                } else {
+                    setStatus("Erro ao carregar: " + (data.error || "Desconhecido"), "error");
+                }
+            } catch (err) {
+                setStatus("Erro de conexão ao carregar documento.", "error");
+            }
         }
 
         checkAuthStatus();

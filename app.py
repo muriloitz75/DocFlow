@@ -9,6 +9,8 @@ import re
 import shutil
 import tempfile
 import sys
+import json
+from datetime import datetime
 from uuid import uuid4
 from functools import wraps
 
@@ -39,6 +41,9 @@ def login_required(f):
 
 # Configurações
 UPLOAD_ROOT = os.path.join(tempfile.gettempdir(), "markitdown-web")
+SAVED_DOCS_DIR = os.path.join(BASE_DIR, "saved_docs")
+os.makedirs(SAVED_DOCS_DIR, exist_ok=True)
+
 ALLOWED_EXTENSIONS = {
     "pdf", "docx", "xlsx", "xls", "pptx",
     "html", "htm", "csv", "json", "xml",
@@ -1223,6 +1228,92 @@ def auth_logout():
 def auth_status():
     """Verificar se o usuário está autenticado"""
     return jsonify({"authenticated": session.get("logged_in", False)})
+
+
+@app.route("/api/saved_docs", methods=["POST"])
+@login_required
+def save_document():
+    """Salva o estado atual de um documento convertido (incluindo marcações HTML)."""
+    try:
+        data = request.get_json()
+        if not data or "html" not in data or "markdown" not in data:
+            return jsonify({"success": False, "error": "Dados incompletos."}), 400
+        
+        filename = data.get("filename", "documento")
+        # Remove extensão original se presente
+        if '.' in filename:
+            filename = filename.rsplit('.', 1)[0]
+        
+        # Cria um nome de arquivo seguro e único
+        safe_filename = secure_filename(filename) or "doc"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        doc_id = f"{safe_filename}_{timestamp}.json"
+        
+        filepath = os.path.join(SAVED_DOCS_DIR, doc_id)
+        
+        # Salva o arquivo
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump({
+                "id": doc_id,
+                "original_filename": filename,
+                "timestamp": datetime.now().isoformat(),
+                "mode": data.get("mode", "standard"),
+                "markdown": data["markdown"],
+                "html": data["html"]
+            }, f, ensure_ascii=False, indent=2)
+            
+        return jsonify({"success": True, "id": doc_id, "message": "Documento salvo com sucesso!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/saved_docs", methods=["GET"])
+@login_required
+def list_saved_documents():
+    """Lista todos os documentos salvos."""
+    try:
+        docs = []
+        for filename in os.listdir(SAVED_DOCS_DIR):
+            if filename.endswith(".json"):
+                filepath = os.path.join(SAVED_DOCS_DIR, filename)
+                try:
+                    # Lê apenas para pegar os metadados (para não pesar)
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        docs.append({
+                            "id": data.get("id", filename),
+                            "filename": data.get("original_filename", filename),
+                            "timestamp": data.get("timestamp", ""),
+                            "mode": data.get("mode", "standard"),
+                            "size": os.path.getsize(filepath)
+                        })
+                except Exception:
+                    continue
+        
+        # Ordena por mais recente primeiro
+        docs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return jsonify({"success": True, "documents": docs})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/saved_docs/<doc_id>", methods=["GET"])
+@login_required
+def get_saved_document(doc_id):
+    """Retorna um documento salvo específico."""
+    try:
+        safe_id = secure_filename(doc_id)
+        filepath = os.path.join(SAVED_DOCS_DIR, safe_id)
+        
+        if not os.path.exists(filepath):
+            return jsonify({"success": False, "error": "Documento não encontrado."}), 404
+            
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        return jsonify({"success": True, "document": data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 def get_local_ip():
