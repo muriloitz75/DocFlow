@@ -786,6 +786,11 @@
             font-weight: 800;
         }
 
+        .highlight-paragraph {
+            color: #10b981;
+            font-weight: 700;
+        }
+
         .highlight-inciso {
             color: #2563eb;
             font-weight: 700;
@@ -1958,7 +1963,8 @@
                 nodesToReplace.push(node);
             }
             
-            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:-[A-Za-z])?\.?|§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
+            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:-[A-Za-z])?\.?)/i;
+            const parRegex = /^(\s*(?:\*\*|__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
             const incisoRegex = /^(\s*(?:\*\*|__)?)([IVXLCDM]+)(\s*[-–—])/;
             
             nodesToReplace.forEach(textNode => {
@@ -1968,6 +1974,9 @@
                 
                 if (artRegex.test(text)) {
                     newHtml = newHtml.replace(artRegex, '$1<span class="highlight-article">$2</span>');
+                    changed = true;
+                } else if (parRegex.test(text)) {
+                    newHtml = newHtml.replace(parRegex, '$1<span class="highlight-paragraph">$2</span>');
                     changed = true;
                 }
                 
