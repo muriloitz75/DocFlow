@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from functools import wraps
 
@@ -1249,7 +1249,7 @@ def save_document():
             
             # Cria um nome de arquivo seguro e único
             safe_filename = secure_filename(filename) or "doc"
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             doc_id = f"{safe_filename}_{timestamp}.json"
         
         filepath = os.path.join(SAVED_DOCS_DIR, doc_id)
@@ -1259,7 +1259,7 @@ def save_document():
             json.dump({
                 "id": doc_id,
                 "original_filename": filename,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "mode": data.get("mode", "standard"),
                 "markdown": data["markdown"],
                 "html": data["html"]
