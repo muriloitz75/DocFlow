@@ -1507,8 +1507,11 @@
             font-size: 11px;
             font-weight: 700;
             padding: 6px 10px;
+            width: max-content;
+            min-width: 160px;
             max-width: 280px;
             white-space: normal;
+            overflow-wrap: break-word;
             border: var(--border);
             box-shadow: 3px 3px 0px var(--accent);
             pointer-events: none;
@@ -3006,49 +3009,49 @@
             }
         }
 
-        function removeHighlight(markEl) {
-            const parent = markEl.parentNode;
+        function unwrapAnnotationElement(annotationEl) {
+            const parent = annotationEl.parentNode;
             if (!parent) return;
             
-            // Move todos os filhos do <mark> (geralmente apenas texto) para antes dele no pai
-            while (markEl.firstChild) {
-                parent.insertBefore(markEl.firstChild, markEl);
+            // Move todos os filhos do elemento anotado para antes dele no pai
+            while (annotationEl.firstChild) {
+                parent.insertBefore(annotationEl.firstChild, annotationEl);
             }
-            parent.removeChild(markEl);
+            parent.removeChild(annotationEl);
             parent.normalize(); // Consolida nós de texto adjacentes
         }
 
-        function removeHighlightsInSelection() {
+        function removeHighlight(markEl) {
+            unwrapAnnotationElement(markEl);
+        }
+
+        function removeNote(noteEl) {
+            unwrapAnnotationElement(noteEl);
+        }
+
+        function removeAnnotationsInSelection() {
             const sel = window.getSelection();
             if (!sel || sel.isCollapsed) return;
 
             const range = sel.getRangeAt(0);
-            const container = range.commonAncestorContainer;
-            const parentNode = container.nodeType === Node.TEXT_NODE ? container.parentNode : container;
-            const highlights = [];
+            const annotations = Array.from(outputArea.querySelectorAll("mark.doc-highlight, .doc-note"))
+                .filter(node => range.intersectsNode(node));
 
-            // Encontra todos os <mark.doc-highlight> que interseccionam o range selecionado
-            function findHighlights(node) {
-                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("doc-highlight")) {
-                    if (range.intersectsNode(node)) {
-                        highlights.push(node);
-                    }
-                }
-                if (node.childNodes) {
-                    node.childNodes.forEach(findHighlights);
-                }
-            }
-
-            findHighlights(parentNode);
-
-            if (highlights.length > 0) {
-                highlights.forEach(removeHighlight);
+            if (annotations.length > 0) {
+                annotations.forEach(node => {
+                    if (node.matches("mark.doc-highlight")) removeHighlight(node);
+                    else if (node.matches(".doc-note")) removeNote(node);
+                });
                 sel.removeAllRanges();
                 hideSelectionPopover();
-                showPopoverToast("Realces removidos!");
+                showPopoverToast("Anotações removidas!");
             } else {
-                showPopoverToast("Nenhum realce na seleção.");
+                showPopoverToast("Nenhuma anotação na seleção.");
             }
+        }
+
+        function removeHighlightsInSelection() {
+            removeAnnotationsInSelection();
         }
 
         // --- EVENT LISTENERS PARA MARCA-TEXTO ---
@@ -3413,10 +3416,8 @@
                     const sel = window.getSelection();
                     if (sel && !sel.isCollapsed) {
                         removeHighlightsInSelection();
-                        hideSelectionPopover();
-                        showPopoverToast("Realce removido.");
                     } else {
-                        showPopoverToast("Selecione texto para apagar o realce.");
+                        showPopoverToast("Selecione texto para apagar a anotação.");
                     }
                 }
             });
