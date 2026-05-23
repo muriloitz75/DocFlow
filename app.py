@@ -1127,9 +1127,36 @@ def convert():
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
             file.save(temp_path)
-        
-        result = md_converter.convert(temp_path)
-        content = result.text_content
+            filepath = temp_path
+
+        else:
+            if is_url:
+                try:
+                    import requests
+                    import re
+                    from markitdown.converters._html_converter import HtmlConverter
+                    
+                    response = requests.get(file_or_url, timeout=30)
+                    content_type = response.headers.get("Content-Type", "").lower()
+                    
+                    if "text/html" in content_type:
+                        html_text = response.text
+                        # Corrige HTML malformado (ex: Planalto com </body> no meio do texto)
+                        html_text = re.sub(r'</?(body|html)[^>]*>', '', html_text, flags=re.IGNORECASE)
+                        
+                        converter = HtmlConverter()
+                        result = converter.convert_string(html_text, url=file_or_url)
+                        content = result.markdown
+                    else:
+                        result = md.convert(file_or_url)
+                        content = result.text_content
+                except Exception as e:
+                    print(f"Fallback fetch para {file_or_url}: {e}")
+                    result = md.convert(file_or_url)
+                    content = result.text_content
+            else:
+                result = md.convert(filepath)
+                content = result.text_content
         extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
         # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL/HTML
