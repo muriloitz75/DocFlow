@@ -2210,7 +2210,7 @@
                 setActions(Boolean(convertedContent));
                 if (saveDocBtn) saveDocBtn.disabled = !Boolean(convertedContent);
 
-                const suffix = data.truncated ? " Resultado truncado em 1 MB." : "";
+                const suffix = data.truncated ? " Resultado truncado em 10 MB." : "";
                 const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
                 const fmtLabel = selectedFormat === "html" ? " → HTML" : selectedFormat === "json" ? " → JSON" : "";
                 setStatus(`Conversão concluída em modo ${modeLabel}${fmtLabel}.${suffix}`, "success");

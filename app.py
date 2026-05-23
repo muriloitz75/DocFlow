@@ -1166,8 +1166,8 @@ def convert():
             
         original_length = len(content)
         truncated = False
-        if original_length > 1_000_000:
-            content = content[:1_000_000] + "\n\n... [conteúdo truncado]"
+        if original_length > 10_000_000:
+            content = content[:10_000_000] + "\n\n... [conteúdo truncado]"
             truncated = True
             
         return jsonify({
