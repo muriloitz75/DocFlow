@@ -324,12 +324,15 @@ def _starts_structural_block(line):
     text = _normalize_text_line(line)
     if _heading_from_line(text):
         return True
-    if CITATION_PATTERN.match(text):
+        
+    clean_text = re.sub(r"^[\*_]+", "", text).strip()
+    
+    if CITATION_PATTERN.match(clean_text):
         return False
-    if any(pattern.match(text) for pattern in STRUCTURAL_LINE_PATTERNS[1:]):
+    if any(pattern.match(clean_text) for pattern in STRUCTURAL_LINE_PATTERNS[1:]):
         return True
         
-    roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", text, flags=re.I)
+    roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", clean_text, flags=re.I)
     if roman_match and roman_match.group(1).upper() in VALID_ROMANS:
         return True
         
