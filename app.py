@@ -142,7 +142,7 @@ def normalize_abnt_markdown(content):
 
 LEGAL_HEADING_PATTERNS = [
     (1, re.compile(r"^LIVRO\s+(?:[IVXLCDM]+|COMPLEMENTAR|PRIMEIRO|SEGUNDO|TERCEIRO|QUARTO|[ÚU]NICO)\b", re.I)),
-    (2, re.compile(r"^(?:DAS\s+)?DISPOSI[ÇC](?:[ÃA]O|[ÕO]ES)\s+(?:PRELIMINAR(?:ES)?|GERA(?:IS|L)|FINA(?:IS|L)|TRANSIT[ÓO]RIA(?:S)?)\b", re.I)),
+    (2, re.compile(r"^(?:DAS\s+)?DISPOSI[ÇC](?:[ÃA]O|[ÕO]ES)\s+(?:PRELIMINAR(?:ES)?|GERA(?:IS|L)|FINA(?:IS|L)|TRANSIT[ÓO]RIA(?:S)?)(?:\s+E\s+(?:PRELIMINAR(?:ES)?|GERA(?:IS|L)|FINA(?:IS|L)|TRANSIT[ÓO]RIA(?:S)?))?(?:\s*[-–—:]\s*.*)?$", re.I)),
     (2, re.compile(r"^T[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (3, re.compile(r"^CAP[ÍI]TULO\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
     (4, re.compile(r"^SE[ÇC][ÃA]O\s+(?:[IVXLCDM]+|[0-9]+)\b", re.I)),
@@ -242,7 +242,7 @@ def _heading_from_line(line):
         return None
 
     # Strip markdown bold and italic formatting wrappers
-    clean_stripped = re.sub(r"^[\*_]+|[\*_]+$", "", stripped).strip()
+    clean_stripped = re.sub(r"[\*_]+", "", stripped).strip()
 
     if clean_stripped.startswith("#"):
         marker, _, title = clean_stripped.partition(" ")
