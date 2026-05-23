@@ -2162,6 +2162,7 @@
         });
 
         convertBtn.addEventListener("click", async () => {
+            currentDocId = null;
             const formData = new FormData();
             let displayName = "documento";
             
@@ -3148,6 +3149,8 @@
         const savedDocsList = document.getElementById("savedDocsList");
         const closeLoadModalBtn = document.getElementById("closeLoadModalBtn");
 
+        let currentDocId = null;
+
         saveDocBtn.addEventListener("click", async () => {
             if (!convertedContent) return;
             
@@ -3160,6 +3163,7 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        doc_id: currentDocId,
                         filename: getActiveFilename(),
                         mode: selectedOption,
                         markdown: convertedContent,
@@ -3168,6 +3172,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
+                    currentDocId = data.id;
                     setStatus("Documento e marcações salvos com sucesso!", "success");
                 } else {
                     setStatus("Erro ao salvar: " + (data.error || "Desconhecido"), "error");
@@ -3233,6 +3238,7 @@
                 
                 if (response.ok && data.success) {
                     const doc = data.document;
+                    currentDocId = doc.id;
                     convertedContent = doc.markdown;
                     selectedOption = doc.mode;
                     

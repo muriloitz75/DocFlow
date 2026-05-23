@@ -1240,14 +1240,17 @@ def save_document():
             return jsonify({"success": False, "error": "Dados incompletos."}), 400
         
         filename = data.get("filename", "documento")
-        # Remove extensão original se presente
-        if '.' in filename:
-            filename = filename.rsplit('.', 1)[0]
         
-        # Cria um nome de arquivo seguro e único
-        safe_filename = secure_filename(filename) or "doc"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        doc_id = f"{safe_filename}_{timestamp}.json"
+        doc_id = data.get("doc_id")
+        if not doc_id:
+            # Remove extensão original se presente
+            if '.' in filename:
+                filename = filename.rsplit('.', 1)[0]
+            
+            # Cria um nome de arquivo seguro e único
+            safe_filename = secure_filename(filename) or "doc"
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            doc_id = f"{safe_filename}_{timestamp}.json"
         
         filepath = os.path.join(SAVED_DOCS_DIR, doc_id)
         
