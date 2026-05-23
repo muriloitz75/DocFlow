@@ -3202,17 +3202,31 @@
                     
                     data.documents.forEach(doc => {
                         const li = document.createElement("li");
-                        li.style.cssText = "border: var(--border); padding: 12px; cursor: pointer; transition: background 0.2s;";
+                        li.style.cssText = "border: var(--border); padding: 8px 12px; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;";
                         li.onmouseover = () => li.style.background = "#d8d6d0";
                         li.onmouseout = () => li.style.background = "transparent";
                         
                         const dateStr = new Date(doc.timestamp).toLocaleString("pt-BR");
-                        li.innerHTML = `
+                        
+                        const infoDiv = document.createElement("div");
+                        infoDiv.style.cssText = "cursor: pointer; flex: 1;";
+                        infoDiv.innerHTML = `
                             <div style="font-weight: bold; font-family: var(--font-sans); font-size: 14px;">${doc.filename}</div>
                             <div style="font-size: 11px; opacity: 0.7; font-family: var(--font-mono); margin-top: 4px;">Modo: ${doc.mode} | Salvo em: ${dateStr}</div>
                         `;
+                        infoDiv.addEventListener("click", () => loadDocument(doc.id));
+
+                        const delBtn = document.createElement("button");
+                        delBtn.title = "Excluir documento";
+                        delBtn.style.cssText = "background: transparent; border: none; color: var(--accent); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; transition: transform 0.1s;";
+                        delBtn.onmouseover = () => delBtn.style.transform = "scale(1.1)";
+                        delBtn.onmouseout = () => delBtn.style.transform = "scale(1)";
+                        delBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+                        delBtn.addEventListener("click", (e) => deleteDocument(doc.id, e));
+
+                        li.appendChild(infoDiv);
+                        li.appendChild(delBtn);
                         
-                        li.addEventListener("click", () => loadDocument(doc.id));
                         savedDocsList.appendChild(li);
                     });
                 } else {
@@ -3265,6 +3279,25 @@
                 }
             } catch (err) {
                 setStatus("Erro de conexão ao carregar documento.", "error");
+            }
+        }
+
+        async function deleteDocument(docId, event) {
+            if (event) event.stopPropagation();
+            if (!confirm("Tem certeza que deseja excluir este documento salvo?")) return;
+            
+            try {
+                const response = await fetch(`/api/saved_docs/${docId}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    if (currentDocId === docId) currentDocId = null;
+                    setStatus("Documento excluído com sucesso.", "success");
+                    loadDocsBtn.click(); // Recarrega a lista
+                } else {
+                    alert("Erro ao excluir: " + (data.error || "Desconhecido"));
+                }
+            } catch (err) {
+                alert("Erro de conexão ao excluir documento.");
             }
         }
 
