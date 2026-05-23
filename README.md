@@ -12,17 +12,17 @@ O DocFlow oferece uma interface gráfica no navegador para converter arquivos de
 
 ### Formatos suportados
 
-| Categoria | Extensões |
+| Categoria | Extensões / Tipos |
 |---|---|
 | Documentos | PDF, DOCX, XLSX, XLS, PPTX |
-| Web | HTML, HTM |
+| Web | HTML, HTM, **URLs Públicas** |
 | Dados | CSV, JSON, XML |
 | Imagens | PNG, JPG, JPEG, GIF, BMP |
 | Áudio | MP3, WAV |
 | Texto | TXT, MD |
 | Outros | EPUB, ZIP |
 
-Limite de upload: **100 MB** por arquivo.
+Limites: **100 MB** por upload de arquivo. Suporte a extração e conversão de textos diretamente via **Links/URLs** copiados da web (como o portal do Planalto).
 
 ### Modos de saída
 
@@ -160,14 +160,15 @@ Serve arquivos estáticos da pasta `image/`.
 
 ---
 
-## Tratamento especial para PDFs jurídicos
+## Tratamento especial para textos jurídicos
 
-O `app.py` contém lógica dedicada para documentos legais municipais:
+O sistema contém lógicas dedicadas (no Backend e no Frontend) para melhorar drasticamente a legibilidade de documentos legais e governamentais:
 
-- **Limpeza de cabeçalhos/rodapés** — remove marcas institucionais repetidas (ex.: DIAAF) detectadas por frequência entre páginas
-- **Formatação modelo 2** — agrupa parágrafos fragmentados, formata artigos com negrito (`**Art. 1.**`), organiza incisos romanos e alíneas
-- **Remoção de duplicatas** — detecta quando o PDF gerou o documento em duplicata e remove a segunda cópia
-- **Correção de deslocamentos** — repara transposições de texto específicas de PDFs gerados por escâneres
+- **Limpeza de cabeçalhos/rodapés** — remove marcas institucionais repetidas (ex.: DIAAF) detectadas por frequência entre páginas.
+- **Estruturação hierárquica** — agrupa parágrafos fragmentados, formata artigos com negrito (`**Art. 1.**`), e organiza corretamente as classificações de Capítulos, Seções, e Subseções, além de extrair títulos especiais como `DISPOSIÇÕES GERAIS`.
+- **Destaque Visual Inteligente** — a própria interface aplica colorização automática da taxonomia legal (Artigos em Laranja, Parágrafos em Verde, Incisos em Azul e Alíneas em Roxo), ignorando menções no meio do texto e aplicando apenas para as aberturas de bloco.
+- **Remoção de duplicatas** — detecta quando o PDF gerou o documento em duplicata (anexos inteiros idênticos) e remove a segunda cópia.
+- **Correção de deslocamentos** — repara transposições de texto específicas de PDFs gerados por escâneres e protege menções legais (ex: de leis e parágrafos) para que não quebrem o formato do documento.
 
 ---
 
