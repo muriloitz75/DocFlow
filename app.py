@@ -1101,9 +1101,6 @@ def convert():
             else:
                 html_str = '<meta charset="utf-8">' + html_str
                 
-            # Strip stray </body> and </html> tags to prevent premature truncation in BeautifulSoup
-            html_str = re.sub(r'</?(body|html)[^>]*>', '', html_str, flags=re.I)
-            
             with open(temp_path, "w", encoding="utf-8") as f:
                 f.write(html_str)
         else:
@@ -1131,6 +1128,17 @@ def convert():
             temp_path = os.path.join(temp_dir, filename)
             file.save(temp_path)
             filepath = temp_path
+
+        # If the file is HTML, sanitize it to prevent truncation by premature </body> tags
+        if temp_path.lower().endswith(".html"):
+            try:
+                with open(temp_path, "r", encoding="utf-8", errors="replace") as f:
+                    html_content = f.read()
+                html_content = re.sub(r'</?(body|html)[^>]*>', '', html_content, flags=re.IGNORECASE)
+                with open(temp_path, "w", encoding="utf-8") as f:
+                    f.write(html_content)
+            except Exception as e:
+                print("Error sanitizing HTML:", e)
 
         result = md_converter.convert(temp_path)
         content = result.text_content
