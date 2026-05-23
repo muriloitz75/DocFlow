@@ -1,0 +1,537 @@
+|  |  |
+| --- | --- |
+| ![Brastra.gif (4376 bytes)](../Brastra.gif) | **Presidência da República  Casa Civil  Subchefia para Assuntos Jurídicos** |
+
+[**LEI Nº 5.172, DE 25 DE OUTUBRO DE 1966**.](http://legislacao.planalto.gov.br/legisla/legislacao.nsf/Viw_Identificacao/lei%205.172-1966?OpenDocument)
+
+|  |  |
+| --- | --- |
+| [Denominado Código Tributário Nacional](../ACP/acp-36-67.htm#art7) [Vigência](#art218) [(Vide Decreto-lei nº 82, de 1966)](../Decreto-Lei/1965-1988/Del0082.htm)   [(Vide Decreto nº 6.306, de 2007)](../_Ato2007-2010/2007/Decreto/D6306.htm) [(Vide Complementar nº 214, de 2025)](LCP/Lcp214.htm#art496)       [Produção de efeitos](LCP/Lcp214.htm#art544-6) | Dispõe sobre o Sistema Tributário Nacional e institui normas gerais de direito tributário aplicáveis à União, Estados e Municípios. |
+
+**O
+PRESIDENTE DA REPÚBLICA** Faço saber que o Congresso Nacional decreta e eu sanciono a
+seguinte lei:
+
+**DISPOSIÇÃO PRELIMINAR**
+
+        Art.
+1º Esta Lei regula, com fundamento na
+[Emenda Constitucional n. 18, de 1º de dezembro de
+1965](../Constituicao/Emendas/Emc_anterior1988/emc18-65.htm), o sistema tributário nacional e estabelece, com fundamento no
+[art. 5º, inciso
+XV, alínea *b*, da Constituição Federal](../Constituicao/Constituicao46.htm#art5xvb) as normas gerais de direito tributário
+aplicáveis à União, aos Estados, ao Distrito Federal e aos Municípios, sem prejuízo
+da respectiva legislação complementar, supletiva ou regulamentar.
+
+LIVRO PRIMEIRO
+
+SISTEMA TRIBUTÁRIO NACIONAL
+
+TÍTULO I
+
+Disposições Gerais
+
+        Art.
+2º O sistema tributário nacional é regido pelo disposto na
+[Emenda Constitucional n. 18,
+de 1º de dezembro de 1965](../Constituicao/Emendas/Emc_anterior1988/emc18-65.htm), em leis complementares, em resoluções do Senado Federal e,
+nos limites das respectivas competências, em leis federais, nas Constituições e em leis
+estaduais, e em leis municipais.
+
+        Art.
+3º Tributo é toda prestação pecuniária compulsória, em moeda ou cujo valor nela se
+possa exprimir, que não constitua sanção de ato ilícito, instituída em lei e cobrada
+mediante atividade administrativa plenamente vinculada.
+
+        Art. 4º
+A natureza jurídica específica do tributo é determinada pelo fato gerador da respectiva
+obrigação, sendo irrelevantes para qualificá-la:
+
+        I - a
+denominação e demais características formais adotadas pela lei;
+
+        II - a
+destinação legal do produto da sua arrecadação.
+
+        Art.
+5º Os tributos são impostos, taxas e contribuições de melhoria.
+
+TÍTULO II
+
+Competência Tributária
+
+CAPÍTULO I
+
+Disposições Gerais
+
+        Art.
+6º A atribuição constitucional de competência tributária compreende a competência
+legislativa plena, ressalvadas as limitações contidas na Constituição Federal, nas
+Constituições dos Estados e nas Leis Orgânicas do Distrito Federal e dos Municípios, e
+observado o disposto nesta Lei.
+
+Parágrafo único. Os tributos cuja receita seja distribuída, no todo ou em parte, a
+outras pessoas jurídicas de direito público pertencerá à competência legislativa
+daquela a que tenham sido atribuídos.
+
+        Art. 7º
+A competência tributária é indelegável, salvo atribuição das funções de arrecadar
+ou fiscalizar tributos, ou de executar leis, serviços, atos ou decisões administrativas
+em matéria tributária, conferida por uma pessoa jurídica de direito público a outra,
+nos termos do [§ 3º do art. 18 da Constituição](../Constituicao/Constituicao46.htm#art18§3).
+
+        § 1º A
+atribuição compreende as garantias e os privilégios processuais que competem à pessoa
+jurídica de direito público que a conferir.
+
+        § 2º A
+atribuição pode ser revogada, a qualquer tempo, por ato unilateral da pessoa jurídica
+de direito público que a tenha conferido.
+
+        § 3º
+Não constitui delegação de competência o cometimento, a pessoas de direito privado, do
+encargo ou da função de arrecadar tributos.
+
+        Art.
+8º O não-exercício da competência tributária não a defere a pessoa jurídica de
+direito público diversa daquela a que a Constituição a tenha atribuído.
+
+CAPÍTULO II
+
+Limitações da Competência Tributária
+
+Seção I
+
+Disposições Gerais
+
+        Art.
+9º É vedado à União, aos Estados, ao Distrito Federal e aos Municípios:
+
+        I -
+instituir ou majorar tributo sem que a lei o estabeleça, ressalvado, quanto à
+majoração, o disposto nos arts. 21, 26 e 65;
+
+        II -
+cobrar impôsto sôbre o patrimônio e a renda com base em lei posterior à data inicial do
+exercício financeiro a que corresponda;
+
+        III -
+estabelecer limitações ao tráfego, no território nacional, de pessoas ou mercadorias,
+por meio de tributos interestaduais ou intermunicipais;
+
+IV - cobrar impostos e a contribuição de
+que trata o [inciso V do art. 195 da Constituição Federal](../Constituicao/Constituicao.htm#art195-5)sobre:      [(Redação dada pela Lei Complementar nº 214, de 2025)](LCP/Lcp214.htm#art496)
+[Produção de efeitos](LCP/Lcp214.htm#art544-6)
+
+        a) o
+patrimônio, a renda ou os serviços uns dos outros;
+
+       b) entidades religiosas e templos de
+qualquer culto, inclusive suas organizações assistenciais e
+beneficentes;
+[(Redação dada pela Lei
+Complementar nº 214, de 2025)](LCP/Lcp214.htm#art496)
+[Produção de efeitos](LCP/Lcp214.htm#art544-6)
+
+        c)o patrimônio, a renda ou serviços dos partidos políticos, inclusive suas
+fundações, das entidades sindicais dos trabalhadores, das instituições de educação e
+de assistência social, sem fins lucrativos, observados os requisitos fixados na Seção
+II deste Capítulo; [(Redação dada pela Lei Complementar nº 104, de
+2001)](LCP/Lcp104.htm)
+
+        d) papel
+destinado exclusivamente à impressão de jornais, periódicos e livros.
+
+        § 1º O
+disposto no inciso IV não exclui a atribuição, por lei, às entidades nêle referidas,
+da condição de responsáveis pelos tributos que lhes caiba reter na fonte, e não as
+dispensa da prática de atos, previstos em lei, assecuratórios do cumprimento de
+obrigações tributárias por terceiros.
+
+        § 2º O
+disposto na alínea a do inciso IV aplica-se, exclusivamente, aos serviços próprios das
+pessoas jurídicas de direito público a que se refere este artigo, e inerentes aos seus
+objetivos.
+
+        Art.
+10. É vedado à União instituir tributo que não seja uniforme em todo o território
+nacional, ou que importe distinção ou preferência em favor de determinado Estado ou
+Município.
+
+        Art. 11.
+É vedado aos Estados, ao Distrito Federal e aos Municípios estabelecer diferença
+tributária entre bens de qualquer natureza, em razão da sua procedência ou do seu
+destino.
+
+**SEÇÃO II**
+
+**Disposições Especiais**
+
+        Art.
+12. O disposto na alínea a do inciso IV do art. 9º, observado o disposto nos seus §§
+1º e 2º, é extensivo às autarquias criadas pela União, pelos Estados, pelo Distrito
+Federal ou pelos Municípios, tão-somente no que se refere ao patrimônio, à renda ou
+aos serviços vinculados às suas finalidades essenciais, ou delas decorrentes.
+
+        Art.
+13. O disposto na alínea a do inciso IV do art. 9º não se aplica aos serviços
+públicos concedidos, cujo tratamento tributário é estabelecido pelo poder concedente,
+no que se refere aos tributos de sua competência, ressalvado o que dispõe o parágrafo
+único.
+
+Parágrafo único. Mediante lei especial e tendo em vista o interêsse comum, a União pode
+instituir isenção de tributos federais, estaduais e municipais para os serviços
+públicos que conceder, observado o disposto no § 1º do art. 9º.
+
+Art. 14. O disposto na alínea c do inciso IV do art. 9º é subordinado à
+observância dos seguintes requisitos pelas entidades nêle referidas:
+
+        I – não distribuírem qualquer parcela de seu patrimônio ou de suas
+rendas, a qualquer título; [(Redação dada pela Lcp nº 104, de
+2001)](LCP/Lcp104.htm)
+
+II - aplicarem integralmente, no País, os seus recursos na manutenção dos seus
+objetivos institucionais;
+
+        III -
+manterem escrituração de suas receitas e despesas em livros revestidos de formalidades
+capazes de assegurar sua exatidão.
+
+        § 1º Na
+falta de cumprimento do disposto neste artigo, ou no § 1º do art. 9º, a autoridade
+competente pode suspender a aplicação do benefício.
+
+        § 2º Os
+serviços a que se refere a alínea c do inciso IV do art. 9º são exclusivamente, os
+diretamente relacionados com os objetivos institucionais das entidades de que trata este
+artigo, previstos nos respectivos estatutos ou atos constitutivos.
+
+        Art.
+15. Somente a União, nos seguintes casos excepcionais, pode instituir empréstimos
+compulsórios:
+
+        I -
+guerra externa, ou sua iminência;
+
+        II -
+calamidade pública que exija auxílio federal impossível de atender com os recursos
+orçamentários disponíveis;
+
+        III -
+conjuntura que exija a absorção temporária de poder aquisitivo.
+
+Parágrafo único. A lei fixará obrigatoriamente o prazo do empréstimo e as condições
+de seu resgate, observando, no que for aplicável, o disposto nesta lei.
+
+TÍTULO III
+
+Impostos
+
+CAPÍTULO I
+
+Disposições Gerais
+
+        Art.
+16. Imposto é o tributo cuja obrigação tem por fato gerador uma situação independente
+de qualquer atividade estatal específica, relativa ao contribuinte.
+
+        Art. 17.
+Os impostos componentes do sistema tributário nacional são exclusivamente os que constam
+dêste Título, com as competências e limitações nele previstas.
+
+        Art. 18.
+Compete:
+
+        I - à
+União, instituir, nos Territórios Federais, os impostos atribuídos aos Estados e, se
+aqueles não forem divididos em Municípios, cumulativamente, os atribuídos a êstes;
+
+        II - ao
+Distrito Federal e aos Estados não divididos em Municípios, instituir, cumulativamente,
+os impostos atribuídos aos Estados e aos Municípios.
+
+Art. 18-A. Para
+fins da incidência do imposto de que trata o inciso II do **caput** do art.
+155 da Constituição Federal, os combustíveis, o gás natural, a energia elétrica,
+as comunicações e o transporte coletivo são considerados bens e serviços
+essenciais e indispensáveis, que não podem ser tratados como supérfluos.
+[(Incluído pela Lei Complementar nº 194, de 2022)](LCP/Lcp194.htm#art1)
+
+Parágrafo único. Para efeito do disposto neste artigo:
+[(Incluído pela Lei Complementar nº 194, de 2022)](LCP/Lcp194.htm#art1)
+
+I - é
+vedada a fixação de alíquotas sobre as operações referidas no **caput** deste
+artigo em patamar superior ao das operações em geral, considerada a
+essencialidade dos bens e serviços;
+[(Incluído pela Lei Complementar nº 194, de 2022)](LCP/Lcp194.htm#art1)
+
+II - é
+facultada ao ente federativo competente a aplicação de alíquotas reduzidas em
+relação aos bens referidos no **caput** deste artigo, como forma de
+beneficiar os consumidores em geral; e
+[(Incluído pela Lei Complementar nº 194, de 2022)](LCP/Lcp194.htm#art1)
+
+III -
+[(Revogado pela Lei Complementar nº 201, de 2023)](LCP/Lcp201.htm#art18)
+
+CAPÍTULO II
+
+Impostos sôbre o Comércio Exterior
+
+Seção I
+
+Impôsto sôbre a Importação
+
+        Art.
+19. O impôsto, de competência da União, sôbre a importação de produtos estrangeiros
+tem como fato gerador a entrada dêstes no território nacional.
+
+        Art. 20.
+A base de cálculo do impôsto é:
+
+        I -
+quando a alíquota seja específica, a unidade de medida adotada pela lei tributária;
+
+        II -
+quando a alíquota seja ad valorem, o preço normal que o produto, ou seu similar,
+alcançaria, ao tempo da importação, em uma venda em condições de livre concorrência,
+para entrega no porto ou lugar de entrada do produto no País;
+
+        III -
+quando se trate de produto apreendido ou abandonado, levado a leilão, o preço da
+arrematação.
+
+        Art.
+21. O Poder Executivo pode, nas condições e nos limites estabelecidos em lei, alterar as
+alíquotas ou as bases de cálculo do impôsto, a fim de ajustá-lo aos objetivos da
+política cambial e do comércio exterior.
+
+        Art. 22.
+Contribuinte do impôsto é:
+
+        I - o
+importador ou quem a lei a ele equiparar;
+
+        II - o
+arrematante de produtos apreendidos ou abandonados.
+
+Seção II
+
+Impôsto sôbre a Exportação
+
+        Art.
+23. O impôsto, de competência da União, sôbre a exportação, para o estrangeiro, de
+produtos nacionais ou nacionalizados tem como fato gerador a saída dêstes do território
+nacional.
+
+        Art. 24.
+A base de cálculo do impôsto é:
+
+        I -
+quando a alíquota seja específica, a unidade de medida adotada pela lei tributária;
+
+        II -
+quando a alíquota seja ad valorem, o preço normal que o produto, ou seu similar,
+alcançaria, ao tempo da exportação, em uma venda em condições de livre concorrência.
+
+Parágrafo único. Para os efeitos do inciso II, considera-se a entrega como efetuada no
+porto ou lugar da saída do produto, deduzidos os tributos diretamente incidentes sôbre a
+operação de exportação e, nas vendas efetuadas a prazo superior aos correntes no
+mercado internacional o custo do financiamento.
+
+        Art.
+25. A lei pode adotar como base de cálculo a parcela do valor ou do preço, referidos no
+artigo anterior, excedente de valor básico, fixado de acordo com os critérios e dentro
+dos limites por ela estabelecidos.
+
+        Art. 26.
+O Poder Executivo pode, nas condições e nos limites estabelecidos em lei, alterar as
+alíquotas ou as bases de cálculo do impôsto, a fim de ajustá-los aos objetivos da
+política cambial e do comércio exterior.
+
+        Art. 27.
+Contribuinte do impôsto é o exportador ou quem a lei a êle equiparar.
+
+        Art.
+28. A receita líquida do impôsto destina-se à formação de reservas monetárias, na
+forma da lei.
+
+CAPÍTULO III
+
+Impostos sôbre o Patrimônio e a Renda
+
+Seção I
+
+Impôsto sôbre a Propriedade Territorial Rural
+
+Art. 29. O impôsto, de competência da União, sobre a propriedade
+territorial rural tem como fato gerador a propriedade, o domínio útil ou a posse de
+imóvel por natureza, como definido na lei civil, localizado fora da zona urbana do
+Município.
+
+      Art. 30.
+A base do cálculo do impôsto é o valor fundiário.
+
+Art. 31. Contribuinte do impôsto é o proprietário do imóvel, o titular de
+seu domínio útil, ou o seu possuidor a qualquer título.
+
+Seção II
+
+Impôsto sôbre a Propriedade Predial e Territorial
+Urbana
+
+Art. 32. O impôsto, de competência dos Municípios, sôbre a propriedade
+predial e territorial urbana tem como fato gerador a propriedade, o domínio útil ou a
+posse de bem imóvel por natureza ou por acessão física, como definido na lei civil,
+localizado na zona urbana do Município.
+
+        § 1º
+Para os efeitos dêste impôsto, entende-se como zona urbana a definida em lei municipal;
+observado o requisito mínimo da existência de melhoramentos indicados em pelo menos 2
+(dois) dos incisos seguintes, construídos ou mantidos pelo Poder Público:
+
+        I -
+meio-fio ou calçamento, com canalização de águas pluviais;
+
+        II -
+abastecimento de água;
+
+        III -
+sistema de esgotos sanitários;
+
+        IV - rêde
+de iluminação pública, com ou sem posteamento para distribuição domiciliar;
+
+        V -
+escola primária ou pôsto de saúde a uma distância máxima de 3 (três) quilômetros do
+imóvel considerado.
+
+        § 2º A
+lei municipal pode considerar urbanas as áreas urbanizáveis, ou de expansão urbana,
+constantes de loteamentos aprovados pelos órgãos competentes, destinados à habitação,
+à indústria ou ao comércio, mesmo que localizados fora das zonas definidas nos têrmos
+do parágrafo anterior.
+
+        Art.
+33. A base do cálculo do impôsto é o valor venal do imóvel.
+
+Parágrafo único. Na determinação da base de cálculo, não se considera o valor dos
+bens móveis mantidos, em caráter permanente ou temporário, no imóvel, para efeito de
+sua utilização, exploração, aformoseamento ou comodidade.
+
+        Art. 34.
+Contribuinte do impôsto é o proprietário do imóvel, o titular do seu domínio útil, ou
+o seu possuidor a qualquer título.
+
+Seção III
+
+[(Redação dada pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+Do Imposto sobre
+a Transmissão *Inter vivos*, por Ato Oneroso, de Bens Imóveis e de Direitos
+a Eles Relativos
+
+Art. 35.
+O Imposto sobre a Transmissão *Inter vivos*, por Ato Oneroso, de Bens
+Imóveis e de Direitos a Eles Relativos, de competência dos Municípios e do
+Distrito Federal, tem como fato gerador:
+[(Redação dada pela Lei Complementar nº 227, de
+2026)](LCP/Lcp227.htm#art165)
+
+I - a
+transmissão *inter vivos*, a qualquer título, por ato oneroso, da
+propriedade ou do domínio útil de bens imóveis por natureza ou por acessão
+física, como definidos na lei civil;
+[(Redação dada pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+II - a
+transmissão *inter vivos*, a qualquer título, por ato oneroso, de direitos
+reais sobre imóveis, exceto os direitos reais de garantia;
+[(Redação dada pela Lei Complementar nº 227, de
+2026)](LCP/Lcp227.htm#art165)
+
+III - a
+cessão *inter vivos*, por ato oneroso, de direitos relativos às
+transmissões referidas nos incisos I e II deste *caput*.
+[(Redação dada pela Lei Complementar nº 227, de
+2026)](LCP/Lcp227.htm#art165)
+
+Parágrafo único. [(Revogado)](LCP/Lcp227.htm#art181).
+[(Redação dada pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+Art.
+35-A. (VETADO).
+[(Incluído pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+        Art.
+36. Ressalvado o disposto no artigo seguinte, o impôsto não incide sôbre a transmissão
+dos bens ou direitos referidos no artigo anterior:
+
+        I -
+quando efetuada para sua incorporação ao patrimônio de pessoa jurídica em pagamento de
+capital nela subscrito;
+
+        II -
+quando decorrente da incorporação ou da fusão de uma pessoa jurídica por outra ou com
+outra.
+
+Parágrafo único. O impôsto não incide sôbre a transmissão aos mesmos alienantes, dos
+bens e direitos adquiridos na forma do inciso I dêste artigo, em decorrência da sua desincorporação do patrimônio da pessoa jurídica a que foram conferidos.
+
+        Art.
+37. O disposto no artigo anterior não se aplica quando a pessoa jurídica adquirente
+tenha como atividade preponderante a venda ou locação de propriedade imobiliária ou a
+cessão de direitos relativos à sua aquisição.
+
+        § 1º
+Considera-se caracterizada a atividade preponderante referida neste artigo quando mais de
+50% (cinqüenta por cento) da receita operacional da pessoa jurídica adquirente, nos 2
+(dois) anos anteriores e nos 2 (dois) anos subseqüentes à aquisição, decorrer de
+transações mencionadas neste artigo.
+
+        § 2º Se
+a pessoa jurídica adquirente iniciar suas atividades após a aquisição, ou menos de 2
+(dois) anos antes dela, apurar-se-á a preponderância referida no parágrafo anterior
+levando em conta os 3 (três) primeiros anos seguintes à data da aquisição.
+
+        § 3º
+Verificada a preponderância referida neste artigo, tornar-se-á devido o impôsto, nos
+termos da lei vigente à data da aquisição, sôbre o valor do bem ou direito nessa data.
+
+        § 4º O
+disposto neste artigo não se aplica à transmissão de bens ou direitos, quando realizada
+em conjunto com a da totalidade do patrimônio da pessoa jurídica alienante.
+
+        Art.
+38. A base de cálculo do imposto é o valor venal dos bens ou direitos transmitidos.
+
+§ 1º
+Considera-se valor venal, para fins do *caput* deste artigo, o valor pelo
+qual o bem ou direito seria negociado à vista, em condições normais de mercado.
+ [(Incluído
+pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+§ 2º O
+valor pelo qual o bem ou direito seria negociado à vista, em condições normais
+de mercado, a que se refere o § 1º deste artigo, será estimado por meio de
+critérios técnicos, considerando pelo menos um dos seguintes:
+ [(Incluído
+pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+I -
+análise de preços praticados no mercado imobiliário;
+ [(Incluído
+pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+II -
+informações prestadas pelos serviços notariais e registrais e por agentes
+financeiros;
+ [(Incluído
+pela Lei Complementar nº 227, de 2026)](LCP/Lcp227.htm#art165)
+
+III -
+localização, tipologia, destinação, padrão e área de terreno e construção, entre
+outras características do bem imóvel; e
+ [(Incluído
+pela Lei Complemen

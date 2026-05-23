@@ -903,6 +903,12 @@ def split_planalto_document(content):
     lines = content.splitlines()
     header_lines = []
     body_lines = []
+
+    if re.search(r"CONSTITUI[ÇC][ÃA]O\s+DA\s+REP[ÚU]BLICA", content, re.I):
+        preamble_pattern = re.compile(r"^\s*(?:\*\*)?PRE[ÂA]MBULO(?:\*\*)?\s*$", re.I)
+        for idx, line in enumerate(lines):
+            if preamble_pattern.match(line):
+                return "\n".join(lines[:idx]), "\n".join(lines[idx:])
     
     promulgation_pattern = re.compile(
         r'^\s*(?:\*\*|\*|)?(?:O\s+PRESIDENTE\s+DA\s+REP[ÚU]BLICA|O\s+CONGRESSO\s+NACIONAL|O\s+GOVERNADOR|O\s+PREFEITO|A\s+ASSEMBL[ÉE]IA\s+LEGISLATIVA|A\s+C[ÂA]MARA\s+MUNICIPAL)\b',
@@ -911,7 +917,8 @@ def split_planalto_document(content):
     
     promulgation_idx = -1
     for idx, line in enumerate(lines):
-        if promulgation_pattern.match(line):
+        clean_line = re.sub(r'^\s*(?:\*\*|\*)?', '', line).lstrip()
+        if clean_line[:1] in ("O", "A") and promulgation_pattern.match(line):
             promulgation_idx = idx
             break
             
@@ -1130,7 +1137,7 @@ def convert():
             filepath = temp_path
 
         # If the file is HTML, sanitize it to prevent truncation by premature </body> tags
-        if temp_path.lower().endswith(".html"):
+        if temp_path.lower().endswith((".html", ".htm")):
             try:
                 with open(temp_path, "r", encoding="utf-8", errors="replace") as f:
                     html_content = f.read()

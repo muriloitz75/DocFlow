@@ -46,7 +46,7 @@ result = md_converter.convert(temp_path)
 content = result.text_content
 
 print(f"\n=== RAW MARKITDOWN OUTPUT (first 2000 chars) ===")
-print(content[:2000])
+print(content)
 print(f"\n=== END RAW ===\n")
 
 # Apply planalto pipeline

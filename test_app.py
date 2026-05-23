@@ -397,6 +397,81 @@ class WebInterfaceTestCase(unittest.TestCase):
         )
 
     @unittest.mock.patch("requests.get")
+    def test_convert_via_htm_url_keeps_content_after_premature_body_close(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = (
+            b"<html><body><p>Parte dentro do body.</p></body>"
+            b"<p>Parte depois do body que tambem pertence ao documento.</p></html>"
+        )
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn("Parte dentro do body.", response.json["content"])
+        self.assertIn("Parte depois do body que tambem pertence ao documento.", response.json["content"])
+
+    def test_planalto_split_does_not_treat_lowercase_congress_continuation_as_promulgation(self):
+        content = "\n".join([
+            "Constituição",
+            "",
+            "| Presidência da República |",
+            "",
+            "**PREÂMBULO**",
+            "",
+            "**TÍTULO I**",
+            "",
+            "Art. 224. Para os efeitos do disposto neste capítulo,",
+            "o Congresso Nacional instituirá o Conselho de Comunicação Social.",
+            "",
+            "CAPÍTULO VI",
+            "",
+            "DO MEIO AMBIENTE",
+        ])
+
+        header_text, body_text = webapp.split_planalto_document(content)
+
+        self.assertNotIn("Art. 224", header_text)
+        self.assertIn("**PREÂMBULO**", body_text)
+        self.assertIn("o Congresso Nacional instituirá", body_text)
+
+    def test_planalto_split_constitution_starts_body_at_preamble(self):
+        content = "\n".join([
+            "Constituição",
+            "",
+            "| Presidência da República |",
+            "",
+            "**CONSTITUIÇÃO DA REPÚBLICA FEDERATIVA DO BRASIL DE 1988**",
+            "",
+            "**PREÂMBULO**",
+            "",
+            "**TÍTULO I**",
+            "",
+            "Art. 1º A República Federativa do Brasil...",
+            "",
+            "> **ATO DAS DISPOSIÇÕES CONSTITUCIONAIS TRANSITÓRIAS**",
+            "",
+            "Art. 1º. O Presidente da República, o Presidente do Supremo Tribunal Federal e os",
+            "membros do Congresso Nacional prestarão o compromisso.",
+        ])
+
+        header_text, body_text = webapp.split_planalto_document(content)
+
+        self.assertIn("CONSTITUIÇÃO DA REPÚBLICA", header_text)
+        self.assertNotIn("**PREÂMBULO**", header_text)
+        self.assertTrue(body_text.startswith("**PREÂMBULO**"))
+        self.assertIn("O Presidente da República", body_text)
+
+    @unittest.mock.patch("requests.get")
     def test_convert_via_url_failure(self, mock_get):
         mock_get.side_effect = Exception("Connection timed out")
 
