@@ -831,6 +831,7 @@
 
         /* TOC PANEL */
         .output-wrapper {
+            --toc-width: 280px;
             flex: 1;
             display: flex;
             position: relative;
@@ -841,7 +842,7 @@
         }
 
         .output-wrapper.toc-open {
-            padding-left: 280px;
+            padding-left: var(--toc-width);
         }
 
         /* FLOATING TOC HANDLE */
@@ -890,7 +891,7 @@
             top: 0;
             left: 0;
             bottom: 0;
-            width: 280px;
+            width: var(--toc-width);
             background: var(--surface);
             border-right: var(--border);
             z-index: 10;
@@ -904,6 +905,33 @@
         .toc-panel.visible {
             transform: translateX(0);
             box-shadow: 4px 0 12px rgba(0,0,0,0.08);
+        }
+
+        .toc-resize-handle {
+            position: absolute;
+            top: 0;
+            right: -5px;
+            bottom: 0;
+            width: 10px;
+            cursor: col-resize;
+            z-index: 2;
+        }
+
+        .toc-resize-handle::after {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 4px;
+            width: 2px;
+            background: rgba(17, 17, 17, 0.16);
+            transition: background 0.15s, width 0.15s;
+        }
+
+        .toc-resize-handle:hover::after,
+        .toc-panel.resizing .toc-resize-handle::after {
+            width: 3px;
+            background: var(--accent);
         }
 
         .toc-header {
@@ -1751,6 +1779,7 @@
                             </button>
                         </div>
                         <ul class="toc-list" id="tocList"></ul>
+                        <div class="toc-resize-handle" id="tocResizeHandle" title="Arrastar para ajustar largura"></div>
                     </nav>
                     <pre class="preview markdown-preview" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
                     <canvas id="penCanvas"></canvas>
@@ -1921,6 +1950,7 @@
         const tocBadge = document.getElementById("tocBadge");
         const tocCloseBtn = document.getElementById("tocCloseBtn");
         const tocToggleHandle = document.getElementById("tocToggleHandle");
+        const tocResizeHandle = document.getElementById("tocResizeHandle");
         const zoomControls = document.getElementById("zoomControls");
         const zoomOutBtn = document.getElementById("zoomOutBtn");
         const zoomInBtn = document.getElementById("zoomInBtn");
@@ -3340,6 +3370,50 @@
 
         if (tocToggleHandle) {
             tocToggleHandle.addEventListener("click", openToc);
+        }
+
+        let isResizingToc = false;
+        const minTocWidth = 220;
+        const maxTocWidth = 520;
+
+        function setTocWidth(width) {
+            if (!outputWrapper) return;
+            const wrapperWidth = outputWrapper.getBoundingClientRect().width || window.innerWidth;
+            const maxWidth = Math.min(maxTocWidth, Math.max(minTocWidth, Math.round(wrapperWidth * 0.55)));
+            const nextWidth = Math.max(minTocWidth, Math.min(Math.round(width), maxWidth));
+            outputWrapper.style.setProperty("--toc-width", `${nextWidth}px`);
+            if (penCanvas && penCanvas.style.display !== "none") syncPenCanvas();
+        }
+
+        if (tocResizeHandle) {
+            tocResizeHandle.addEventListener("pointerdown", (e) => {
+                isResizingToc = true;
+                tocPanel.classList.add("resizing");
+                tocResizeHandle.setPointerCapture(e.pointerId);
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+                e.preventDefault();
+            });
+
+            tocResizeHandle.addEventListener("pointermove", (e) => {
+                if (!isResizingToc || !outputWrapper) return;
+                const wrapperRect = outputWrapper.getBoundingClientRect();
+                setTocWidth(e.clientX - wrapperRect.left);
+            });
+
+            function finishTocResize(e) {
+                if (!isResizingToc) return;
+                isResizingToc = false;
+                tocPanel.classList.remove("resizing");
+                if (e && tocResizeHandle.hasPointerCapture(e.pointerId)) {
+                    tocResizeHandle.releasePointerCapture(e.pointerId);
+                }
+                document.body.style.cursor = "";
+                document.body.style.userSelect = "";
+            }
+
+            tocResizeHandle.addEventListener("pointerup", finishTocResize);
+            tocResizeHandle.addEventListener("pointercancel", finishTocResize);
         }
 
         // ===== MONITORAMENTO DE SCROLL (SCROLL SPY) =====
