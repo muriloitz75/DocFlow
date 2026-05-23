@@ -3288,6 +3288,12 @@
             
             try {
                 const response = await fetch(`/api/saved_docs/${docId}`, { method: 'DELETE' });
+                
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error(`Servidor retornou um formato inesperado (${response.status} ${response.statusText}). Tente novamente em alguns segundos.`);
+                }
+                
                 const data = await response.json();
                 if (response.ok && data.success) {
                     if (currentDocId === docId) currentDocId = null;
@@ -3297,7 +3303,8 @@
                     alert("Erro ao excluir: " + (data.error || "Desconhecido"));
                 }
             } catch (err) {
-                alert("Erro de conexão ao excluir documento.");
+                console.error("Erro na deleção:", err);
+                alert(err.message || "Erro de conexão ao excluir documento.");
             }
         }
 
