@@ -2012,7 +2012,7 @@
         }
 
         /* Se o dicionário estiver aberto e a barra não foi arrastada, desloca-se automaticamente */
-        body.dict-open .annotation-toolbar {
+        body.dict-open .annotation-toolbar:not(.dragged) {
             right: calc(var(--dict-width, 320px) + 24px) !important;
         }
 
@@ -4395,6 +4395,7 @@
                 // Remove o transform inicial (translateY(-50%)) na primeira movimentação
                 annotationToolbar.style.transform = "none";
                 annotationToolbar.style.right = "auto";
+                annotationToolbar.classList.add("dragged");
                 hasDragged = true;
             }
             const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
