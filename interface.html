@@ -837,18 +837,24 @@
         /* TOC PANEL */
         .output-wrapper {
             --toc-width: 280px;
+            --dict-width: 320px;
             flex: 1;
             display: flex;
             justify-content: center;
             position: relative;
             min-height: 0;
             overflow: hidden;
-            transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             padding-left: 0;
+            padding-right: 0;
         }
 
         .output-wrapper.toc-open {
             padding-left: var(--toc-width);
+        }
+
+        .output-wrapper.dict-open {
+            padding-right: var(--dict-width);
         }
 
         /* FLOATING TOC HANDLE */
@@ -1741,6 +1747,260 @@
             opacity: 0.9;
         }
 
+        /* DICTIONARY PANEL */
+        .dict-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--dict-width);
+            background: var(--surface);
+            border-left: var(--border);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -4px 0 12px rgba(0,0,0,0);
+        }
+
+        .dict-panel.visible {
+            transform: translateX(0);
+            box-shadow: -4px 0 12px rgba(0,0,0,0.08);
+        }
+
+        .dict-resize-handle {
+            position: absolute;
+            top: 0;
+            left: -5px;
+            bottom: 0;
+            width: 10px;
+            cursor: col-resize;
+            z-index: 2;
+        }
+
+        .dict-resize-handle::after {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 4px;
+            width: 2px;
+            background: rgba(17, 17, 17, 0.16);
+            transition: background 0.15s, width 0.15s;
+        }
+
+        .dict-resize-handle:hover::after,
+        .dict-panel.resizing .dict-resize-handle::after {
+            width: 3px;
+            background: var(--accent);
+        }
+
+        .dict-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: var(--border);
+            background: var(--bg);
+        }
+
+        .dict-title {
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dict-title svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--ink);
+        }
+
+        .dict-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ink);
+            transition: color 0.15s;
+        }
+
+        .dict-close-btn:hover {
+            color: var(--accent);
+        }
+
+        .dict-search-container {
+            padding: 12px 16px;
+            border-bottom: var(--border);
+            background: var(--surface);
+            display: flex;
+            gap: 8px;
+        }
+
+        .dict-search-input {
+            flex: 1;
+            border: var(--border);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            box-shadow: 2px 2px 0px var(--ink);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .dict-search-input:focus {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--ink);
+        }
+
+        .dict-search-btn {
+            background: var(--ink);
+            color: var(--surface);
+            border: var(--border);
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--accent);
+            transition: all 0.15s;
+        }
+
+        .dict-search-btn:hover {
+            background: var(--accent);
+            color: var(--surface);
+            box-shadow: 2px 2px 0px var(--ink);
+        }
+
+        .dict-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Dict Loader */
+        .dict-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .dict-spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid var(--bg);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .dict-word-header {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: var(--border);
+        }
+
+        .dict-word-title {
+            font-size: 24px;
+            font-family: var(--font-sans);
+            font-weight: 800;
+            color: var(--ink);
+            text-transform: capitalize;
+        }
+
+        .dict-word-class {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 6px;
+            background: var(--accent);
+            color: var(--surface);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid var(--ink);
+        }
+
+        .dict-definitions-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .dict-definition-item {
+            padding: 12px;
+            background: var(--bg);
+            border: var(--border);
+            box-shadow: 2px 2px 0px var(--ink);
+            font-family: var(--font-sans);
+        }
+
+        .dict-definition-num {
+            font-weight: 800;
+            color: var(--accent);
+            margin-right: 6px;
+        }
+
+        .dict-etymology {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--muted);
+            font-style: italic;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .dict-history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: var(--border);
+        }
+
+        .dict-history-title {
+            width: 100%;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .dict-history-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: var(--surface);
+            border: 1px solid var(--ink);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .dict-history-tag:hover {
+            background: var(--accent);
+            color: var(--surface);
+            transform: translate(-1px, -1px);
+            box-shadow: 1px 1px 0px var(--ink);
+        }
+
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
             .shell { padding: 12px; }
@@ -1919,6 +2179,34 @@
                     </nav>
                     <pre class="preview markdown-preview preview-empty" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
                     <canvas id="penCanvas"></canvas>
+                    
+                    <!-- Painel do Dicionário Integrado -->
+                    <nav class="dict-panel" id="dictPanel">
+                        <div class="dict-header">
+                            <span class="dict-title">
+                                <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+                                Dicionário
+                            </span>
+                            <button class="dict-close-btn" id="dictCloseBtn" type="button" title="Recolher dicionário">✕</button>
+                        </div>
+                        <div class="dict-search-container">
+                            <input type="text" class="dict-search-input" id="dictSearchInput" placeholder="Procurar palavra..." autocomplete="off">
+                            <button class="dict-search-btn" id="dictSearchBtn" type="button">Buscar</button>
+                        </div>
+                        <div class="dict-content" id="dictContent">
+                            <div class="dict-loader" style="display: none;" id="dictLoader">
+                                <div class="dict-spinner"></div>
+                                <p style="font-family: var(--font-mono); font-size: 11px; margin-top: 8px;">Consultando significado...</p>
+                            </div>
+                            <div id="dictResultArea">
+                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; color: var(--muted);">
+                                    <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: currentColor; margin-bottom: 16px; opacity: 0.5;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                    <p>Selecione uma palavra no texto ou digite acima para buscar sua definição em português.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dict-resize-handle" id="dictResizeHandle" title="Arrastar para ajustar largura"></div>
+                    </nav>
                 </div>
             </section>
 
@@ -1991,6 +2279,9 @@
                     <button class="annot-btn" id="annotStampBtn" type="button" title="Carimbo Dinâmico">
                         <svg viewBox="0 0 24 24"><path d="M18 10h-1V7c0-1.66-1.34-3-3-3h-4C8.34 4 7 5.34 7 7v3H6c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2zM9 7c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v3H9V7zm9 10H6v-3h12v3z"/></svg>
                     </button>
+                    <button class="annot-btn" id="annotDictBtn" type="button" title="Dicionário" disabled>
+                        <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -2011,6 +2302,10 @@
                 <button class="popover-btn" id="popoverCopyImgBtn" type="button" title="Copiar trecho como imagem">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4.44-6.19l-2.28 2.73-1.63-1.95L7 17h10l-3.44-4.19z"/></svg>
                     Copiar Imagem
+                </button>
+                <button class="popover-btn" id="popoverDictBtn" type="button" title="Procurar no Dicionário">
+                    <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+                    Dicionário
                 </button>
                 
                 <div class="popover-separator"></div>
@@ -3983,6 +4278,18 @@
         const annotSelCount     = document.getElementById("annotSelCount");
         const annotPenBtn       = document.getElementById("annotPenBtn");
         const annotStampBtn     = document.getElementById("annotStampBtn");
+        const annotDictBtn      = document.getElementById("annotDictBtn");
+
+        // ===== DICIONÁRIO INTEGRADO =====
+        const dictPanel         = document.getElementById("dictPanel");
+        const dictCloseBtn      = document.getElementById("dictCloseBtn");
+        const dictSearchInput   = document.getElementById("dictSearchInput");
+        const dictSearchBtn     = document.getElementById("dictSearchBtn");
+        const dictContent       = document.getElementById("dictContent");
+        const dictLoader        = document.getElementById("dictLoader");
+        const dictResultArea    = document.getElementById("dictResultArea");
+        const dictResizeHandle  = document.getElementById("dictResizeHandle");
+        const popoverDictBtn    = document.getElementById("popoverDictBtn");
         const eraserSizeInput   = document.getElementById("eraserSizeInput");
         const eraserSizeLabel   = document.getElementById("eraserSizeLabel");
         const penCanvas         = document.getElementById("penCanvas");
@@ -4059,7 +4366,7 @@
 
         // --- Habilitar botões de seleção ---
         function updateAnnotBtnsState(hasSelection) {
-            [annotCopyBtn, annotShareBtn, annotScreenshotBtn, annotCopyImgBtn, annotNoteBtn].forEach(btn => {
+            [annotCopyBtn, annotShareBtn, annotScreenshotBtn, annotCopyImgBtn, annotNoteBtn, annotDictBtn].forEach(btn => {
                 if (btn) btn.disabled = !hasSelection;
             });
             if (annotSelCount) annotSelCount.style.display = hasSelection ? "block" : "none";
@@ -4968,6 +5275,276 @@
                 console.error("Erro na deleção:", err);
                 alert(err.message || "Erro de conexão ao excluir documento.");
             }
+        }
+
+        // ==========================================
+        //         DICIONÁRIO WEB INTEGRADO
+        // ==========================================
+        let dictHistoryList = JSON.parse(sessionStorage.getItem("dictHistoryList") || "[]");
+
+        // Função para obter o texto selecionado limpo (uma única palavra)
+        function getCleanSelectedWord() {
+            const selection = window.getSelection();
+            if (!selection) return "";
+            let text = selection.toString().trim();
+            if (!text) return "";
+            
+            // Remove pontuação e caracteres especiais ao redor
+            text = text.replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'“«»’‘“”]+|[.,\/#!$%\^&\*;:{}=\-_`~()?"'“«»’‘“”]+$/g, "");
+            
+            // Pega apenas a primeira palavra se houver mais de uma
+            const firstWord = text.split(/\s+/)[0];
+            return firstWord.toLowerCase();
+        }
+
+        // Função para abrir o painel do dicionário
+        function openDictPanel() {
+            dictPanel.classList.add("visible");
+            outputWrapper.classList.add("dict-open");
+        }
+
+        // Função para fechar o painel do dicionário
+        function closeDictPanel() {
+            dictPanel.classList.remove("visible");
+            outputWrapper.classList.remove("dict-open");
+        }
+
+        // Função principal para buscar a palavra no Dicionário
+        async function searchWord(word) {
+            if (!word) return;
+            word = word.trim().toLowerCase();
+            
+            // Exibe loader e limpa área de resultados
+            dictLoader.style.display = "flex";
+            dictResultArea.innerHTML = "";
+            openDictPanel();
+
+            try {
+                const response = await fetch(`/api/dictionary?word=${encodeURIComponent(word)}`);
+                const data = await response.json();
+                
+                dictLoader.style.display = "none";
+                
+                if (data.success && data.results && data.results.length > 0) {
+                    // Adiciona ao histórico se não existir
+                    if (!dictHistoryList.includes(word)) {
+                        dictHistoryList.unshift(word);
+                        if (dictHistoryList.length > 8) dictHistoryList.pop();
+                        sessionStorage.setItem("dictHistoryList", JSON.stringify(dictHistoryList));
+                    }
+                    
+                    renderDictionaryResults(word, data.results);
+                } else {
+                    renderNoWordFound(word, data.suggestions || []);
+                }
+            } catch (err) {
+                console.error("Erro na busca de palavra:", err);
+                dictLoader.style.display = "none";
+                dictResultArea.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--accent);">
+                        <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: currentColor; margin-bottom: 12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <p style="font-weight: bold; margin-bottom: 8px;">Erro na consulta</p>
+                        <p style="font-size: 12px; color: var(--ink);">Não foi possível conectar ao servidor de dicionário. Tente novamente mais tarde.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Renderiza os resultados com estilização Neobrutalista
+        function renderDictionaryResults(word, results) {
+            let html = `
+                <div class="dict-word-header">
+                    <h2 class="dict-word-title">${word}</h2>
+            `;
+            
+            // Agrupa classes gramaticais distintas
+            const classes = results
+                .map(r => r.class)
+                .filter((v, i, a) => v && a.indexOf(v) === i);
+                
+            if (classes.length > 0) {
+                classes.forEach(c => {
+                    html += `<span class="dict-word-class">${c}</span> `;
+                });
+            }
+            
+            html += `</div>`; // fim header
+            
+            // Definições agrupadas
+            html += `<ul class="dict-definitions-list">`;
+            
+            results.forEach((res, index) => {
+                res.meanings.forEach((meaning, mIndex) => {
+                    html += `
+                        <li class="dict-definition-item">
+                            <span class="dict-definition-num">${index + 1}.${mIndex + 1}</span>
+                            ${meaning}
+                        </li>
+                    `;
+                });
+            });
+            
+            html += `</ul>`;
+            
+            // Etimologia se houver
+            const etymologies = results
+                .map(r => r.etymology)
+                .filter((v, i, a) => v && a.indexOf(v) === i);
+                
+            if (etymologies.length > 0 && etymologies[0]) {
+                html += `
+                    <div class="dict-etymology">
+                        <strong>Etimologia:</strong> ${etymologies[0]}
+                    </div>
+                `;
+            }
+            
+            // Histórico recente
+            if (dictHistoryList.length > 0) {
+                html += `
+                    <div class="dict-history">
+                        <div class="dict-history-title">Buscas Recentes</div>
+                `;
+                dictHistoryList.forEach(histWord => {
+                    html += `<span class="dict-history-tag" onclick="searchWord('${histWord.replace(/'/g, "\\\\'")}')">${histWord}</span>`;
+                });
+                html += `</div>`;
+            }
+            
+            dictResultArea.innerHTML = html;
+        }
+
+        // Renderiza estado de não encontrado
+        function renderNoWordFound(word, suggestions) {
+            let html = `
+                <div style="padding: 20px 10px; text-align: center; color: var(--muted);">
+                    <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: currentColor; margin-bottom: 16px; opacity: 0.5;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    <p style="font-weight: bold; color: var(--ink); margin-bottom: 8px;">Palavra não encontrada</p>
+                    <p style="font-size: 12px; margin-bottom: 16px;">Não encontramos definições para a palavra "<strong>${word}</strong>".</p>
+            `;
+            
+            if (suggestions && suggestions.length > 0) {
+                html += `
+                    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; text-align: left;">Sugestões:</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start;">
+                `;
+                suggestions.forEach(sug => {
+                    html += `<span class="dict-history-tag" onclick="searchWord('${sug.replace(/'/g, "\\\\'")}')">${sug}</span>`;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            
+            // Histórico recente mesmo quando não encontrada
+            if (dictHistoryList.length > 0) {
+                html += `
+                    <div class="dict-history" style="margin-top: 24px;">
+                        <div class="dict-history-title">Buscas Recentes</div>
+                `;
+                dictHistoryList.forEach(histWord => {
+                    html += `<span class="dict-history-tag" onclick="searchWord('${histWord.replace(/'/g, "\\\\'")}')">${histWord}</span>`;
+                });
+                html += `</div>`;
+            }
+            
+            dictResultArea.innerHTML = html;
+        }
+
+        // --- Event Listeners para acionamento do Dicionário ---
+        
+        // Botão no menu flutuante (popover)
+        if (popoverDictBtn) {
+            popoverDictBtn.addEventListener("click", () => {
+                const word = getCleanSelectedWord();
+                if (word) {
+                    searchWord(word);
+                    hideSelectionPopover();
+                } else {
+                    showPopoverToast("Selecione apenas uma palavra para buscar.");
+                }
+            });
+        }
+
+        // Botão na barra de anotações lateral (toolbar)
+        if (annotDictBtn) {
+            annotDictBtn.addEventListener("click", () => {
+                const word = getCleanSelectedWord();
+                if (word) {
+                    searchWord(word);
+                } else {
+                    showPopoverToast("Selecione uma palavra no texto.");
+                }
+            });
+        }
+
+        // Botão de fechar painel
+        if (dictCloseBtn) {
+            dictCloseBtn.addEventListener("click", closeDictPanel);
+        }
+
+        // Busca manual interna (botão e tecla Enter)
+        if (dictSearchBtn) {
+            dictSearchBtn.addEventListener("click", () => {
+                const query = dictSearchInput.value.trim();
+                if (query) {
+                    searchWord(query);
+                }
+            });
+        }
+        if (dictSearchInput) {
+            dictSearchInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const query = dictSearchInput.value.trim();
+                    if (query) {
+                        searchWord(query);
+                    }
+                }
+            });
+        }
+
+        // --- Redimensionamento manual da barra lateral do dicionário (Drag) ---
+        let isResizingDict = false;
+        const minDictWidth = 240;
+        const maxDictWidth = 520;
+
+        function setDictWidth(width) {
+            if (!outputWrapper) return;
+            const wrapperWidth = outputWrapper.offsetWidth;
+            const maxWidth = Math.min(maxDictWidth, Math.max(minDictWidth, Math.round(wrapperWidth * 0.55)));
+            const nextWidth = Math.max(minDictWidth, Math.min(Math.round(width), maxWidth));
+            outputWrapper.style.setProperty("--dict-width", `${nextWidth}px`);
+        }
+
+        if (dictResizeHandle) {
+            dictResizeHandle.addEventListener("pointerdown", (e) => {
+                isResizingDict = true;
+                dictPanel.classList.add("resizing");
+                dictResizeHandle.setPointerCapture(e.pointerId);
+                e.preventDefault();
+            });
+
+            dictResizeHandle.addEventListener("pointermove", (e) => {
+                if (!isResizingDict || !outputWrapper) return;
+                const wrapperRect = outputWrapper.getBoundingClientRect();
+                // Como o painel está no lado direito, a largura cresce quando arrastamos para a esquerda
+                // Largura = wrapperRight - clientX
+                const width = wrapperRect.right - e.clientX;
+                setDictWidth(width);
+            });
+
+            function finishDictResize(e) {
+                if (!isResizingDict) return;
+                isResizingDict = false;
+                dictPanel.classList.remove("resizing");
+                if (e && dictResizeHandle.hasPointerCapture(e.pointerId)) {
+                    dictResizeHandle.releasePointerCapture(e.pointerId);
+                }
+            }
+
+            dictResizeHandle.addEventListener("pointerup", finishDictResize);
+            dictResizeHandle.addEventListener("pointercancel", finishDictResize);
         }
 
         checkAuthStatus();

@@ -1297,6 +1297,128 @@ def health():
     })
 
 
+@app.route("/api/dictionary", methods=["GET"])
+@login_required
+def get_dictionary_definition():
+    """Proxy route to fetch word definition from api.dicionario-aberto.net using Latin-1 decoding to prevent glitches."""
+    word = request.args.get("word", "").strip()
+    if not word:
+        return jsonify({"success": False, "error": "Nenhuma palavra fornecida."}), 400
+        
+    # Basic cleaning of the word: keep only letters, remove punctuation
+    word_clean = re.sub(r"[^\w\s-]", "", word).strip()
+    if not word_clean or " " in word_clean:
+        return jsonify({"success": False, "error": "Forneça apenas uma única palavra para busca."}), 400
+        
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        
+        url = f"https://api.dicionario-aberto.net/word/{word_clean.lower()}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        # Word not found
+        if response.status_code == 404:
+            return jsonify({
+                "success": True, 
+                "word": word_clean, 
+                "definitions": [], 
+                "message": f"A palavra '{word_clean}' não foi encontrada no dicionário."
+            })
+            
+        response.raise_for_status()
+        
+        # Decode as latin-1 to perfectly preserve Portuguese accents
+        try:
+            raw_text = response.content.decode("latin-1")
+            entries_data = json.loads(raw_text)
+        except Exception:
+            # Fallback to standard response decoding if latin-1 fails
+            entries_data = response.json()
+            
+        if not entries_data or not isinstance(entries_data, list):
+            return jsonify({
+                "success": True, 
+                "word": word_clean, 
+                "definitions": [], 
+                "message": f"A palavra '{word_clean}' não possui definições registradas."
+            })
+            
+        parsed_entries = []
+        for entry in entries_data:
+            if not entry.get("xml"):
+                continue
+                
+            try:
+                soup = BeautifulSoup(entry["xml"], "xml")
+                
+                # Extract Orthography
+                orth_el = soup.find("orth")
+                orth = orth_el.text.strip() if orth_el else entry.get("word", word_clean)
+                
+                # Extract Grammatical Class
+                gram_el = soup.find("gramGrp")
+                gram = gram_el.text.strip() if gram_el else ""
+                
+                # Map standard abbreviations to friendly Portuguese names
+                gram_friendly = gram
+                gram_lower = gram.lower().strip(" .")
+                if gram_lower == "m":
+                    gram_friendly = "substantivo masculino"
+                elif gram_lower == "f":
+                    gram_friendly = "substantivo feminino"
+                elif gram_lower == "adj":
+                    gram_friendly = "adjetivo"
+                elif gram_lower == "v":
+                    gram_friendly = "verbo"
+                elif gram_lower == "adv":
+                    gram_friendly = "advérbio"
+                
+                # Extract Etymology
+                etym_el = soup.find("etym")
+                etym = etym_el.text.strip() if etym_el else ""
+                # Clean Markdown-like syntax from etymology (e.g. Lat. _tributum_)
+                etym = re.sub(r"_(.+?)_", r"*\1*", etym)
+                
+                # Extract Definitions
+                def_el = soup.find("def")
+                defs = []
+                if def_el:
+                    # Definitions are typically separated by newlines
+                    lines = def_el.text.strip().split("\n")
+                    for line in lines:
+                        cleaned_line = line.strip(" .;-\t\n\r")
+                        if cleaned_line:
+                            defs.append(cleaned_line)
+                            
+                parsed_entries.append({
+                    "orth": orth,
+                    "gram": gram_friendly,
+                    "definitions": defs,
+                    "etym": etym
+                })
+            except Exception as parse_err:
+                print(f"Error parsing dictionary XML: {parse_err}")
+                continue
+                
+        return jsonify({
+            "success": True,
+            "word": word_clean,
+            "definitions": parsed_entries
+        })
+        
+    except Exception as e:
+        print(f"Error in dictionary proxy: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao acessar o dicionário: {str(e)}"
+        }), 500
+
+
 @app.route("/api/auth/login", methods=["POST"])
 def auth_login():
     """Realizar login do usuário"""

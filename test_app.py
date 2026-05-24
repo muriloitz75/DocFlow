@@ -665,6 +665,31 @@ class WebInterfaceTestCase(unittest.TestCase):
         # The content after premature </body> must be fully preserved
         self.assertIn("Texto após o fechamento precoce do body", content)
 
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_endpoint_success(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b'[{"word":"teste","xml":"<entry id=\\"teste\\"><form><orth>Teste</orth></form><sense><gramGrp>m.</gramGrp><def>Ato ou efeito de testar.\\nSubmiss\\u00e3o a exame.</def></sense><etym orig=\\"Lat\\">(Lat. _testu_)</etym></entry>"}]'
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        # Set session as logged_in to bypass auth
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+
+        response = self.client.get("/api/dictionary?word=teste")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["word"], "teste")
+        self.assertEqual(len(response.json["definitions"]), 1)
+        
+        definition = response.json["definitions"][0]
+        self.assertEqual(definition["orth"], "Teste")
+        self.assertEqual(definition["gram"], "substantivo masculino")
+        self.assertIn("Ato ou efeito de testar", definition["definitions"])
+        self.assertEqual(definition["etym"], "(Lat. *testu*)")
+
 
 if __name__ == "__main__":
     unittest.main()
