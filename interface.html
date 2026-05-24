@@ -1466,45 +1466,52 @@
         .annotation-toolbar {
             position: fixed;
             display: none;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
             z-index: 10001; /* acima do canvas (10000) */
             background: var(--ink);
             border: var(--border);
             box-shadow: 4px 4px 0px var(--accent);
             user-select: none;
-            min-width: 48px;
-            right: 32px;
-            top: 50%;
-            transform: translateY(-50%);
+            min-height: 48px;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
             zoom: 0.75;
         }
         .annotation-toolbar.visible { display: flex; }
 
         .annot-handle {
-            padding: 8px 6px;
+            padding: 6px 12px;
             cursor: grab;
             color: rgba(255,255,255,0.5);
             text-align: center;
             font-size: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-            letter-spacing: 2px;
+            border-right: 1px solid rgba(255,255,255,0.12);
+            border-bottom: none;
+            letter-spacing: normal;
             line-height: 1;
+            display: flex;
+            align-items: center;
+            align-self: stretch;
+            justify-content: center;
         }
         .annot-handle:active { cursor: grabbing; }
 
         .annot-group {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            padding: 6px;
-            gap: 4px;
+            padding: 6px 8px;
+            gap: 6px;
         }
 
         .annot-divider {
-            height: 1px;
-            width: calc(100% - 16px);
+            width: 1px;
+            height: calc(100% - 16px);
             background: rgba(255,255,255,0.12);
-            margin: 0 8px;
+            margin: 8px 0;
+            align-self: stretch;
         }
 
         .annot-btn {
@@ -1554,21 +1561,22 @@
         }
 
         .eraser-size-control {
-            width: 32px;
+            height: 32px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
+            padding: 0 4px;
         }
 
         .eraser-size-control input[type="range"] {
             width: 72px;
             height: 16px;
-            transform: rotate(-90deg);
+            transform: none;
             transform-origin: center;
             accent-color: var(--accent);
             cursor: pointer;
-            margin: 28px 0;
+            margin: 0;
         }
 
         .eraser-size-label {
@@ -1578,6 +1586,7 @@
             color: var(--surface);
             line-height: 1;
             text-align: center;
+            min-width: 16px;
         }
 
         .annot-sel-count {
@@ -1586,9 +1595,11 @@
             font-weight: 700;
             color: var(--accent);
             text-align: center;
-            padding: 4px 4px 0;
+            padding: 0 8px;
             letter-spacing: 0;
             line-height: 1.2;
+            align-self: center;
+            border-right: 1px solid rgba(255,255,255,0.12);
         }
 
         /* NOTAS / COMENTÁRIOS */
@@ -2003,17 +2014,12 @@
 
         /* Transições para o deslocamento da barra flutuante */
         .annotation-toolbar {
-            transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s, background 0.2s, opacity 0.2s;
+            transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s, background 0.2s, opacity 0.2s;
         }
 
         /* Desabilita transição ao arrastar para não dar lag */
         .annotation-toolbar.dragging {
             transition: none !important;
-        }
-
-        /* Se o dicionário estiver aberto e a barra não foi arrastada, desloca-se automaticamente */
-        body.dict-open .annotation-toolbar:not(.dragged) {
-            right: calc(var(--dict-width, 320px) + 24px) !important;
         }
 
         @media (max-width: 900px) {
@@ -4180,11 +4186,9 @@
 
         function positionAnnotationToolbarOppositeToc() {
             if (!annotationToolbar) return;
-            annotationToolbar.style.left = "auto";
-            annotationToolbar.style.right = "32px";
-            annotationToolbar.style.top = "50%";
-            annotationToolbar.style.transform = "translateY(-50%)";
             hasDragged = false;
+            annotationToolbar.classList.remove("dragged");
+            adjustToolbarPosition();
         }
 
 
@@ -5137,6 +5141,7 @@
         // Reposiciona canvas ao redimensionar janela
         window.addEventListener("resize", () => {
             if (penCanvas.style.display !== "none") syncPenCanvas();
+            adjustToolbarPosition();
         });
 
         // ===== CONTROLES DE ZOOM =====
@@ -5360,20 +5365,31 @@
             if (!annotationToolbar) return;
             
             const dictOpen = dictPanel.classList.contains("visible");
-            if (dictOpen) {
+            const dictWidth = dictOpen ? (parseFloat(document.documentElement.style.getPropertyValue("--dict-width")) || 320) : 0;
+            
+            if (!hasDragged) {
+                // Posicionamento padrão horizontal: centralizado no topo
+                annotationToolbar.style.top = "24px";
+                annotationToolbar.style.right = "auto";
+                if (dictOpen) {
+                    const remainingWidth = window.innerWidth - dictWidth;
+                    annotationToolbar.style.left = `${remainingWidth / 2}px`;
+                    annotationToolbar.style.transform = "translateX(-50%)";
+                } else {
+                    annotationToolbar.style.left = "50%";
+                    annotationToolbar.style.transform = "translateX(-50%)";
+                }
+            } else {
                 // Se a barra já foi arrastada, ajusta a posição 'left' dela para não sobrepor
-                if (hasDragged) {
-                    const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
-                    const toolbarRect = annotationToolbar.getBoundingClientRect();
-                    const dictWidth = parseFloat(outputWrapper.style.getPropertyValue("--dict-width")) || 320;
-                    
-                    // Limite máximo permitido à esquerda da área do dicionário
-                    const maxLeft = window.innerWidth - dictWidth - (toolbarRect.width / zoomLevel) - 24;
-                    const currentLeft = parseFloat(annotationToolbar.style.left) || 0;
-                    
-                    if (currentLeft > maxLeft) {
-                        annotationToolbar.style.left = maxLeft + "px";
-                    }
+                const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
+                const toolbarRect = annotationToolbar.getBoundingClientRect();
+                
+                // Limite máximo permitido à esquerda da área do dicionário
+                const maxLeft = window.innerWidth - dictWidth - (toolbarRect.width / zoomLevel) - 24;
+                const currentLeft = parseFloat(annotationToolbar.style.left) || 0;
+                
+                if (currentLeft > maxLeft) {
+                    annotationToolbar.style.left = maxLeft + "px";
                 }
             }
         }
@@ -5391,6 +5407,7 @@
             dictPanel.classList.remove("visible");
             outputWrapper.classList.remove("dict-open");
             document.body.classList.remove("dict-open");
+            adjustToolbarPosition();
         }
 
         // Função principal para buscar a palavra no Dicionário
