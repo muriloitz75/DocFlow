@@ -2560,7 +2560,7 @@
                 nodesToReplace.push(node);
             }
             
-            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:-[A-Za-z])?\.?)/i;
+            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:(?:º|o)?-[A-Za-z0-9]+)?(?:º|o)?\.?)/i;
             const parRegex = /^(\s*(?:\*\*|__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
             const incisoRegex = /^(\s*(?:\*\*|__)?)([IVXLCDM]+)(\s*[-–—])/;
             const alineaRegex = /^(\s*(?:\*\*|__)?)([a-z])(\))/;
@@ -3591,14 +3591,28 @@
             }
 
             const legalHeadingRegex = /^(LIVRO|TÍTULO|TITULO|CAPÍTULO|CAPITULO|SEÇÃO|SEÇAO|SECAO|SUBSEÇÃO|SUBSEÇAO|SUBSECAO)\s+([IVXLCDM]+|[0-9]+|COMPLEMENTAR)\b/i;
-            const articleRegex = /^\s*Art\.\s*(\d+(?:-[A-Za-z0-9]+)?)/; // Case-sensitive to avoid lowercase inline citations
+            const articleRegex = /^\s*Art\.\s*(\d+(?:(?:º|o)?-[A-Za-z0-9]+)?)/; // Case-sensitive to avoid lowercase inline citations
 
             // Busca todos os elementos que representam títulos e artigos na ordem do documento
-            const allElements = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-'], strong, b");
+            const allElements = Array.from(outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-'], strong, b, .highlight-article"));
+            
+            // Filtra para remover elementos que estão dentro de outros elementos já selecionados
+            // para evitar processar o mesmo elemento de forma aninhada (ex: span.highlight-article dentro de strong, ou b dentro de h1)
+            const filteredElements = allElements.filter(el => {
+                let parent = el.parentElement;
+                while (parent && parent !== outputArea) {
+                    if (allElements.includes(parent)) {
+                        return false;
+                    }
+                    parent = parent.parentElement;
+                }
+                return true;
+            });
+
             const headingElements = [];
             let currentHeading = null;
 
-            allElements.forEach((el) => {
+            filteredElements.forEach((el) => {
                 const isHeading = el.tagName.startsWith("H") || el.id.startsWith("toc-heading-");
                 
                 if (isHeading) {
@@ -3639,7 +3653,7 @@
                     };
                     headingElements.push(currentHeading);
                 } else {
-                    // É um elemento strong ou b, verificar se define o início de um Artigo
+                    // É um elemento strong, b ou .highlight-article, verificar se define o início de um Artigo
                     const text = el.textContent.trim();
                     const match = text.match(articleRegex);
                     if (match && currentHeading) {
@@ -3657,7 +3671,24 @@
 
             // Função para formatar o número do artigo de acordo com a norma brasileira (1º ao 9º ordinal, 10+ cardinal)
             function formatArtNumber(numStr) {
-                if (/^[1-9]$/.test(numStr)) {
+                // Se já contiver o símbolo ordinal, retorna como está
+                if (numStr.includes("º") || numStr.includes("°")) {
+                    return numStr;
+                }
+                
+                // Verifica sufixo com hífen (ex: "1-A" ou "10-A")
+                const match = numStr.match(/^([0-9]+)(-.+)$/);
+                if (match) {
+                    const baseNum = parseInt(match[1], 10);
+                    if (baseNum >= 1 && baseNum <= 9) {
+                        return match[1] + "º" + match[2];
+                    }
+                    return numStr;
+                }
+                
+                // Número simples (ex: "1" ou "10")
+                const baseNum = parseInt(numStr, 10);
+                if (baseNum >= 1 && baseNum <= 9) {
                     return numStr + "º";
                 }
                 return numStr;
