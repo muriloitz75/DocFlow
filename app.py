@@ -1338,6 +1338,23 @@ def get_saved_document(doc_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/saved_docs/<doc_id>", methods=["DELETE"])
+@login_required
+def delete_saved_document(doc_id):
+    """Exclui um documento salvo específico."""
+    try:
+        safe_id = secure_filename(doc_id)
+        filepath = os.path.join(SAVED_DOCS_DIR, safe_id)
+        
+        if not os.path.exists(filepath):
+            return jsonify({"success": False, "error": "Documento não encontrado."}), 404
+            
+        os.remove(filepath)
+        return jsonify({"success": True, "message": "Documento excluído com sucesso."})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 def get_local_ip():
     """Obter o endereço de IP local da LAN para acesso externo na rede."""
     import socket

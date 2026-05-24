@@ -525,6 +525,47 @@ class WebInterfaceTestCase(unittest.TestCase):
         result = webapp.format_pdf_markdown_model2(content)
         self.assertIn("**Parágrafo único.** Para efeito", result)
 
+    def test_saved_documents_lifecycle(self):
+        # 1. Salvar um documento
+        doc_data = {
+            "html": "<p>Conteúdo HTML</p>",
+            "markdown": "Conteúdo Markdown",
+            "filename": "teste_doc.pdf",
+            "mode": "standard"
+        }
+        response = self.client.post(
+            "/api/saved_docs",
+            json=doc_data
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        doc_id = response.json["id"]
+        self.assertTrue(doc_id.startswith("teste_doc"))
+
+        # 2. Listar documentos salvos
+        response = self.client.get("/api/saved_docs")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        docs = response.json["documents"]
+        self.assertTrue(any(d["id"] == doc_id for d in docs))
+
+        # 3. Pegar o documento específico
+        response = self.client.get(f"/api/saved_docs/{doc_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["document"]["markdown"], "Conteúdo Markdown")
+
+        # 4. Excluir o documento
+        response = self.client.delete(f"/api/saved_docs/{doc_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["message"], "Documento excluído com sucesso.")
+
+        # 5. Tentar pegar novamente e receber 404
+        response = self.client.get(f"/api/saved_docs/{doc_id}")
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.json["success"])
+
 
 if __name__ == "__main__":
     unittest.main()
