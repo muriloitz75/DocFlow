@@ -839,6 +839,7 @@
             --toc-width: 280px;
             flex: 1;
             display: flex;
+            justify-content: center;
             position: relative;
             min-height: 0;
             overflow: hidden;
@@ -1082,11 +1083,22 @@
             position: relative;
         }
 
+        .preview.preview-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 0;
+        }
+
         /* Specific preview modes */
         .preview.abnt-preview {
             font-family: "Times New Roman", Times, serif;
             font-size: 16px;
             text-align: justify;
+            flex: none;
+            width: 100%;
             max-width: 800px;
             margin: 0 auto;
             background: var(--surface);
@@ -1101,6 +1113,8 @@
             font-family: "Instrument Serif", Georgia, serif;
             font-size: 20px;
             line-height: 1.5;
+            flex: none;
+            width: 100%;
             max-width: 800px;
             margin: 0 auto;
             padding: 40px 60px;
@@ -1903,7 +1917,7 @@
                         <ul class="toc-list" id="tocList"></ul>
                         <div class="toc-resize-handle" id="tocResizeHandle" title="Arrastar para ajustar largura"></div>
                     </nav>
-                    <pre class="preview markdown-preview" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
+                    <pre class="preview markdown-preview preview-empty" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
                     <canvas id="penCanvas"></canvas>
                 </div>
             </section>
@@ -2383,7 +2397,7 @@
         function resetOutput() {
             convertedContent = "";
             outputArea.classList.remove("abnt-preview", "html-preview");
-            outputArea.classList.add("markdown-preview");
+            outputArea.classList.add("markdown-preview", "preview-empty");
             outputArea.innerHTML = '<span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span>';
             updateMetrics("", "sem arquivo");
             
@@ -2525,6 +2539,7 @@
         }
 
         function applyFormat(content, mode) {
+            outputArea.classList.remove("preview-empty");
             if (selectedFormat === "html") {
                 outputArea.classList.remove("markdown-preview", "abnt-preview");
                 outputArea.classList.add("html-preview");
@@ -2797,7 +2812,7 @@
             const loadingMsg = activeInputType === "file" ? "Convertendo arquivo..." : "Convertendo conteúdo da URL...";
             setLoading(loadingMsg);
             outputArea.classList.remove("abnt-preview", "html-preview");
-            outputArea.classList.add("markdown-preview");
+            outputArea.classList.add("markdown-preview", "preview-empty");
             outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
 
             try {
@@ -3792,8 +3807,8 @@
                 isScrollingToHeading = false;
             }, 850);
 
-            // Recolhe o sumário automaticamente para visualização limpa do tópico localizado
-            closeToc();
+            // O sumário permanece aberto conforme preferência do usuário (recolhe apenas pelas setas)
+            // closeToc();
         }
 
         function setActiveTocItem(index) {

@@ -1182,8 +1182,20 @@ def convert():
         if temp_path.lower().endswith((".html", ".htm")):
             try:
                 from bs4 import BeautifulSoup
-                with open(temp_path, "r", encoding="utf-8", errors="replace") as f:
-                    html_content = f.read()
+                
+                # First read the raw bytes to detect encoding
+                with open(temp_path, "rb") as f:
+                    raw_bytes = f.read()
+                
+                import charset_normalizer
+                try:
+                    detection = charset_normalizer.from_bytes(raw_bytes).best()
+                    encoding = detection.encoding if detection else "utf-8"
+                except Exception:
+                    encoding = "utf-8"
+                
+                html_content = raw_bytes.decode(encoding, errors="replace")
+                
                 # First strip body/html tags to prevent premature termination when BeautifulSoup parses it
                 html_content = re.sub(r'</?(body|html)[^>]*>', '', html_content, flags=re.IGNORECASE)
                 # Parse with BeautifulSoup + lxml to rebuild/close nested structures correctly
@@ -1202,32 +1214,47 @@ def convert():
 
         # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL/HTML
         is_legal_or_pdf = (extension == "pdf" or bool(request.form.get("url", "").strip()) or extension in ("html", "htm"))
+        is_legal = False
 
         if is_legal_or_pdf:
             is_planalto = "presid" in content.lower() and ("casa civil" in content.lower() or "subchefia" in content.lower())
-            if is_planalto:
-                # Clean encoding glitches and strip relative/internal links on the entire document first
-                content = clean_planalto_encoding_glitches(content)
-                content = strip_relative_and_internal_links(content)
-                
-                # Split and extract header
-                header_text, body_text = split_planalto_document(content)
-                premium_header = generate_premium_header(header_text)
-                
-                # Format body using the standard legal formatter
-                body_text = clean_pdf_headers_footers(body_text)
-                formatted_body = format_pdf_markdown_model2(body_text)
-                
-                # Reassemble the beautiful document
-                content = premium_header + "\n\n" + formatted_body
-            else:
-                content = clean_pdf_headers_footers(content)
-                content = format_pdf_markdown_model2(content)
+            
+            # Check if it actually looks like a legal document before applying legal formatting
+            is_legal = is_planalto or (
+                "art. 1" in content.lower() or 
+                "art.1" in content.lower() or 
+                "decreto" in content.lower() or 
+                "lei complementar" in content.lower() or 
+                "lei nº" in content.lower() or 
+                "lei no" in content.lower() or
+                "portaria" in content.lower() or
+                "resolução" in content.lower()
+            )
+            
+            if is_legal:
+                if is_planalto:
+                    # Clean encoding glitches and strip relative/internal links on the entire document first
+                    content = clean_planalto_encoding_glitches(content)
+                    content = strip_relative_and_internal_links(content)
+                    
+                    # Split and extract header
+                    header_text, body_text = split_planalto_document(content)
+                    premium_header = generate_premium_header(header_text)
+                    
+                    # Format body using the standard legal formatter
+                    body_text = clean_pdf_headers_footers(body_text)
+                    formatted_body = format_pdf_markdown_model2(body_text)
+                    
+                    # Reassemble the beautiful document
+                    content = premium_header + "\n\n" + formatted_body
+                else:
+                    content = clean_pdf_headers_footers(content)
+                    content = format_pdf_markdown_model2(content)
 
         if option == "compact":
             content = compact_markdown(content)
         elif option == "abnt":
-            if is_legal_or_pdf:
+            if is_legal_or_pdf and is_legal:
                 content = polish_legal_markdown_model2(content)
             else:
                 content = normalize_abnt_markdown(content)
