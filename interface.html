@@ -2872,18 +2872,47 @@
             
             const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:(?:º|o)?-[A-Za-z0-9]+)?(?:º|o)?\.?)/i;
             const parRegex = /^(\s*(?:\*\*|__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
-            const incisoRegex = /^(\s*(?:\*\*|__)?)([IVXLCDM]+)(\s*[-–—])/;
+            const incisoRegex = /^(\s*(?:\*\*|__)?)(([IVXLCDM]+)(\s*[-–—]))/;
             const alineaRegex = /^(\s*(?:\*\*|__)?)([a-z])(\))/;
+            
+            // Severe rule: check if the node starts a block/line
+            function isAtBlockStart(n) {
+                let parent = n.parentNode;
+                while (parent && parent !== rootNode && !['P', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE'].includes(parent.nodeName)) {
+                    parent = parent.parentNode;
+                }
+                if (!parent || parent === rootNode) return false;
+                
+                const parentText = parent.textContent;
+                const nodeText = n.nodeValue;
+                const nodeIndex = parentText.indexOf(nodeText);
+                
+                if (nodeIndex > 0) {
+                    const textBefore = parentText.substring(0, nodeIndex).trim();
+                    if (textBefore.length > 0) {
+                        return false;
+                    }
+                }
+                return true;
+            }
             
             nodesToReplace.forEach(textNode => {
                 const text = textNode.nodeValue;
+                
+                // Severe rule: Only highlight if it starts at the block level
+                if (!isAtBlockStart(textNode)) return;
+                
                 let newHtml = escapeHtml(text);
                 let changed = false;
                 
-                if (artRegex.test(text)) {
+                // Severe rule: A real Article or Paragraph header must be bolded (contains ** or __, or is inside strong)
+                const isBolded = textNode.parentNode && (textNode.parentNode.nodeName === 'STRONG' || textNode.parentNode.nodeName === 'B') ||
+                                 /^\s*(\*\*|__)/.test(text);
+                                 
+                if (artRegex.test(text) && isBolded) {
                     newHtml = newHtml.replace(artRegex, '$1<span class="highlight-article">$2</span>');
                     changed = true;
-                } else if (parRegex.test(text)) {
+                } else if (parRegex.test(text) && isBolded) {
                     newHtml = newHtml.replace(parRegex, '$1<span class="highlight-paragraph">$2</span>');
                     changed = true;
                 }

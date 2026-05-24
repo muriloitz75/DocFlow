@@ -508,6 +508,20 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertNotIn("**Art. 5º**", result)
         self.assertIn("no Art. 5º, inciso XV", result)
 
+    def test_citation_protection_with_semicolon(self):
+        content = (
+            "houver descumprimento reiterado da obrigação contida no inciso I do caput do\n\n"
+            "Art. 26.;\n"
+            "o limite proporcional de receita bruta de que trata o § 2o do\n\n"
+            "Art. 3o;"
+        )
+        result = webapp.format_pdf_markdown_model2(content)
+        self.assertNotIn("**Art. 26.**", result)
+        self.assertNotIn("**Art. 3º**", result)
+        self.assertNotIn("**Art. 3o**", result)
+        self.assertIn("do Art. 26.;", result)
+        self.assertIn("do Art. 3o;", result)
+
     def test_model2_does_not_merge_structural_elements_after_parenthesis(self):
         content = (
             "cobrar impostos e a contribuição de que trata o inciso V do art. 195 da Constituição Federalsobre: (Redação dada pela Lei Complementar nº 214, de 2025) Produção de efeitos\n\n"

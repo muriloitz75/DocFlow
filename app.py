@@ -160,7 +160,7 @@ STRUCTURAL_LINE_PATTERNS = [
 ]
 
 CITATION_PATTERN = re.compile(
-    r'^\s*(?:Arts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|inciso\b|al[\u00edi]nea\b|\s*da\s+Const|dos\b|das\b|s[\u00f4o]bre\b|\bcaput\b)',
+    r'^\s*(?:Arts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|inciso\b|al[\u00edi]nea\b|\s*da\s+Const|dos\b|das\b|s[\u00f4o]bre\b|\bcaput\b|deste\b|desta\b|combinado\b|c/c\b|;|,|\s*$)',
     re.IGNORECASE
 )
 
