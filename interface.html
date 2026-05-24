@@ -3591,46 +3591,61 @@
             }
 
             const legalHeadingRegex = /^(LIVRO|TÍTULO|TITULO|CAPÍTULO|CAPITULO|SEÇÃO|SEÇAO|SECAO|SUBSEÇÃO|SUBSEÇAO|SUBSECAO)\s+([IVXLCDM]+|[0-9]+|COMPLEMENTAR)\b/i;
+            const articleRegex = /^\s*Art\.\s*(\d+(?:-[A-Za-z0-9]+)?)/; // Case-sensitive to avoid lowercase inline citations
 
-            // Busca todos os elementos que representam títulos na visualização atual
-            const allElements = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-']");
+            // Busca todos os elementos que representam títulos e artigos na ordem do documento
+            const allElements = outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-'], strong, b");
             const headingElements = [];
+            let currentHeading = null;
 
             allElements.forEach((el) => {
-                let level = 1;
-                if (el.tagName.startsWith("H") && el.tagName.length === 2) {
-                    level = parseInt(el.tagName.substring(1), 10);
-                } else if (el.id.startsWith("toc-heading-")) {
-                    const text = el.textContent.trim();
-                    const matchHash = text.match(/^(#{1,6})\s+/);
-                    if (matchHash) {
-                        level = matchHash[1].length;
-                    } else {
-                        // Título legal sem hashes (ex: CAPÍTULO I)
-                        const matchLegal = text.match(legalHeadingRegex);
-                        if (matchLegal) {
-                            const word = matchLegal[1].toUpperCase();
-                            if (word.startsWith("LIVRO")) level = 1;
-                            else if (word.startsWith("TITULO") || word.startsWith("TÍTULO")) level = 2;
-                            else if (word.startsWith("CAPITULO") || word.startsWith("CAPÍTULO")) level = 3;
-                            else if (word.startsWith("SECAO") || word.startsWith("SEÇÃO") || word.startsWith("SEÇAO")) level = 4;
-                            else level = 5;
+                const isHeading = el.tagName.startsWith("H") || el.id.startsWith("toc-heading-");
+                
+                if (isHeading) {
+                    let level = 1;
+                    if (el.tagName.startsWith("H") && el.tagName.length === 2) {
+                        level = parseInt(el.tagName.substring(1), 10);
+                    } else if (el.id.startsWith("toc-heading-")) {
+                        const text = el.textContent.trim();
+                        const matchHash = text.match(/^(#{1,6})\s+/);
+                        if (matchHash) {
+                            level = matchHash[1].length;
+                        } else {
+                            // Título legal sem hashes (ex: CAPÍTULO I)
+                            const matchLegal = text.match(legalHeadingRegex);
+                            if (matchLegal) {
+                                const word = matchLegal[1].toUpperCase();
+                                if (word.startsWith("LIVRO")) level = 1;
+                                else if (word.startsWith("TITULO") || word.startsWith("TÍTULO")) level = 2;
+                                else if (word.startsWith("CAPITULO") || word.startsWith("CAPÍTULO")) level = 3;
+                                else if (word.startsWith("SECAO") || word.startsWith("SEÇÃO") || word.startsWith("SEÇAO")) level = 4;
+                                else level = 5;
+                            }
                         }
                     }
-                }
 
-                let text = el.textContent.trim();
-                // Limpa marcações de Markdown da exibição do sumário
-                if (el.id.startsWith("toc-heading-") && !el.tagName.startsWith("H")) {
-                    text = text.replace(/^#{1,6}\s+/, "");
-                }
-                text = text.replace(/[*_`~]/g, "");
+                    let text = el.textContent.trim();
+                    // Limpa marcações de Markdown da exibição do sumário
+                    if (el.id.startsWith("toc-heading-") && !el.tagName.startsWith("H")) {
+                        text = text.replace(/^#{1,6}\s+/, "");
+                    }
+                    text = text.replace(/[*_`~]/g, "");
 
-                headingElements.push({
-                    element: el,
-                    level: level,
-                    text: text
-                });
+                    currentHeading = {
+                        element: el,
+                        level: level,
+                        text: text,
+                        articles: []
+                    };
+                    headingElements.push(currentHeading);
+                } else {
+                    // É um elemento strong ou b, verificar se define o início de um Artigo
+                    const text = el.textContent.trim();
+                    const match = text.match(articleRegex);
+                    if (match && currentHeading) {
+                        currentHeading.articles.push(match[1]);
+                    }
+                }
             });
 
             tocBadge.textContent = String(headingElements.length);
@@ -3639,6 +3654,40 @@
                 tocList.innerHTML = '<li class="toc-empty">Nenhum título encontrado</li>';
                 return;
             }
+
+            // Função para formatar o número do artigo de acordo com a norma brasileira (1º ao 9º ordinal, 10+ cardinal)
+            function formatArtNumber(numStr) {
+                if (/^[1-9]$/.test(numStr)) {
+                    return numStr + "º";
+                }
+                return numStr;
+            }
+
+            // Determinar o intervalo de artigos abrangidos por cada tópico
+            headingElements.forEach((h, idx) => {
+                let allSubArticles = [];
+                allSubArticles.push(...h.articles);
+
+                // Adiciona artigos dos subtópicos daquele nível
+                for (let j = idx + 1; j < headingElements.length; j++) {
+                    if (headingElements[j].level <= h.level) {
+                        break; // Para no próximo tópico de mesmo nível ou superior
+                    }
+                    allSubArticles.push(...headingElements[j].articles);
+                }
+
+                if (allSubArticles.length > 0) {
+                    const firstArt = formatArtNumber(allSubArticles[0]);
+                    const lastArt = formatArtNumber(allSubArticles[allSubArticles.length - 1]);
+                    if (firstArt === lastArt) {
+                        h.displayText = `${h.text}: Art. ${firstArt}`;
+                    } else {
+                        h.displayText = `${h.text}: Art. ${firstArt} ao art. ${lastArt}`;
+                    }
+                } else {
+                    h.displayText = h.text;
+                }
+            });
 
             headingElements.forEach((h, i) => {
                 // Sincroniza o ID no DOM com o índice exato do sumário para garantir a navegação
@@ -3653,8 +3702,8 @@
                 li.className = "toc-item";
                 li.setAttribute("data-level", String(h.level));
                 li.setAttribute("data-index", String(i));
-                li.textContent = h.text;
-                li.title = h.text;
+                li.textContent = h.displayText;
+                li.title = h.displayText;
 
                 li.addEventListener("click", () => {
                     navigateToHeading(i);
