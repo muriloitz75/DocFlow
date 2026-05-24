@@ -507,6 +507,13 @@
             box-shadow: 0px 0px 0px var(--ink);
         }
 
+        .tool-btn.active {
+            background: var(--accent);
+            color: var(--surface);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px var(--ink);
+        }
+
         .tool-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
@@ -2127,6 +2134,9 @@
                             <button class="tool-btn" id="searchToggleBtn" type="button" disabled title="Buscar no texto (Ctrl+F)">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Buscar
                             </button>
+                            <button class="tool-btn" id="annotToggleBtn" type="button" disabled title="Ativar/Desativar painel de anotações">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Anotar
+                            </button>
                             <button class="tool-btn" id="copyBtn" type="button" disabled>Copiar</button>
                             <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
                             <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
@@ -2280,6 +2290,9 @@
                             <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
                         </button>
                     </div>
+
+                    <!-- Botão de Fechar no canto direito -->
+                    <button class="annot-btn close-annot-btn" id="closeAnnotToolbarBtn" type="button" title="Fechar painel de anotações" style="margin-left: auto; margin-right: 16px; font-weight: bold; font-size: 14px;">✕</button>
                 </div>
             </section>
 
@@ -2671,6 +2684,7 @@
             downloadBtn.disabled = !enabled;
             shareBtn.disabled = !enabled;
             searchToggleBtn.disabled = !enabled;
+            if (annotToggleBtn) annotToggleBtn.disabled = !enabled;
 
             if (tocToggleHandle) {
                 tocToggleHandle.style.display = enabled ? "flex" : "none";
@@ -3446,7 +3460,53 @@
         searchNextBtn.addEventListener("click", () => navigateSearch(1));
         searchCloseBtn.addEventListener("click", closeSearch);
 
+        // --- Controle do painel de Anotações ---
+        function openAnnotations() {
+            if (!annotationToolbar) return;
+            annotationToolbar.classList.add("visible");
+            if (annotToggleBtn) annotToggleBtn.classList.add("active");
+            
+            // Força sincronização do canvas se penCanvas estiver habilitado
+            requestAnimationFrame(() => {
+                if (penPaths.length > 0 || penMode) syncPenCanvas();
+                if (penPaths.length > 0) penCanvas.style.display = "block";
+            });
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        function closeAnnotations() {
+            if (!annotationToolbar) return;
+            annotationToolbar.classList.remove("visible");
+            if (annotToggleBtn) annotToggleBtn.classList.remove("active");
+            
+            penCanvas.style.display = "none";
+            if (penMode) deactivatePen();
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        if (annotToggleBtn) {
+            annotToggleBtn.addEventListener("click", () => {
+                if (annotationToolbar.classList.contains("visible")) {
+                    closeAnnotations();
+                } else {
+                    openAnnotations();
+                }
+            });
+        }
+
+        if (closeAnnotToolbarBtn) {
+            closeAnnotToolbarBtn.addEventListener("click", closeAnnotations);
+        }
+
         document.addEventListener("keydown", (e) => {
+            // Atalho Alt+A para abrir/fechar anotações
+            if (e.altKey && e.key.toLowerCase() === "a" && !loginOverlay.classList.contains("visible")) {
+                if (convertedContent) {
+                    e.preventDefault();
+                    if (annotationToolbar.classList.contains("visible")) closeAnnotations();
+                    else openAnnotations();
+                }
+            }
             if ((e.ctrlKey || e.metaKey) && e.key === "f" && !loginOverlay.classList.contains("visible")) {
                 if (convertedContent) {
                     e.preventDefault();
@@ -4268,20 +4328,12 @@
                     maximizePanelText.textContent = "Minimizar";
                     maximizePanelIcon.innerHTML = `<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>`;
                     openToc();
-                    positionAnnotationToolbarOppositeToc();
-                    annotationToolbar.classList.add("visible");
-                    // Reposiciona canvas se houver desenhos ou pen ativo
-                    requestAnimationFrame(() => {
-                        if (penPaths.length > 0 || penMode) syncPenCanvas();
-                        if (penPaths.length > 0) penCanvas.style.display = "block";
-                    });
+                    openAnnotations();
                 } else {
                     maximizePanelBtn.title = "Maximizar tela de resultado";
                     maximizePanelText.textContent = "Maximizar";
                     maximizePanelIcon.innerHTML = `<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>`;
-                    annotationToolbar.classList.remove("visible");
-                    penCanvas.style.display = "none";
-                    if (penMode) deactivatePen();
+                    closeAnnotations();
                 }
 
                 // Dispara o evento de redimensionamento para recalcular layouts se necessário
@@ -4291,6 +4343,8 @@
 
         // ===== BARRA DE ANOTAÇÃO FLUTUANTE =====
         const annotationToolbar = document.getElementById("annotationToolbar");
+        const annotToggleBtn    = document.getElementById("annotToggleBtn");
+        const closeAnnotToolbarBtn = document.getElementById("closeAnnotToolbarBtn");
         const annotHandle       = document.getElementById("annotHandle");
         const annotCopyBtn      = document.getElementById("annotCopyBtn");
         const annotShareBtn     = document.getElementById("annotShareBtn");
