@@ -407,7 +407,28 @@ def _format_inciso_start(text):
 
 
 def _join_wrapped_lines(lines):
-    paragraph = " ".join(_normalize_text_line(line) for line in lines if _normalize_text_line(line))
+    result = []
+    pronouns = {"se", "lo", "la", "nos", "vos", "lhes", "o", "a", "os", "as", "me", "te"}
+    for line in lines:
+        cleaned = _normalize_text_line(line)
+        if not cleaned:
+            continue
+        if result and result[-1].endswith("-"):
+            next_word = cleaned.split()[0] if cleaned.split() else ""
+            clean_next_word = re.sub(r"[^\w]", "", next_word).lower()
+            if (next_word and next_word[0].islower() and 
+                clean_next_word not in pronouns and 
+                not clean_next_word.startswith("de") and 
+                not clean_next_word.startswith("lei")):
+                result[-1] = result[-1][:-1] + cleaned
+            else:
+                result[-1] = result[-1] + cleaned
+        else:
+            if result:
+                result.append(" " + cleaned)
+            else:
+                result.append(cleaned)
+    paragraph = "".join(result)
     paragraph = re.sub(r"\s+([,.;:!?])", r"\1", paragraph)
     return paragraph.strip()
 
@@ -479,7 +500,21 @@ def _merge_spurious_continuation_breaks(content):
 
         next_line = lines[next_index] if next_index < len(lines) else ""
         if _is_continuation_candidate(previous, next_line):
-            output[-1] = f"{previous.rstrip()} {_normalize_text_line(next_line)}"
+            prev_clean = previous.rstrip()
+            next_clean = _normalize_text_line(next_line)
+            if prev_clean.endswith("-"):
+                next_word = next_clean.split()[0] if next_clean.split() else ""
+                clean_next_word = re.sub(r"[^\w]", "", next_word).lower()
+                pronouns = {"se", "lo", "la", "nos", "vos", "lhes", "o", "a", "os", "as", "me", "te"}
+                if (next_word and next_word[0].islower() and 
+                    clean_next_word not in pronouns and 
+                    not clean_next_word.startswith("de") and 
+                    not clean_next_word.startswith("lei")):
+                    output[-1] = f"{prev_clean[:-1]}{next_clean}"
+                else:
+                    output[-1] = f"{prev_clean}{next_clean}"
+            else:
+                output[-1] = f"{prev_clean} {next_clean}"
             index = next_index + 1
             continue
 
@@ -1088,13 +1123,20 @@ def convert():
             temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
-            
             # planalto and other Brazilian government pages are typically served in ISO-8859-1 or CP1252
             # Let's decode it correctly and write as UTF-8 to prevent any parsing encoding issues
-            encoding = response.encoding
-            if "planalto.gov.br" in url.lower():
-                encoding = "cp1252"
-            elif not encoding or encoding.lower() in ('iso-8859-1', 'latin-1'):
+            import charset_normalizer
+            
+            try:
+                detection = charset_normalizer.from_bytes(response.content).best()
+                encoding = detection.encoding if detection else None
+            except Exception:
+                encoding = None
+                
+            if not encoding:
+                encoding = response.encoding or "cp1252"
+                
+            if "planalto.gov.br" in url.lower() or encoding.lower() in ('iso-8859-1', 'latin-1', 'cp1252'):
                 encoding = "cp1252"
                 
             try:
@@ -1139,11 +1181,18 @@ def convert():
         # If the file is HTML, sanitize it to prevent truncation by premature </body> tags
         if temp_path.lower().endswith((".html", ".htm")):
             try:
+                from bs4 import BeautifulSoup
                 with open(temp_path, "r", encoding="utf-8", errors="replace") as f:
                     html_content = f.read()
+                # First strip body/html tags to prevent premature termination when BeautifulSoup parses it
                 html_content = re.sub(r'</?(body|html)[^>]*>', '', html_content, flags=re.IGNORECASE)
+                # Parse with BeautifulSoup + lxml to rebuild/close nested structures correctly
+                soup = BeautifulSoup(html_content, "lxml")
+                html_sanitized = str(soup)
+                # Strip body/html tags again to ensure clean body content for downstream converters
+                html_sanitized = re.sub(r'</?(body|html)[^>]*>', '', html_sanitized, flags=re.IGNORECASE)
                 with open(temp_path, "w", encoding="utf-8") as f:
-                    f.write(html_content)
+                    f.write(html_sanitized)
             except Exception as e:
                 print("Error sanitizing HTML:", e)
 

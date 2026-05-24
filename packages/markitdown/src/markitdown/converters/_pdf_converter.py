@@ -492,6 +492,79 @@ def _extract_tables_from_words(page: Any) -> list[list[list[str]]]:
     return [table_rows]
 
 
+def extract_text_with_layout_and_columns(page: Any) -> str:
+    """
+    Extracts text from a pdfplumber Page, crops top and bottom 8% margins
+    to remove headers/footers, and detects if the page has a two-column layout.
+    If a clear vertical gutter exists in the middle, extracts columns sequentially.
+    """
+    if not page.height or not page.width:
+        return page.extract_text() or ""
+
+    top_margin = page.height * 0.08
+    bottom_margin = page.height * 0.08
+
+    # Crop to exclude top 8% and bottom 8% margins
+    cropped_page = page.crop((0, top_margin, page.width, page.height - bottom_margin))
+
+    # Extract words from the cropped area
+    words = cropped_page.extract_words()
+    if not words:
+        return ""
+
+    # Check for a vertical gutter in the middle region [40% to 60% of page width]
+    width = cropped_page.width
+    mid_start = width * 0.40
+    mid_end = width * 0.60
+
+    # Sort word boundaries horizontally
+    spans = sorted([(w["x0"], w["x1"]) for w in words])
+
+    # Merge overlapping intervals
+    union_intervals = []
+    for s in spans:
+        if not union_intervals:
+            union_intervals.append(s)
+        else:
+            prev_s = union_intervals[-1]
+            if s[0] <= prev_s[1]:
+                union_intervals[-1] = (prev_s[0], max(prev_s[1], s[1]))
+            else:
+                union_intervals.append(s)
+
+    # Detect gaps in the middle region
+    gaps = []
+    for idx in range(len(union_intervals) - 1):
+        gap_start = union_intervals[idx][1]
+        gap_end = union_intervals[idx + 1][0]
+        if gap_start < mid_end and gap_end > mid_start:
+            overlap_start = max(gap_start, mid_start)
+            overlap_end = min(gap_end, mid_end)
+            if overlap_end - overlap_start > 15:  # At least 15 points wide vertical gap
+                gaps.append((overlap_start, overlap_end))
+
+    if gaps:
+        # Select the widest gap in the middle region as the column divider
+        gaps.sort(key=lambda g: g[1] - g[0], reverse=True)
+        gutter_start, gutter_end = gaps[0]
+        gutter_x = (gutter_start + gutter_end) / 2
+
+        # Crop page into left and right columns (excluding margins)
+        left_box = (0, top_margin, gutter_x, page.height - bottom_margin)
+        right_box = (gutter_x, top_margin, page.width, page.height - bottom_margin)
+
+        left_page = page.crop(left_box)
+        right_page = page.crop(right_box)
+
+        left_text = left_page.extract_text() or ""
+        right_text = right_page.extract_text() or ""
+
+        return left_text.strip() + "\n\n" + right_text.strip()
+    else:
+        # Fall back to standard extraction on the cropped page
+        return cropped_page.extract_text() or ""
+
+
 class PdfConverter(DocumentConverter):
     """
     Converts PDFs to Markdown.
@@ -540,38 +613,23 @@ class PdfConverter(DocumentConverter):
         pdf_bytes = io.BytesIO(file_stream.read())
 
         try:
-            # Single pass: check every page for form-style content.
-            # Pages with tables/forms get rich extraction; plain-text
-            # pages are collected separately. page.close() is called
-            # after each page to free pdfplumber's cached objects and
-            # keep memory usage constant regardless of page count.
             markdown_chunks: list[str] = []
-            form_page_count = 0
-            plain_page_indices: list[int] = []
 
             with pdfplumber.open(pdf_bytes) as pdf:
                 for page_idx, page in enumerate(pdf.pages):
                     page_content = _extract_form_content_from_words(page)
 
                     if page_content is not None:
-                        form_page_count += 1
                         if page_content.strip():
-                            markdown_chunks.append(page_content)
+                            markdown_chunks.append(page_content.strip())
                     else:
-                        plain_page_indices.append(page_idx)
-                        text = page.extract_text()
+                        text = extract_text_with_layout_and_columns(page)
                         if text and text.strip():
                             markdown_chunks.append(text.strip())
 
                     page.close()  # Free cached page data immediately
 
-            # If no pages had form-style content, use pdfminer for
-            # the whole document (better text spacing for prose).
-            if form_page_count == 0:
-                pdf_bytes.seek(0)
-                markdown = pdfminer.high_level.extract_text(pdf_bytes)
-            else:
-                markdown = "\n\n".join(markdown_chunks).strip()
+            markdown = "\n\n".join(markdown_chunks).strip()
 
         except Exception:
             # Fallback if pdfplumber fails

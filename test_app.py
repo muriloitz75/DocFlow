@@ -566,6 +566,105 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertFalse(response.json["success"])
 
+    def test_hyphenated_continuation_merge(self):
+        # 1. Test _join_wrapped_lines
+        lines_word_break = ["Esta lei é constitu-", "cional para todos."]
+        self.assertEqual(webapp._join_wrapped_lines(lines_word_break), "Esta lei é constitucional para todos.")
+
+        lines_compound = ["Este decreto-", "lei regulamenta a matéria."]
+        self.assertEqual(webapp._join_wrapped_lines(lines_compound), "Este decreto-lei regulamenta a matéria.")
+
+        lines_enclitic = ["Dá-", "se provimento ao recurso."]
+        self.assertEqual(webapp._join_wrapped_lines(lines_enclitic), "Dá-se provimento ao recurso.")
+
+        # 2. Test _merge_spurious_continuation_breaks
+        content_word_break = "Esta lei é constitu-\n\ncional para todos."
+        self.assertIn("Esta lei é constitucional para todos.", webapp._merge_spurious_continuation_breaks(content_word_break))
+
+        content_compound = "Este decreto-\n\nlei regulamenta a matéria."
+        self.assertIn("Este decreto-lei regulamenta a matéria.", webapp._merge_spurious_continuation_breaks(content_compound))
+
+        content_enclitic = "Dá-\n\nse provimento ao recurso."
+        self.assertIn("Dá-se provimento ao recurso.", webapp._merge_spurious_continuation_breaks(content_enclitic))
+
+    def test_pdf_converter_column_layout_detection(self):
+        from markitdown.converters._pdf_converter import extract_text_with_layout_and_columns
+
+        # Define Mock objects inside the test method
+        class MockWord:
+            def __init__(self, text, x0, x1, top, bottom):
+                self.dict = {"text": text, "x0": x0, "x1": x1, "top": top, "bottom": bottom}
+            def __getitem__(self, key):
+                return self.dict[key]
+
+        class MockPage:
+            def __init__(self, width=612, height=792, words=None, text_left="", text_right="", text_all=""):
+                self.width = width
+                self.height = height
+                self.words_list = words or []
+                self.text_left = text_left
+                self.text_right = text_right
+                self.text_all = text_all
+
+            def crop(self, box):
+                x0, top, x1, bottom = box
+                if x1 < self.width * 0.6:
+                    return MockPage(width=self.width, height=self.height, text_all=self.text_left)
+                elif x0 > self.width * 0.4:
+                    return MockPage(width=self.width, height=self.height, text_all=self.text_right)
+                return self
+
+            def extract_words(self):
+                return self.words_list
+
+            def extract_text(self):
+                return self.text_all
+
+        # Case 1: Two Columns with a clear gutter
+        words = [
+            MockWord("Esquerda", 50, 100, 100, 115),
+            MockWord("Direita", 350, 400, 100, 115)
+        ]
+        two_col_page = MockPage(
+            width=612,
+            height=792,
+            words=words,
+            text_left="Texto da esquerda",
+            text_right="Texto da direita"
+        )
+        extracted = extract_text_with_layout_and_columns(two_col_page)
+        self.assertEqual(extracted, "Texto da esquerda\n\nTexto da direita")
+
+        # Case 2: Single Column
+        single_words = [
+            MockWord("Meio", 280, 320, 100, 115)
+        ]
+        single_page = MockPage(
+            width=612,
+            height=792,
+            words=single_words,
+            text_all="Texto de coluna única"
+        )
+        extracted_single = extract_text_with_layout_and_columns(single_page)
+        self.assertEqual(extracted_single, "Texto de coluna única")
+
+    def test_html_sanitization_lxml_nested_repaired(self):
+        # Create a malformed HTML that BS4 + lxml should repair without truncating at early body
+        malformed_html = (
+            "<html><body>"
+            "<h1>Título</h1>"
+            "<div>"
+            "<p>Texto dentro do div"
+            "</body></html>"
+            "<p>Texto após o fechamento precoce do body</p>"
+        )
+        
+        response = self.post_file(malformed_html.encode("utf-8"), "documento.html")
+        self.assertEqual(response.status_code, 200)
+        content = response.json["content"]
+        # The content after premature </body> must be fully preserved
+        self.assertIn("Texto após o fechamento precoce do body", content)
+
 
 if __name__ == "__main__":
     unittest.main()
