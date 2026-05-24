@@ -1079,6 +1079,7 @@
             white-space: pre-wrap;
             word-break: break-word;
             zoom: var(--preview-zoom, 1);
+            position: relative;
         }
 
         /* Specific preview modes */
@@ -1613,13 +1614,13 @@
 
         /* CARIMBOS DINÂMICOS */
         .doc-stamp {
+            position: absolute;
             display: inline-flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border: 3px double currentColor;
-            padding: 4px 10px;
-            margin: 4px 8px;
+            padding: 6px 12px;
             font-family: var(--font-mono);
             font-weight: 700;
             font-size: 11px;
@@ -1627,29 +1628,18 @@
             border-radius: 4px;
             transform: rotate(-2deg);
             user-select: none;
-            vertical-align: middle;
             text-transform: uppercase;
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
-        }
-        .stamp-approved {
-            color: #16a34a;
-            background-color: #f0fdf4;
-            border-color: #16a34a;
-        }
-        .stamp-rejected {
-            color: #dc2626;
-            background-color: #fef2f2;
-            border-color: #dc2626;
-        }
-        .stamp-pending {
-            color: #d97706;
-            background-color: #fffbeb;
-            border-color: #d97706;
-        }
-        .stamp-custom {
-            color: #2563eb;
+            box-shadow: 3px 3px 0px rgba(17, 17, 17, 0.15);
+            cursor: move;
+            z-index: 50; /* Above text, below floating toolbar */
             background-color: #eff6ff;
+            color: #2563eb;
             border-color: #2563eb;
+            transition: transform 0.1s ease;
+        }
+        .doc-stamp:active {
+            transform: rotate(-2deg) scale(1.05);
+            box-shadow: 5px 5px 0px rgba(17, 17, 17, 0.2);
         }
         .stamp-title {
             font-size: 14px;
@@ -1660,52 +1650,8 @@
         .stamp-meta {
             font-size: 8px;
             opacity: 0.8;
+            white-space: nowrap;
         }
-
-        .stamp-menu {
-            position: absolute;
-            right: 56px;
-            background: var(--surface);
-            border: var(--border);
-            box-shadow: var(--shadow);
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            padding: 8px;
-            z-index: 10002;
-            width: 160px;
-        }
-        .stamp-menu.visible {
-            display: flex;
-        }
-        .stamp-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            border-radius: 2px;
-            transition: background 0.1s;
-            text-transform: uppercase;
-            color: var(--ink);
-        }
-        .stamp-menu-item:hover {
-            background: #d8d6d0;
-        }
-        .stamp-menu-item::before {
-            content: '';
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        .stamp-menu-item.approved::before { background: #16a34a; }
-        .stamp-menu-item.rejected::before { background: #dc2626; }
-        .stamp-menu-item.pending::before { background: #d97706; }
-        .stamp-menu-item.custom::before { background: #2563eb; }
 
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
@@ -1960,14 +1906,6 @@
                     <button class="annot-btn" id="annotStampBtn" type="button" title="Carimbo Dinâmico">
                         <svg viewBox="0 0 24 24"><path d="M18 10h-1V7c0-1.66-1.34-3-3-3h-4C8.34 4 7 5.34 7 7v3H6c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2zM9 7c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v3H9V7zm9 10H6v-3h12v3z"/></svg>
                     </button>
-                </div>
-
-                <!-- Menu de Carimbos -->
-                <div class="stamp-menu" id="stampMenu">
-                    <div class="stamp-menu-item approved" data-stamp="approved">Aprovado</div>
-                    <div class="stamp-menu-item rejected" data-stamp="rejected">Rejeitado</div>
-                    <div class="stamp-menu-item pending" data-stamp="pending">Pendente</div>
-                    <div class="stamp-menu-item custom" data-stamp="custom">Customizar...</div>
                 </div>
             </div>
 
@@ -3305,46 +3243,39 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                let range;
-                if (document.caretRangeFromPoint) {
-                    range = document.caretRangeFromPoint(e.clientX, e.clientY);
-                } else if (document.caretPositionFromPoint) {
-                    const position = document.caretPositionFromPoint(e.clientX, e.clientY);
-                    if (position) {
-                        range = document.createRange();
-                        range.setStart(position.offsetNode, position.offset);
-                        range.setEnd(position.offsetNode, position.offset);
-                    }
-                }
+                const rect = outputArea.getBoundingClientRect();
+                const x = e.clientX - rect.left + outputArea.scrollLeft;
+                const y = e.clientY - rect.top + outputArea.scrollTop;
 
-                if (range) {
-                    const stampEl = document.createElement("span");
-                    stampEl.className = `doc-stamp stamp-${selectedStamp.type}`;
-                    stampEl.setAttribute("contenteditable", "false");
+                const stampEl = document.createElement("span");
+                stampEl.className = "doc-stamp";
+                stampEl.setAttribute("contenteditable", "false");
 
-                    const titleEl = document.createElement("span");
-                    titleEl.className = "stamp-title";
-                    titleEl.textContent = selectedStamp.text;
+                const stampWidth = 150;
+                const stampHeight = 46;
+                stampEl.style.left = (x - stampWidth / 2) + "px";
+                stampEl.style.top = (y - stampHeight / 2) + "px";
 
-                    const metaEl = document.createElement("span");
-                    metaEl.className = "stamp-meta";
-                    const now = new Date();
-                    const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
-                    metaEl.textContent = `Por: Admin | ${dateStr}`;
+                const titleEl = document.createElement("span");
+                titleEl.className = "stamp-title";
+                titleEl.textContent = selectedStamp.text;
 
-                    stampEl.appendChild(titleEl);
-                    stampEl.appendChild(metaEl);
+                const metaEl = document.createElement("span");
+                metaEl.className = "stamp-meta";
+                const now = new Date();
+                const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
+                metaEl.textContent = `Por: Admin | ${dateStr}`;
 
-                    range.insertNode(stampEl);
+                stampEl.appendChild(titleEl);
+                stampEl.appendChild(metaEl);
 
-                    // Salva as alterações
-                    convertedContent = outputArea.innerHTML;
+                makeStampDraggable(stampEl);
+                outputArea.appendChild(stampEl);
 
-                    showPopoverToast("Carimbo aplicado!");
-                } else {
-                    showPopoverToast("Não foi possível determinar a posição no texto.");
-                }
+                // Salva as alterações
+                convertedContent = outputArea.innerHTML;
 
+                showPopoverToast("Carimbo aplicado!");
                 deactivateStampMode();
                 return;
             }
@@ -3690,7 +3621,6 @@
         const annotPenBtn       = document.getElementById("annotPenBtn");
         const annotClearPenBtn  = document.getElementById("annotClearPenBtn");
         const annotStampBtn     = document.getElementById("annotStampBtn");
-        const stampMenu         = document.getElementById("stampMenu");
         const eraserSizeInput   = document.getElementById("eraserSizeInput");
         const eraserSizeLabel   = document.getElementById("eraserSizeLabel");
         const penCanvas         = document.getElementById("penCanvas");
@@ -3785,10 +3715,65 @@
             }
         }
 
+        function makeStampDraggable(stampEl) {
+            let isDraggingStamp = false;
+            let startX, startY;
+            let startLeft, startTop;
+
+            stampEl.addEventListener("pointerdown", (e) => {
+                if (eraseMode && !penMode) return; // Deixa para a borracha apagar
+
+                isDraggingStamp = true;
+                stampEl.setPointerCapture(e.pointerId);
+
+                startX = e.clientX;
+                startY = e.clientY;
+
+                startLeft = parseInt(stampEl.style.left, 10) || 0;
+                startTop = parseInt(stampEl.style.top, 10) || 0;
+
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            stampEl.addEventListener("pointermove", (e) => {
+                if (!isDraggingStamp) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                stampEl.style.left = (startLeft + deltaX) + "px";
+                stampEl.style.top = (startTop + deltaY) + "px";
+
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            const stopDrag = (e) => {
+                if (!isDraggingStamp) return;
+                isDraggingStamp = false;
+                try {
+                    stampEl.releasePointerCapture(e.pointerId);
+                } catch (err) {}
+
+                // Salva o estado atualizado no cache local/variável
+                convertedContent = outputArea.innerHTML;
+
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            stampEl.addEventListener("pointerup", stopDrag);
+            stampEl.addEventListener("pointercancel", stopDrag);
+        }
+
+        function initializeExistingStamps() {
+            outputArea.querySelectorAll(".doc-stamp").forEach(makeStampDraggable);
+        }
+
         function deactivateStampMode() {
             stampMode = false;
             if (annotStampBtn) annotStampBtn.classList.remove("active");
-            if (stampMenu) stampMenu.classList.remove("visible");
             outputArea.style.cursor = "";
         }
 
@@ -3802,7 +3787,6 @@
             selectedStamp = { text: text, type: type };
             stampMode = true;
             if (annotStampBtn) annotStampBtn.classList.add("active");
-            if (stampMenu) stampMenu.classList.remove("visible");
             outputArea.style.cursor = "copy";
         }
 
@@ -3823,7 +3807,7 @@
                         annotEraseBtn.classList.toggle("active", eraseMode);
                         updateOutputAreaCursor();
                         if (eraseMode) {
-                            showPopoverToast("Borracha ativada. Clique em um realce para removê-lo.");
+                            showPopoverToast("Borracha ativada. Clique em um realce ou carimbo para removê-lo.");
                         } else {
                             showPopoverToast("Borracha desativada.");
                         }
@@ -3832,45 +3816,18 @@
             });
         }
 
-        if (annotStampBtn && stampMenu) {
+        if (annotStampBtn) {
             annotStampBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 if (stampMode) {
                     deactivateStampMode();
                 } else {
-                    // Posiciona o menu de carimbos alinhado ao botão
-                    stampMenu.style.top = annotStampBtn.offsetTop + "px";
-                    stampMenu.classList.toggle("visible");
-                }
-            });
-
-            // Fechar menu de carimbos ao clicar fora
-            document.addEventListener("click", (e) => {
-                if (!stampMenu.contains(e.target) && e.target !== annotStampBtn) {
-                    stampMenu.classList.remove("visible");
-                }
-            });
-
-            // Clique nas opções de carimbo
-            stampMenu.addEventListener("click", (e) => {
-                const item = e.target.closest(".stamp-menu-item");
-                if (!item) return;
-
-                e.stopPropagation();
-                const stampType = item.dataset.stamp;
-                let stampText = item.textContent;
-
-                if (stampType === "custom") {
                     const customText = prompt("Digite o texto do carimbo:");
-                    if (!customText || !customText.trim()) {
-                        stampMenu.classList.remove("visible");
-                        return;
-                    }
-                    stampText = customText.trim();
-                }
+                    if (!customText || !customText.trim()) return;
 
-                activateStampMode(stampText, stampType);
-                showPopoverToast(`Carimbo '${stampText}' selecionado. Clique no documento para aplicar.`);
+                    activateStampMode(customText.trim(), "custom");
+                    showPopoverToast(`Carimbo '${customText.trim()}' selecionado. Clique no documento para posicionar.`);
+                }
             });
         }
 
@@ -4228,6 +4185,7 @@
                     // Atualiza a visualização sem re-processar o markdown (preserva o innerHTML salvo com os <mark>)
                     outputArea.className = "preview html-preview"; // Assume que está formatado com HTML completo
                     outputArea.innerHTML = doc.html;
+                    initializeExistingStamps();
                     
                     // Restaura botões
                     modeSegmented.querySelectorAll(".segment").forEach(btn => {
