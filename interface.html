@@ -1636,9 +1636,12 @@
             color: #2563eb;
             border-color: #2563eb;
             transition: transform 0.1s ease;
+            box-sizing: border-box;
+            min-width: 100px;
+            min-height: 40px;
         }
         .doc-stamp:active {
-            transform: rotate(-2deg) scale(1.05);
+            transform: rotate(-2deg) scale(1.02);
             box-shadow: 5px 5px 0px rgba(17, 17, 17, 0.2);
         }
         .stamp-title {
@@ -1651,6 +1654,21 @@
             font-size: 8px;
             opacity: 0.8;
             white-space: nowrap;
+        }
+        .stamp-resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            right: 3px;
+            bottom: 3px;
+            cursor: se-resize;
+            border-right: 3px double currentColor;
+            border-bottom: 3px double currentColor;
+            opacity: 0.4;
+            transition: opacity 0.15s;
+        }
+        .doc-stamp:hover .stamp-resize-handle {
+            opacity: 0.9;
         }
 
         @media (max-width: 900px) {
@@ -3269,7 +3287,7 @@
                 stampEl.appendChild(titleEl);
                 stampEl.appendChild(metaEl);
 
-                makeStampDraggable(stampEl);
+                makeStampInteractive(stampEl);
                 outputArea.appendChild(stampEl);
 
                 // Salva as alterações
@@ -3715,13 +3733,26 @@
             }
         }
 
-        function makeStampDraggable(stampEl) {
+        function makeStampInteractive(stampEl) {
             let isDraggingStamp = false;
+            let isResizingStamp = false;
             let startX, startY;
             let startLeft, startTop;
+            let startWidth, startHeight;
 
+            // Encontra ou cria a alça de redimensionamento
+            let handle = stampEl.querySelector(".stamp-resize-handle");
+            if (!handle) {
+                handle = document.createElement("div");
+                handle.className = "stamp-resize-handle";
+                handle.title = "Redimensionar";
+                stampEl.appendChild(handle);
+            }
+
+            // Arrastar carimbo
             stampEl.addEventListener("pointerdown", (e) => {
                 if (eraseMode && !penMode) return; // Deixa para a borracha apagar
+                if (e.target === handle) return; // Não arrasta se clicou na alça de redimensionar
 
                 isDraggingStamp = true;
                 stampEl.setPointerCapture(e.pointerId);
@@ -3765,10 +3796,59 @@
 
             stampEl.addEventListener("pointerup", stopDrag);
             stampEl.addEventListener("pointercancel", stopDrag);
+
+            // Redimensionar carimbo
+            handle.addEventListener("pointerdown", (e) => {
+                isResizingStamp = true;
+                handle.setPointerCapture(e.pointerId);
+
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const rect = stampEl.getBoundingClientRect();
+                startWidth = rect.width;
+                startHeight = rect.height;
+
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            handle.addEventListener("pointermove", (e) => {
+                if (!isResizingStamp) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                const newWidth = Math.max(100, startWidth + deltaX);
+                const newHeight = Math.max(40, startHeight + deltaY);
+
+                stampEl.style.width = newWidth + "px";
+                stampEl.style.height = newHeight + "px";
+
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            const stopResize = (e) => {
+                if (!isResizingStamp) return;
+                isResizingStamp = false;
+                try {
+                    handle.releasePointerCapture(e.pointerId);
+                } catch (err) {}
+
+                // Salva o estado atualizado no cache local/variável
+                convertedContent = outputArea.innerHTML;
+
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            handle.addEventListener("pointerup", stopResize);
+            handle.addEventListener("pointercancel", stopResize);
         }
 
         function initializeExistingStamps() {
-            outputArea.querySelectorAll(".doc-stamp").forEach(makeStampDraggable);
+            outputArea.querySelectorAll(".doc-stamp").forEach(makeStampInteractive);
         }
 
         function deactivateStampMode() {
