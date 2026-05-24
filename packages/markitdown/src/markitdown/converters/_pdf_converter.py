@@ -494,31 +494,31 @@ def _extract_tables_from_words(page: Any) -> list[list[list[str]]]:
 
 def extract_text_with_layout_and_columns(page: Any) -> str:
     """
-    Extracts text from a pdfplumber Page, crops top and bottom 8% margins
-    to remove headers/footers, and detects if the page has a two-column layout.
-    If a clear vertical gutter exists in the middle, extracts columns sequentially.
+    Extracts text from a pdfplumber Page. To avoid omitting valid body text printed
+    low or high on the page, the full page height is extracted.
+    Headers/footers are ignored only during column gutter detection,
+    and are later cleaned dynamically by frequency-based post-processing.
     """
     if not page.height or not page.width:
         return page.extract_text() or ""
 
-    top_margin = page.height * 0.08
-    bottom_margin = page.height * 0.08
-
-    # Crop to exclude top 8% and bottom 8% margins
-    cropped_page = page.crop((0, top_margin, page.width, page.height - bottom_margin))
-
-    # Extract words from the cropped area
-    words = cropped_page.extract_words()
+    # Get all words on the page
+    words = page.extract_words()
     if not words:
         return ""
 
+    # Filter words to exclude headers/footers ONLY for gutter detection
+    top_gate = page.height * 0.08
+    bottom_gate = page.height * 0.92
+    middle_words = [w for w in words if w["top"] > top_gate and w["bottom"] < bottom_gate]
+
     # Check for a vertical gutter in the middle region [40% to 60% of page width]
-    width = cropped_page.width
+    width = page.width
     mid_start = width * 0.40
     mid_end = width * 0.60
 
     # Sort word boundaries horizontally
-    spans = sorted([(w["x0"], w["x1"]) for w in words])
+    spans = sorted([(w["x0"], w["x1"]) for w in middle_words])
 
     # Merge overlapping intervals
     union_intervals = []
@@ -549,9 +549,9 @@ def extract_text_with_layout_and_columns(page: Any) -> str:
         gutter_start, gutter_end = gaps[0]
         gutter_x = (gutter_start + gutter_end) / 2
 
-        # Crop page into left and right columns (excluding margins)
-        left_box = (0, top_margin, gutter_x, page.height - bottom_margin)
-        right_box = (gutter_x, top_margin, page.width, page.height - bottom_margin)
+        # Crop page into left and right columns spanning the full height to avoid content omission
+        left_box = (0, 0, gutter_x, page.height)
+        right_box = (gutter_x, 0, page.width, page.height)
 
         left_page = page.crop(left_box)
         right_page = page.crop(right_box)
@@ -561,8 +561,8 @@ def extract_text_with_layout_and_columns(page: Any) -> str:
 
         return left_text.strip() + "\n\n" + right_text.strip()
     else:
-        # Fall back to standard extraction on the cropped page
-        return cropped_page.extract_text() or ""
+        # Fall back to standard extraction on the full page height
+        return page.extract_text() or ""
 
 
 class PdfConverter(DocumentConverter):
@@ -629,7 +629,9 @@ class PdfConverter(DocumentConverter):
 
                     page.close()  # Free cached page data immediately
 
-            markdown = "\n\n".join(markdown_chunks).strip()
+            # Join pages using form feed (\f) so downstream post-processing
+            # can segment pages and remove repeated headers/footers accurately.
+            markdown = "\f".join(markdown_chunks).strip()
 
         except Exception:
             # Fallback if pdfplumber fails
