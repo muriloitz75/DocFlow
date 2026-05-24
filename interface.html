@@ -1464,39 +1464,24 @@
 
         /* BARRA DE ANOTAÇÃO FLUTUANTE */
         .annotation-toolbar {
-            position: fixed;
+            position: relative;
             display: none;
             flex-direction: row;
             align-items: center;
+            justify-content: center;
             z-index: 10001; /* acima do canvas (10000) */
             background: var(--ink);
-            border: var(--border);
-            box-shadow: 4px 4px 0px var(--accent);
+            border: none;
+            border-top: var(--border);
             user-select: none;
             min-height: 48px;
-            top: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            zoom: 0.75;
+            width: 100%;
         }
         .annotation-toolbar.visible { display: flex; }
 
         .annot-handle {
-            padding: 6px 12px;
-            cursor: grab;
-            color: rgba(255,255,255,0.5);
-            text-align: center;
-            font-size: 16px;
-            border-right: 1px solid rgba(255,255,255,0.12);
-            border-bottom: none;
-            letter-spacing: normal;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            align-self: stretch;
-            justify-content: center;
+            display: none !important;
         }
-        .annot-handle:active { cursor: grabbing; }
 
         .annot-group {
             display: flex;
@@ -2012,15 +1997,7 @@
             box-shadow: 1px 1px 0px var(--ink);
         }
 
-        /* Transições para o deslocamento da barra flutuante */
-        .annotation-toolbar {
-            transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s, background 0.2s, opacity 0.2s;
-        }
 
-        /* Desabilita transição ao arrastar para não dar lag */
-        .annotation-toolbar.dragging {
-            transition: none !important;
-        }
 
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
@@ -2229,82 +2206,82 @@
                         <div class="dict-resize-handle" id="dictResizeHandle" title="Arrastar para ajustar largura"></div>
                     </nav>
                 </div>
+
+                <!-- Barra de anotações integrada (rodapé fixo) -->
+                <div class="annotation-toolbar" id="annotationToolbar">
+                    <div class="annot-handle" id="annotHandle" title="Arrastar barra" style="display:none">⠿</div>
+
+                    <!-- Contador de seleção -->
+                    <div class="annot-sel-count" id="annotSelCount" style="display:none"></div>
+
+                    <!-- Ações rápidas -->
+                    <div class="annot-group">
+                        <button class="annot-btn" id="annotCopyBtn" type="button" title="Copiar seleção" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotShareBtn" type="button" title="Compartilhar seleção" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotScreenshotBtn" type="button" title="Screenshot do trecho" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotCopyImgBtn" type="button" title="Copiar trecho como imagem" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4.44-6.19l-2.28 2.73-1.63-1.95L7 17h10l-3.44-4.19z"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="annot-divider"></div>
+
+                    <!-- Marca-texto -->
+                    <div class="annot-group">
+                        <button class="annot-color-btn hl-yellow" data-color="hl-yellow" type="button" title="Realçar em Amarelo"></button>
+                        <button class="annot-color-btn hl-green"  data-color="hl-green"  type="button" title="Realçar em Verde"></button>
+                        <button class="annot-color-btn hl-blue"   data-color="hl-blue"   type="button" title="Realçar em Azul"></button>
+                        <button class="annot-color-btn hl-pink"   data-color="hl-pink"   type="button" title="Realçar em Rosa"></button>
+                        <button class="annot-color-btn hl-orange" data-color="hl-orange" type="button" title="Realçar em Laranja"></button>
+                    </div>
+
+                    <div class="annot-divider"></div>
+
+                    <!-- Cores da caneta -->
+                    <div class="annot-group">
+                        <button class="pen-color-btn selected" data-pen-color="#FF3E00" type="button" title="Caneta vermelha" style="background:#FF3E00"></button>
+                        <button class="pen-color-btn" data-pen-color="#111111" type="button" title="Caneta preta" style="background:#111111"></button>
+                        <button class="pen-color-btn" data-pen-color="#2563EB" type="button" title="Caneta azul" style="background:#2563EB"></button>
+                        <button class="pen-color-btn" data-pen-color="#16A34A" type="button" title="Caneta verde" style="background:#16A34A"></button>
+                        <button class="pen-color-btn" data-pen-color="#9333EA" type="button" title="Caneta roxa" style="background:#9333EA"></button>
+                    </div>
+
+                    <div class="annot-divider"></div>
+
+                    <!-- Tamanho da borracha -->
+                    <div class="annot-group eraser-size-control" title="Tamanho da borracha">
+                        <input id="eraserSizeInput" type="range" min="8" max="40" step="2" value="16" aria-label="Tamanho da borracha">
+                        <span class="eraser-size-label" id="eraserSizeLabel">16</span>
+                    </div>
+
+                    <div class="annot-divider"></div>
+
+                    <!-- Ferramentas -->
+                    <div class="annot-group">
+                        <button class="annot-btn" id="annotEraseBtn" type="button" title="Apagar realce / borracha (duplo clique limpa desenhos)">
+                            <svg viewBox="0 0 24 24"><path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.78-.78 2.05 0 2.83L6.44 21.4c.39.39.9.59 1.41.59h12c1.1 0 2-.9 2-2v-4.14c0-.51-.2-1.02-.59-1.41L16.55 3.59c-.39-.39-.9-.59-1.41-.59zM17 19H9.41l-4.12-4.12 9.3-9.3 4.12 4.12-2.3 2.3 2 2L17 19z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotNoteBtn" type="button" title="Adicionar nota ao trecho" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12zM7 9h10v2H7zm0-3h10v2H7zm0 6h7v2H7z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotPenBtn" type="button" title="Caneta livre (ativar/desativar)">
+                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotStampBtn" type="button" title="Carimbo Dinâmico">
+                            <svg viewBox="0 0 24 24"><path d="M18 10h-1V7c0-1.66-1.34-3-3-3h-4C8.34 4 7 5.34 7 7v3H6c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2zM9 7c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v3H9V7zm9 10H6v-3h12v3z"/></svg>
+                        </button>
+                        <button class="annot-btn" id="annotDictBtn" type="button" title="Dicionário" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+                        </button>
+                    </div>
+                </div>
             </section>
-
-            <!-- Barra de anotação flutuante (modo maximizado) -->
-            <div class="annotation-toolbar" id="annotationToolbar">
-                <div class="annot-handle" id="annotHandle" title="Arrastar barra">⠿</div>
-
-                <!-- Contador de seleção -->
-                <div class="annot-sel-count" id="annotSelCount" style="display:none"></div>
-
-                <!-- Ações rápidas -->
-                <div class="annot-group">
-                    <button class="annot-btn" id="annotCopyBtn" type="button" title="Copiar seleção" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotShareBtn" type="button" title="Compartilhar seleção" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotScreenshotBtn" type="button" title="Screenshot do trecho" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotCopyImgBtn" type="button" title="Copiar trecho como imagem" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4.44-6.19l-2.28 2.73-1.63-1.95L7 17h10l-3.44-4.19z"/></svg>
-                    </button>
-                </div>
-
-                <div class="annot-divider"></div>
-
-                <!-- Marca-texto -->
-                <div class="annot-group">
-                    <button class="annot-color-btn hl-yellow" data-color="hl-yellow" type="button" title="Realçar em Amarelo"></button>
-                    <button class="annot-color-btn hl-green"  data-color="hl-green"  type="button" title="Realçar em Verde"></button>
-                    <button class="annot-color-btn hl-blue"   data-color="hl-blue"   type="button" title="Realçar em Azul"></button>
-                    <button class="annot-color-btn hl-pink"   data-color="hl-pink"   type="button" title="Realçar em Rosa"></button>
-                    <button class="annot-color-btn hl-orange" data-color="hl-orange" type="button" title="Realçar em Laranja"></button>
-                </div>
-
-                <div class="annot-divider"></div>
-
-                <!-- Cores da caneta -->
-                <div class="annot-group">
-                    <button class="pen-color-btn selected" data-pen-color="#FF3E00" type="button" title="Caneta vermelha" style="background:#FF3E00"></button>
-                    <button class="pen-color-btn" data-pen-color="#111111" type="button" title="Caneta preta" style="background:#111111"></button>
-                    <button class="pen-color-btn" data-pen-color="#2563EB" type="button" title="Caneta azul" style="background:#2563EB"></button>
-                    <button class="pen-color-btn" data-pen-color="#16A34A" type="button" title="Caneta verde" style="background:#16A34A"></button>
-                    <button class="pen-color-btn" data-pen-color="#9333EA" type="button" title="Caneta roxa" style="background:#9333EA"></button>
-                </div>
-
-                <div class="annot-divider"></div>
-
-                <!-- Tamanho da borracha -->
-                <div class="annot-group eraser-size-control" title="Tamanho da borracha">
-                    <input id="eraserSizeInput" type="range" min="8" max="40" step="2" value="16" aria-label="Tamanho da borracha">
-                    <span class="eraser-size-label" id="eraserSizeLabel">16</span>
-                </div>
-
-                <div class="annot-divider"></div>
-
-                <!-- Ferramentas -->
-                <div class="annot-group">
-                    <button class="annot-btn" id="annotEraseBtn" type="button" title="Apagar realce / borracha (duplo clique limpa desenhos)">
-                        <svg viewBox="0 0 24 24"><path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.78-.78 2.05 0 2.83L6.44 21.4c.39.39.9.59 1.41.59h12c1.1 0 2-.9 2-2v-4.14c0-.51-.2-1.02-.59-1.41L16.55 3.59c-.39-.39-.9-.59-1.41-.59zM17 19H9.41l-4.12-4.12 9.3-9.3 4.12 4.12-2.3 2.3 2 2L17 19z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotNoteBtn" type="button" title="Adicionar nota ao trecho" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12zM7 9h10v2H7zm0-3h10v2H7zm0 6h7v2H7z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotPenBtn" type="button" title="Caneta livre (ativar/desativar)">
-                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotStampBtn" type="button" title="Carimbo Dinâmico">
-                        <svg viewBox="0 0 24 24"><path d="M18 10h-1V7c0-1.66-1.34-3-3-3h-4C8.34 4 7 5.34 7 7v3H6c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2zM9 7c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v3H9V7zm9 10H6v-3h12v3z"/></svg>
-                    </button>
-                    <button class="annot-btn" id="annotDictBtn" type="button" title="Dicionário" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
-                    </button>
-                </div>
-            </div>
 
             <!-- Popover de seleção flutuante -->
             <div class="selection-popover" id="selectionPopover">
@@ -4185,10 +4162,8 @@
         }
 
         function positionAnnotationToolbarOppositeToc() {
-            if (!annotationToolbar) return;
-            hasDragged = false;
-            annotationToolbar.classList.remove("dragged");
-            adjustToolbarPosition();
+            // Como a barra agora é um rodapé fixo integrado, não é necessário reposicionar em relação ao TOC.
+            return;
         }
 
 
@@ -5360,38 +5335,10 @@
             return firstWord.toLowerCase();
         }
 
-        // Ajusta a posição da barra de anotação flutuante para não cobrir o dicionário
+        // Ajusta a posição da barra de anotação flutuante para não cobrir o dicionário (barra agora é fixa no rodapé)
         function adjustToolbarPosition() {
-            if (!annotationToolbar) return;
-            
-            const dictOpen = dictPanel.classList.contains("visible");
-            const dictWidth = dictOpen ? (parseFloat(document.documentElement.style.getPropertyValue("--dict-width")) || 320) : 0;
-            
-            if (!hasDragged) {
-                // Posicionamento padrão horizontal: centralizado no topo
-                annotationToolbar.style.top = "24px";
-                annotationToolbar.style.right = "auto";
-                if (dictOpen) {
-                    const remainingWidth = window.innerWidth - dictWidth;
-                    annotationToolbar.style.left = `${remainingWidth / 2}px`;
-                    annotationToolbar.style.transform = "translateX(-50%)";
-                } else {
-                    annotationToolbar.style.left = "50%";
-                    annotationToolbar.style.transform = "translateX(-50%)";
-                }
-            } else {
-                // Se a barra já foi arrastada, ajusta a posição 'left' dela para não sobrepor
-                const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
-                const toolbarRect = annotationToolbar.getBoundingClientRect();
-                
-                // Limite máximo permitido à esquerda da área do dicionário
-                const maxLeft = window.innerWidth - dictWidth - (toolbarRect.width / zoomLevel) - 24;
-                const currentLeft = parseFloat(annotationToolbar.style.left) || 0;
-                
-                if (currentLeft > maxLeft) {
-                    annotationToolbar.style.left = maxLeft + "px";
-                }
-            }
+            // Como a barra agora é um rodapé fixo integrado, não é necessário fazer ajustes dinâmicos de posição.
+            return;
         }
 
         // Função para abrir o painel do dicionário
