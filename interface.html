@@ -1611,6 +1611,102 @@
         }
         #penCanvas.active { pointer-events: auto; }
 
+        /* CARIMBOS DINÂMICOS */
+        .doc-stamp {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px double currentColor;
+            padding: 4px 10px;
+            margin: 4px 8px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 11px;
+            line-height: 1.2;
+            border-radius: 4px;
+            transform: rotate(-2deg);
+            user-select: none;
+            vertical-align: middle;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
+        }
+        .stamp-approved {
+            color: #16a34a;
+            background-color: #f0fdf4;
+            border-color: #16a34a;
+        }
+        .stamp-rejected {
+            color: #dc2626;
+            background-color: #fef2f2;
+            border-color: #dc2626;
+        }
+        .stamp-pending {
+            color: #d97706;
+            background-color: #fffbeb;
+            border-color: #d97706;
+        }
+        .stamp-custom {
+            color: #2563eb;
+            background-color: #eff6ff;
+            border-color: #2563eb;
+        }
+        .stamp-title {
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+        .stamp-meta {
+            font-size: 8px;
+            opacity: 0.8;
+        }
+
+        .stamp-menu {
+            position: absolute;
+            right: 56px;
+            background: var(--surface);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            z-index: 10002;
+            width: 160px;
+        }
+        .stamp-menu.visible {
+            display: flex;
+        }
+        .stamp-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: background 0.1s;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+        .stamp-menu-item:hover {
+            background: #d8d6d0;
+        }
+        .stamp-menu-item::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .stamp-menu-item.approved::before { background: #16a34a; }
+        .stamp-menu-item.rejected::before { background: #dc2626; }
+        .stamp-menu-item.pending::before { background: #d97706; }
+        .stamp-menu-item.custom::before { background: #2563eb; }
+
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
             .shell { padding: 12px; }
@@ -1861,6 +1957,17 @@
                     <button class="annot-btn" id="annotClearPenBtn" type="button" title="Limpar todos os desenhos">
                         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                     </button>
+                    <button class="annot-btn" id="annotStampBtn" type="button" title="Carimbo Dinâmico">
+                        <svg viewBox="0 0 24 24"><path d="M18 10h-1V7c0-1.66-1.34-3-3-3h-4C8.34 4 7 5.34 7 7v3H6c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-5c0-1.1-.9-2-2-2zM9 7c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v3H9V7zm9 10H6v-3h12v3z"/></svg>
+                    </button>
+                </div>
+
+                <!-- Menu de Carimbos -->
+                <div class="stamp-menu" id="stampMenu">
+                    <div class="stamp-menu-item approved" data-stamp="approved">Aprovado</div>
+                    <div class="stamp-menu-item rejected" data-stamp="rejected">Rejeitado</div>
+                    <div class="stamp-menu-item pending" data-stamp="pending">Pendente</div>
+                    <div class="stamp-menu-item custom" data-stamp="custom">Customizar...</div>
                 </div>
             </div>
 
@@ -3181,6 +3288,9 @@
                 annotEraseBtn.classList.remove("active");
                 updateOutputAreaCursor();
             }
+
+            // Desativar carimbo se estivesse ativo
+            if (stampMode) deactivateStampMode();
         });
 
         popoverEraseBtn.addEventListener("click", (e) => {
@@ -3189,8 +3299,56 @@
             removeHighlightsInSelection();
         });
 
-        // Delegação de clique no outputArea para remover realce unitário com clique direto se a borracha estiver ativa
+        // Delegação de clique no outputArea para remover realce/carimbo ou aplicar carimbo
         outputArea.addEventListener("click", (e) => {
+            if (stampMode && selectedStamp) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let range;
+                if (document.caretRangeFromPoint) {
+                    range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                } else if (document.caretPositionFromPoint) {
+                    const position = document.caretPositionFromPoint(e.clientX, e.clientY);
+                    if (position) {
+                        range = document.createRange();
+                        range.setStart(position.offsetNode, position.offset);
+                        range.setEnd(position.offsetNode, position.offset);
+                    }
+                }
+
+                if (range) {
+                    const stampEl = document.createElement("span");
+                    stampEl.className = `doc-stamp stamp-${selectedStamp.type}`;
+                    stampEl.setAttribute("contenteditable", "false");
+
+                    const titleEl = document.createElement("span");
+                    titleEl.className = "stamp-title";
+                    titleEl.textContent = selectedStamp.text;
+
+                    const metaEl = document.createElement("span");
+                    metaEl.className = "stamp-meta";
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
+                    metaEl.textContent = `Por: Admin | ${dateStr}`;
+
+                    stampEl.appendChild(titleEl);
+                    stampEl.appendChild(metaEl);
+
+                    range.insertNode(stampEl);
+
+                    // Salva as alterações
+                    convertedContent = outputArea.innerHTML;
+
+                    showPopoverToast("Carimbo aplicado!");
+                } else {
+                    showPopoverToast("Não foi possível determinar a posição no texto.");
+                }
+
+                deactivateStampMode();
+                return;
+            }
+
             if (eraseMode && !penMode) {
                 const mark = e.target.closest("mark.doc-highlight");
                 if (mark) {
@@ -3206,6 +3364,14 @@
                     e.stopPropagation();
                     removeNote(note);
                     showPopoverToast("Nota removida!");
+                    return;
+                }
+                const stamp = e.target.closest(".doc-stamp");
+                if (stamp) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    stamp.remove();
+                    showPopoverToast("Carimbo removido!");
                     return;
                 }
             }
@@ -3523,10 +3689,15 @@
         const annotSelCount     = document.getElementById("annotSelCount");
         const annotPenBtn       = document.getElementById("annotPenBtn");
         const annotClearPenBtn  = document.getElementById("annotClearPenBtn");
+        const annotStampBtn     = document.getElementById("annotStampBtn");
+        const stampMenu         = document.getElementById("stampMenu");
         const eraserSizeInput   = document.getElementById("eraserSizeInput");
         const eraserSizeLabel   = document.getElementById("eraserSizeLabel");
         const penCanvas         = document.getElementById("penCanvas");
         const penCtx            = penCanvas.getContext("2d");
+
+        let stampMode = false;
+        let selectedStamp = null;
 
         let penMode    = false;
         let penDrawing = false;
@@ -3597,6 +3768,9 @@
                     annotEraseBtn.classList.remove("active");
                     updateOutputAreaCursor();
                 }
+
+                // Desativar carimbo se estivesse ativo
+                if (stampMode) deactivateStampMode();
             });
         });
 
@@ -3611,6 +3785,27 @@
             }
         }
 
+        function deactivateStampMode() {
+            stampMode = false;
+            if (annotStampBtn) annotStampBtn.classList.remove("active");
+            if (stampMenu) stampMenu.classList.remove("visible");
+            outputArea.style.cursor = "";
+        }
+
+        function activateStampMode(text, type) {
+            if (penMode) deactivatePen();
+            if (eraseMode) {
+                eraseMode = false;
+                if (annotEraseBtn) annotEraseBtn.classList.remove("active");
+                updateOutputAreaCursor();
+            }
+            selectedStamp = { text: text, type: type };
+            stampMode = true;
+            if (annotStampBtn) annotStampBtn.classList.add("active");
+            if (stampMenu) stampMenu.classList.remove("visible");
+            outputArea.style.cursor = "copy";
+        }
+
         if (annotEraseBtn) {
             annotEraseBtn.addEventListener("click", () => {
                 if (penMode) {
@@ -3622,6 +3817,7 @@
                     if (sel && !sel.isCollapsed) {
                         removeHighlightsInSelection();
                     } else {
+                        if (stampMode) deactivateStampMode();
                         // Toggle eraser mode for text highlights
                         eraseMode = !eraseMode;
                         annotEraseBtn.classList.toggle("active", eraseMode);
@@ -3633,6 +3829,48 @@
                         }
                     }
                 }
+            });
+        }
+
+        if (annotStampBtn && stampMenu) {
+            annotStampBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (stampMode) {
+                    deactivateStampMode();
+                } else {
+                    // Posiciona o menu de carimbos alinhado ao botão
+                    stampMenu.style.top = annotStampBtn.offsetTop + "px";
+                    stampMenu.classList.toggle("visible");
+                }
+            });
+
+            // Fechar menu de carimbos ao clicar fora
+            document.addEventListener("click", (e) => {
+                if (!stampMenu.contains(e.target) && e.target !== annotStampBtn) {
+                    stampMenu.classList.remove("visible");
+                }
+            });
+
+            // Clique nas opções de carimbo
+            stampMenu.addEventListener("click", (e) => {
+                const item = e.target.closest(".stamp-menu-item");
+                if (!item) return;
+
+                e.stopPropagation();
+                const stampType = item.dataset.stamp;
+                let stampText = item.textContent;
+
+                if (stampType === "custom") {
+                    const customText = prompt("Digite o texto do carimbo:");
+                    if (!customText || !customText.trim()) {
+                        stampMenu.classList.remove("visible");
+                        return;
+                    }
+                    stampText = customText.trim();
+                }
+
+                activateStampMode(stampText, stampType);
+                showPopoverToast(`Carimbo '${stampText}' selecionado. Clique no documento para aplicar.`);
             });
         }
 
@@ -3747,6 +3985,7 @@
         function activatePen() {
             penMode    = true;
             eraseMode  = false;
+            if (stampMode) deactivateStampMode();
             syncPenCanvas();
             penCanvas.style.display = "block";
             penCanvas.classList.add("active");
