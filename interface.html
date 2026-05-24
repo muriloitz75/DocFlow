@@ -764,6 +764,11 @@
         .hl-pink   { background-color: #fbcfe8 !important; color: #111111 !important; }
         .hl-orange { background-color: #fed7aa !important; color: #111111 !important; }
 
+        .preview.erase-active,
+        .preview.erase-active * {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2728%27 height=%2728%27 viewBox=%270 0 28 28%27%3E%3Cpath fill=%27%23ffffff%27 stroke=%27%23111111%27 stroke-width=%272%27 d=%27M4.5 18.5 15.8 7.2a3 3 0 0 1 4.2 0l.8.8a3 3 0 0 1 0 4.2L11.5 21.5H5.9l-1.4-3z%27/%3E%3Cpath fill=%27%23FF3E00%27 d=%27m13 10 5 5-6.5 6.5H6l-1.5-3L13 10z%27/%3E%3Cpath fill=%27%23111111%27 d=%27M12 22h11v2H12z%27/%3E%3C/svg%3E") 5 22, auto !important;
+        }
+
         mark.doc-highlight {
             color: inherit;
             padding: 2px 4px;
@@ -3169,6 +3174,13 @@
             sel.removeAllRanges();
             hideSelectionPopover();
             showPopoverToast("Texto realçado!");
+
+            // Desativar a borracha se estivesse ativa
+            if (eraseMode && !penMode) {
+                eraseMode = false;
+                annotEraseBtn.classList.remove("active");
+                updateOutputAreaCursor();
+            }
         });
 
         popoverEraseBtn.addEventListener("click", (e) => {
@@ -3177,14 +3189,25 @@
             removeHighlightsInSelection();
         });
 
-        // Delegação de clique no outputArea para remover realce unitário com clique direto
+        // Delegação de clique no outputArea para remover realce unitário com clique direto se a borracha estiver ativa
         outputArea.addEventListener("click", (e) => {
-            const mark = e.target.closest("mark.doc-highlight");
-            if (mark) {
-                e.preventDefault();
-                e.stopPropagation();
-                removeHighlight(mark);
-                showPopoverToast("Realce removido!");
+            if (eraseMode && !penMode) {
+                const mark = e.target.closest("mark.doc-highlight");
+                if (mark) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeHighlight(mark);
+                    showPopoverToast("Realce removido!");
+                    return;
+                }
+                const note = e.target.closest(".doc-note");
+                if (note) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeNote(note);
+                    showPopoverToast("Nota removida!");
+                    return;
+                }
             }
         });
 
@@ -3567,11 +3590,26 @@
                 highlightRange(sel.getRangeAt(0), btn.dataset.color);
                 hideSelectionPopover();
                 showPopoverToast("Trecho realçado!");
+
+                // Desativar a borracha se estivesse ativa
+                if (eraseMode && !penMode) {
+                    eraseMode = false;
+                    annotEraseBtn.classList.remove("active");
+                    updateOutputAreaCursor();
+                }
             });
         });
 
         // --- Borracha — dual: erase mode canvas (pen ativo) ou apaga realce de texto ---
         let eraseMode = false;
+
+        function updateOutputAreaCursor() {
+            if (eraseMode && !penMode) {
+                outputArea.classList.add("erase-active");
+            } else {
+                outputArea.classList.remove("erase-active");
+            }
+        }
 
         if (annotEraseBtn) {
             annotEraseBtn.addEventListener("click", () => {
@@ -3584,7 +3622,15 @@
                     if (sel && !sel.isCollapsed) {
                         removeHighlightsInSelection();
                     } else {
-                        showPopoverToast("Selecione texto para apagar a anotação.");
+                        // Toggle eraser mode for text highlights
+                        eraseMode = !eraseMode;
+                        annotEraseBtn.classList.toggle("active", eraseMode);
+                        updateOutputAreaCursor();
+                        if (eraseMode) {
+                            showPopoverToast("Borracha ativada. Clique em um realce para removê-lo.");
+                        } else {
+                            showPopoverToast("Borracha desativada.");
+                        }
                     }
                 }
             });
@@ -3708,6 +3754,7 @@
             annotEraseBtn.classList.remove("active");
             outputArea.style.pointerEvents = "none";
             updatePenCursor();
+            updateOutputAreaCursor();
         }
 
         function deactivatePen() {
@@ -3721,6 +3768,7 @@
             outputArea.style.pointerEvents = "";
             penCanvas.style.cursor = "";
             if (penPaths.length === 0) penCanvas.style.display = "none";
+            updateOutputAreaCursor();
         }
 
         annotPenBtn.addEventListener("click", () => penMode ? deactivatePen() : activatePen());
