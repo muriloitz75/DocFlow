@@ -2001,6 +2001,21 @@
             box-shadow: 1px 1px 0px var(--ink);
         }
 
+        /* Transições para o deslocamento da barra flutuante */
+        .annotation-toolbar {
+            transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s, background 0.2s, opacity 0.2s;
+        }
+
+        /* Desabilita transição ao arrastar para não dar lag */
+        .annotation-toolbar.dragging {
+            transition: none !important;
+        }
+
+        /* Se o dicionário estiver aberto e a barra não foi arrastada, desloca-se automaticamente */
+        body.dict-open .annotation-toolbar {
+            right: calc(var(--dict-width, 320px) + 24px) !important;
+        }
+
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
             .shell { padding: 12px; }
@@ -4367,6 +4382,7 @@
 
         annotHandle.addEventListener("mousedown", e => {
             isDragging = true;
+            annotationToolbar.classList.add("dragging");
             const rect = annotationToolbar.getBoundingClientRect();
             dragOffX = e.clientX - rect.left;
             dragOffY = e.clientY - rect.top;
@@ -4385,13 +4401,25 @@
             const rect = annotationToolbar.getBoundingClientRect();
             let targetX = e.clientX - dragOffX;
             let targetY = e.clientY - dragOffY;
-            targetX = Math.max(0, Math.min(targetX, window.innerWidth - rect.width));
-            targetY = Math.max(0, Math.min(targetY, window.innerHeight - rect.height));
+            
+            // Se o dicionário estiver aberto, o limite horizontal máximo é a borda esquerda do dicionário
+            const dictOpen = dictPanel.classList.contains("visible");
+            let maxX = window.innerWidth - rect.width;
+            if (dictOpen) {
+                const dictWidth = parseFloat(outputWrapper.style.getPropertyValue("--dict-width")) || 320;
+                maxX = window.innerWidth - dictWidth - (rect.width / zoomLevel) - 24;
+            }
+            
+            targetX = Math.max(0, Math.min(targetX, maxX));
+            targetY = Math.max(0, Math.min(targetY, window.innerHeight - (rect.height / zoomLevel)));
             annotationToolbar.style.left = (targetX / zoomLevel) + "px";
             annotationToolbar.style.top  = (targetY / zoomLevel) + "px";
         });
 
-        document.addEventListener("mouseup", () => { isDragging = false; });
+        document.addEventListener("mouseup", () => { 
+            isDragging = false; 
+            annotationToolbar.classList.remove("dragging");
+        });
 
         // --- Habilitar botões de seleção ---
         function updateAnnotBtnsState(hasSelection) {
@@ -5326,16 +5354,42 @@
             return firstWord.toLowerCase();
         }
 
+        // Ajusta a posição da barra de anotação flutuante para não cobrir o dicionário
+        function adjustToolbarPosition() {
+            if (!annotationToolbar) return;
+            
+            const dictOpen = dictPanel.classList.contains("visible");
+            if (dictOpen) {
+                // Se a barra já foi arrastada, ajusta a posição 'left' dela para não sobrepor
+                if (hasDragged) {
+                    const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
+                    const toolbarRect = annotationToolbar.getBoundingClientRect();
+                    const dictWidth = parseFloat(outputWrapper.style.getPropertyValue("--dict-width")) || 320;
+                    
+                    // Limite máximo permitido à esquerda da área do dicionário
+                    const maxLeft = window.innerWidth - dictWidth - (toolbarRect.width / zoomLevel) - 24;
+                    const currentLeft = parseFloat(annotationToolbar.style.left) || 0;
+                    
+                    if (currentLeft > maxLeft) {
+                        annotationToolbar.style.left = maxLeft + "px";
+                    }
+                }
+            }
+        }
+
         // Função para abrir o painel do dicionário
         function openDictPanel() {
             dictPanel.classList.add("visible");
             outputWrapper.classList.add("dict-open");
+            document.body.classList.add("dict-open");
+            adjustToolbarPosition();
         }
 
         // Função para fechar o painel do dicionário
         function closeDictPanel() {
             dictPanel.classList.remove("visible");
             outputWrapper.classList.remove("dict-open");
+            document.body.classList.remove("dict-open");
         }
 
         // Função principal para buscar a palavra no Dicionário
@@ -5544,6 +5598,8 @@
             const maxWidth = Math.min(maxDictWidth, Math.max(minDictWidth, Math.round(wrapperWidth * 0.55)));
             const nextWidth = Math.max(minDictWidth, Math.min(Math.round(width), maxWidth));
             outputWrapper.style.setProperty("--dict-width", `${nextWidth}px`);
+            document.documentElement.style.setProperty("--dict-width", `${nextWidth}px`);
+            adjustToolbarPosition();
         }
 
         if (dictResizeHandle) {
