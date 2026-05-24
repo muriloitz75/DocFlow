@@ -1450,6 +1450,7 @@
             right: 32px;
             top: 50%;
             transform: translateY(-50%);
+            zoom: 0.75;
         }
         .annotation-toolbar.visible { display: flex; }
 
@@ -3534,10 +3535,14 @@
                 annotationToolbar.style.right = "auto";
                 hasDragged = true;
             }
-            const x = Math.max(0, Math.min(e.clientX - dragOffX, window.innerWidth  - annotationToolbar.offsetWidth));
-            const y = Math.max(0, Math.min(e.clientY - dragOffY, window.innerHeight - annotationToolbar.offsetHeight));
-            annotationToolbar.style.left = x + "px";
-            annotationToolbar.style.top  = y + "px";
+            const zoomLevel = parseFloat(window.getComputedStyle(annotationToolbar).zoom) || 1;
+            const rect = annotationToolbar.getBoundingClientRect();
+            let targetX = e.clientX - dragOffX;
+            let targetY = e.clientY - dragOffY;
+            targetX = Math.max(0, Math.min(targetX, window.innerWidth - rect.width));
+            targetY = Math.max(0, Math.min(targetY, window.innerHeight - rect.height));
+            annotationToolbar.style.left = (targetX / zoomLevel) + "px";
+            annotationToolbar.style.top  = (targetY / zoomLevel) + "px";
         });
 
         document.addEventListener("mouseup", () => { isDragging = false; });
