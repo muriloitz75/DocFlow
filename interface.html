@@ -1648,7 +1648,6 @@
             font-size: 14px;
             letter-spacing: 0.1em;
             font-weight: 800;
-            margin-bottom: 2px;
         }
         .stamp-meta {
             font-size: 8px;
@@ -3270,7 +3269,7 @@
                 stampEl.setAttribute("contenteditable", "false");
 
                 const stampWidth = 150;
-                const stampHeight = 46;
+                const stampHeight = 40;
                 stampEl.style.left = (x - stampWidth / 2) + "px";
                 stampEl.style.top = (y - stampHeight / 2) + "px";
 
@@ -3278,14 +3277,7 @@
                 titleEl.className = "stamp-title";
                 titleEl.textContent = selectedStamp.text;
 
-                const metaEl = document.createElement("span");
-                metaEl.className = "stamp-meta";
-                const now = new Date();
-                const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
-                metaEl.textContent = `Por: Admin | ${dateStr}`;
-
                 stampEl.appendChild(titleEl);
-                stampEl.appendChild(metaEl);
 
                 makeStampInteractive(stampEl);
                 outputArea.appendChild(stampEl);
