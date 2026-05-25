@@ -1,0 +1,12 @@
+
+    ========================================
+         DocFlow
+    ========================================
+    
+    Acesso Local:     http://localhost:5000
+    Acesso na Rede:   http://192.168.68.56:5000
+    
+    Pressione Ctrl+C para parar o servidor.
+    
+ * Serving Flask app 'app'
+ * Debug mode: off

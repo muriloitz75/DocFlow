@@ -1486,6 +1486,34 @@
         }
         .annotation-toolbar.visible { display: flex; }
 
+        .annot-collapse-tab {
+            display: none;
+            justify-content: flex-end;
+            width: 100%;
+            padding-right: 16px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10001;
+        }
+        .annot-collapse-tab.visible { display: flex; }
+        .annot-collapse-btn {
+            background: var(--ink);
+            border: var(--border);
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            color: var(--surface);
+            width: 38px;
+            height: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            opacity: 0.75;
+            transition: opacity 0.15s;
+        }
+        .annot-collapse-btn:hover { opacity: 1; }
+
         .annot-handle {
             display: none !important;
         }
@@ -2218,6 +2246,12 @@
                 </div>
 
                 <!-- Barra de anotações integrada (rodapé fixo) -->
+                <!-- Tab retrátil acima da barra de anotações -->
+                <div class="annot-collapse-tab" id="annotCollapseTab">
+                    <button class="annot-collapse-btn" id="annotCollapseBtn" title="Recolher barra de anotações">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path id="annotCollapseIcon" d="M7 14l5 5 5-5z" fill="currentColor"/></svg>
+                    </button>
+                </div>
                 <div class="annotation-toolbar" id="annotationToolbar">
                     <div class="annot-handle" id="annotHandle" title="Arrastar barra" style="display:none">⠿</div>
 
@@ -2291,8 +2325,6 @@
                         </button>
                     </div>
 
-                    <!-- Botão de Fechar no canto direito -->
-                    <button class="annot-btn close-annot-btn" id="closeAnnotToolbarBtn" type="button" title="Fechar painel de anotações" style="margin-left: auto; margin-right: 16px; font-weight: bold; font-size: 14px;">✕</button>
                 </div>
             </section>
 
@@ -2753,6 +2785,21 @@
                 .replace(/'/g, "&#039;");
         }
 
+        function inlineMarkdown(text) {
+            text = escapeHtml(text);
+            // Bold (**text** ou __text__)
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
+            // Italic (*text* ou _text_) — após bold para não conflitar com ***
+            text = text.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+            text = text.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+            // Inline code
+            text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+            // Links [texto](url)
+            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            return text;
+        }
+
         function renderAbntMarkdown(markdown) {
             const blocks = [];
             const lines = markdown.split(/\r?\n/);
@@ -2764,14 +2811,14 @@
 
             function flushParagraph() {
                 if (paragraph.length) {
-                    blocks.push(`<p>${escapeHtml(paragraph.join(" "))}</p>`);
+                    blocks.push(`<p>${inlineMarkdown(paragraph.join(" "))}</p>`);
                     paragraph = [];
                 }
             }
 
             function flushList() {
                 if (list.length) {
-                    blocks.push(`<ul>${list.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`);
+                    blocks.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`);
                     list = [];
                 }
             }
@@ -2811,7 +2858,7 @@
                     flushList();
                     const level = Math.min(3, heading[1].length);
                     const hId = `toc-heading-${headingIdx++}`;
-                    blocks.push(`<h${level} id="${hId}">${escapeHtml(heading[2])}</h${level}>`);
+                    blocks.push(`<h${level} id="${hId}">${inlineMarkdown(heading[2])}</h${level}>`);
                     return;
                 }
                 const bullet = trimmed.match(/^[-*]\s+(.+)$/);
@@ -2930,8 +2977,8 @@
                 }
                 
                 if (incisoRegex.test(text)) {
-                    newHtml = newHtml.replace(incisoRegex, function(match, p1, p2, p3) {
-                        return p1 + `<span class="highlight-inciso">${p2}</span>` + p3;
+                    newHtml = newHtml.replace(incisoRegex, function(match, p1, p2) {
+                        return p1 + `<span class="highlight-inciso">${p2}</span>`;
                     });
                     changed = true;
                 } else if (alineaRegex.test(text)) {
@@ -3460,13 +3507,40 @@
         searchNextBtn.addEventListener("click", () => navigateSearch(1));
         searchCloseBtn.addEventListener("click", closeSearch);
 
+        // ===== BARRA DE ANOTAÇÃO FLUTUANTE =====
+        const annotationToolbar  = document.getElementById("annotationToolbar");
+        const annotToggleBtn     = document.getElementById("annotToggleBtn");
+        const annotCollapseTab   = document.getElementById("annotCollapseTab");
+        const annotCollapseBtn   = document.getElementById("annotCollapseBtn");
+        const annotCollapseIcon  = document.getElementById("annotCollapseIcon");
+        let annotationMode = false;
+        const annotHandle       = document.getElementById("annotHandle");
+        const annotCopyBtn      = document.getElementById("annotCopyBtn");
+        const annotShareBtn     = document.getElementById("annotShareBtn");
+        const annotScreenshotBtn= document.getElementById("annotScreenshotBtn");
+        const annotEraseBtn     = document.getElementById("annotEraseBtn");
+        const annotNoteBtn      = document.getElementById("annotNoteBtn");
+        const annotCopyImgBtn   = document.getElementById("annotCopyImgBtn");
+        const annotSelCount     = document.getElementById("annotSelCount");
+        const annotPenBtn       = document.getElementById("annotPenBtn");
+        const annotStampBtn     = document.getElementById("annotStampBtn");
+        const annotDictBtn      = document.getElementById("annotDictBtn");
+
         // --- Controle do painel de Anotações ---
+        function updateCollapseIcon(expanded) {
+            if (!annotCollapseIcon) return;
+            // Seta para baixo quando expandido (ação = recolher), seta para cima quando recolhido (ação = expandir)
+            annotCollapseIcon.setAttribute("d", expanded ? "M7 14l5 5 5-5z" : "M7 10l5-5 5 5z");
+            if (annotCollapseBtn) annotCollapseBtn.title = expanded ? "Recolher barra de anotações" : "Expandir barra de anotações";
+        }
+
         function openAnnotations() {
             if (!annotationToolbar) return;
+            annotationMode = true;
             annotationToolbar.classList.add("visible");
+            if (annotCollapseTab) annotCollapseTab.classList.add("visible");
+            updateCollapseIcon(true);
             if (annotToggleBtn) annotToggleBtn.classList.add("active");
-            
-            // Força sincronização do canvas se penCanvas estiver habilitado
             requestAnimationFrame(() => {
                 if (penPaths.length > 0 || penMode) syncPenCanvas();
                 if (penPaths.length > 0) penCanvas.style.display = "block";
@@ -3476,9 +3550,10 @@
 
         function closeAnnotations() {
             if (!annotationToolbar) return;
+            annotationMode = false;
             annotationToolbar.classList.remove("visible");
+            if (annotCollapseTab) annotCollapseTab.classList.remove("visible");
             if (annotToggleBtn) annotToggleBtn.classList.remove("active");
-            
             penCanvas.style.display = "none";
             if (penMode) deactivatePen();
             window.dispatchEvent(new Event('resize'));
@@ -3486,16 +3561,26 @@
 
         if (annotToggleBtn) {
             annotToggleBtn.addEventListener("click", () => {
-                if (annotationToolbar.classList.contains("visible")) {
-                    closeAnnotations();
-                } else {
-                    openAnnotations();
-                }
+                if (annotationMode) closeAnnotations();
+                else openAnnotations();
             });
         }
 
-        if (closeAnnotToolbarBtn) {
-            closeAnnotToolbarBtn.addEventListener("click", closeAnnotations);
+        if (annotCollapseBtn) {
+            annotCollapseBtn.addEventListener("click", () => {
+                if (annotationToolbar.classList.contains("visible")) {
+                    annotationToolbar.classList.remove("visible");
+                    updateCollapseIcon(false);
+                } else {
+                    annotationToolbar.classList.add("visible");
+                    updateCollapseIcon(true);
+                    requestAnimationFrame(() => {
+                        if (penPaths.length > 0 || penMode) syncPenCanvas();
+                        if (penPaths.length > 0) penCanvas.style.display = "block";
+                    });
+                }
+                window.dispatchEvent(new Event('resize'));
+            });
         }
 
         document.addEventListener("keydown", (e) => {
@@ -3503,7 +3588,7 @@
             if (e.altKey && e.key.toLowerCase() === "a" && !loginOverlay.classList.contains("visible")) {
                 if (convertedContent) {
                     e.preventDefault();
-                    if (annotationToolbar.classList.contains("visible")) closeAnnotations();
+                    if (annotationMode) closeAnnotations();
                     else openAnnotations();
                 }
             }
@@ -4340,22 +4425,6 @@
                 window.dispatchEvent(new Event('resize'));
             });
         }
-
-        // ===== BARRA DE ANOTAÇÃO FLUTUANTE =====
-        const annotationToolbar = document.getElementById("annotationToolbar");
-        const annotToggleBtn    = document.getElementById("annotToggleBtn");
-        const closeAnnotToolbarBtn = document.getElementById("closeAnnotToolbarBtn");
-        const annotHandle       = document.getElementById("annotHandle");
-        const annotCopyBtn      = document.getElementById("annotCopyBtn");
-        const annotShareBtn     = document.getElementById("annotShareBtn");
-        const annotScreenshotBtn= document.getElementById("annotScreenshotBtn");
-        const annotEraseBtn     = document.getElementById("annotEraseBtn");
-        const annotNoteBtn      = document.getElementById("annotNoteBtn");
-        const annotCopyImgBtn   = document.getElementById("annotCopyImgBtn");
-        const annotSelCount     = document.getElementById("annotSelCount");
-        const annotPenBtn       = document.getElementById("annotPenBtn");
-        const annotStampBtn     = document.getElementById("annotStampBtn");
-        const annotDictBtn      = document.getElementById("annotDictBtn");
 
         // ===== DICIONÁRIO INTEGRADO =====
         const dictPanel         = document.getElementById("dictPanel");

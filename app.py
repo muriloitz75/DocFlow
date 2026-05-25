@@ -917,6 +917,67 @@ def clean_planalto_encoding_glitches(content):
     return content
 
 
+def _extract_html_charset(raw_bytes):
+    match = re.search(
+        br'<meta[^>]+charset=["\']?\s*([A-Za-z0-9._-]+)',
+        raw_bytes[:4096],
+        re.I,
+    )
+    if not match:
+        return None
+    try:
+        return match.group(1).decode("ascii", errors="ignore").strip().lower()
+    except Exception:
+        return None
+
+
+def _normalize_legacy_portuguese_encoding(encoding):
+    if not encoding:
+        return None
+    normalized = encoding.strip().lower().replace("_", "-")
+    if normalized in {"iso-8859-1", "latin-1", "latin1", "windows-1252"}:
+        return "cp1252"
+    return normalized
+
+
+def decode_html_bytes(raw_bytes, default_encoding=None, prefer_cp1252=False):
+    """Decode HTML while avoiding mojibake from guessing valid UTF-8 as Cyrillic."""
+    try:
+        return raw_bytes.decode("utf-8"), "utf-8"
+    except UnicodeDecodeError:
+        pass
+
+    candidates = []
+    if prefer_cp1252:
+        candidates.append("cp1252")
+
+    candidates.extend([
+        _normalize_legacy_portuguese_encoding(_extract_html_charset(raw_bytes)),
+        _normalize_legacy_portuguese_encoding(default_encoding),
+    ])
+
+    try:
+        import charset_normalizer
+        detection = charset_normalizer.from_bytes(raw_bytes).best()
+        candidates.append(_normalize_legacy_portuguese_encoding(detection.encoding if detection else None))
+    except Exception:
+        pass
+
+    candidates.extend(["cp1252", "latin-1"])
+
+    tried = set()
+    for encoding in candidates:
+        if not encoding or encoding in tried:
+            continue
+        tried.add(encoding)
+        try:
+            return raw_bytes.decode(encoding), encoding
+        except Exception:
+            continue
+
+    return raw_bytes.decode("utf-8", errors="replace"), "utf-8"
+
+
 def strip_relative_and_internal_links(content):
     def repl(match):
         text = match.group(1)
@@ -1123,26 +1184,11 @@ def convert():
             temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
-            # planalto and other Brazilian government pages are typically served in ISO-8859-1 or CP1252
-            # Let's decode it correctly and write as UTF-8 to prevent any parsing encoding issues
-            import charset_normalizer
-            
-            try:
-                detection = charset_normalizer.from_bytes(response.content).best()
-                encoding = detection.encoding if detection else None
-            except Exception:
-                encoding = None
-                
-            if not encoding:
-                encoding = response.encoding or "cp1252"
-                
-            if "planalto.gov.br" in url.lower() or encoding.lower() in ('iso-8859-1', 'latin-1', 'cp1252'):
-                encoding = "cp1252"
-                
-            try:
-                html_str = response.content.decode(encoding, errors='replace')
-            except Exception:
-                html_str = response.content.decode('cp1252', errors='replace')
+            html_str, _encoding = decode_html_bytes(
+                response.content,
+                default_encoding=response.encoding,
+                prefer_cp1252="planalto.gov.br" in url.lower(),
+            )
                 
             # Inject <meta charset="utf-8"> to force MarkItDown/BeautifulSoup to parse it as UTF-8
             if "<head>" in html_str.lower():
@@ -1187,14 +1233,7 @@ def convert():
                 with open(temp_path, "rb") as f:
                     raw_bytes = f.read()
                 
-                import charset_normalizer
-                try:
-                    detection = charset_normalizer.from_bytes(raw_bytes).best()
-                    encoding = detection.encoding if detection else "utf-8"
-                except Exception:
-                    encoding = "utf-8"
-                
-                html_content = raw_bytes.decode(encoding, errors="replace")
+                html_content, _encoding = decode_html_bytes(raw_bytes, default_encoding="utf-8")
                 
                 # First strip body/html tags to prevent premature termination when BeautifulSoup parses it
                 html_content = re.sub(r'</?(body|html)[^>]*>', '', html_content, flags=re.IGNORECASE)

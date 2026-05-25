@@ -420,6 +420,62 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertIn("Parte dentro do body.", response.json["content"])
         self.assertIn("Parte depois do body que tambem pertence ao documento.", response.json["content"])
 
+    def test_html_decoder_keeps_valid_utf8_even_when_default_encoding_is_wrong(self):
+        raw = (
+            "<html><body>Presid\u00eancia da Rep\u00fablica "
+            "C\u00f3digo Tribut\u00e1rio Nacional</body></html>"
+        ).encode("utf-8")
+
+        text, encoding = webapp.decode_html_bytes(raw, default_encoding="cp1251")
+
+        self.assertEqual(encoding, "utf-8")
+        self.assertIn("Presid\u00eancia da Rep\u00fablica", text)
+        self.assertIn("C\u00f3digo Tribut\u00e1rio Nacional", text)
+        self.assertNotIn("\u0413", text)
+
+    def test_html_decoder_uses_cp1252_for_legacy_planalto_pages(self):
+        raw = (
+            "<html><body>Presid\u00eancia da Rep\u00fablica "
+            "C\u00f3digo Tribut\u00e1rio Nacional</body></html>"
+        ).encode("cp1252")
+
+        text, encoding = webapp.decode_html_bytes(raw, prefer_cp1252=True)
+
+        self.assertEqual(encoding, "cp1252")
+        self.assertIn("Presid\u00eancia da Rep\u00fablica", text)
+        self.assertIn("C\u00f3digo Tribut\u00e1rio Nacional", text)
+
+    @unittest.mock.patch("requests.get")
+    def test_convert_via_url_does_not_turn_utf8_accents_into_cyrillic_mojibake(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.encoding = "cp1251"
+        mock_response.content = (
+            "<html><head></head><body>"
+            "<p>Presid\u00eancia da Rep\u00fablica Casa Civil Subchefia para Assuntos Jur\u00eddicos</p>"
+            "<p>LEI N\u00ba 5.172, DE 25 DE OUTUBRO DE 1966.</p>"
+            "<p>Denominado C\u00f3digo Tribut\u00e1rio Nacional. Produ\u00e7\u00e3o de efeitos.</p>"
+            "<p>O PRESIDENTE DA REP\u00daBLICA Fa\u00e7o saber que o Congresso Nacional decreta.</p>"
+            "</body></html>"
+        ).encode("utf-8")
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "https://www.planalto.gov.br/ccivil_03/leis/l5172compilado.htm",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn("Rep\u00fablica", response.json["content"])
+        self.assertIn("C\u00f3digo Tribut\u00e1rio", response.json["content"])
+        self.assertNotIn("\u0413", response.json["content"])
+        self.assertNotIn("\u0412", response.json["content"])
+
     def test_planalto_split_does_not_treat_lowercase_congress_continuation_as_promulgation(self):
         content = "\n".join([
             "Constituição",
