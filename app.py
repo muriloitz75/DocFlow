@@ -18,7 +18,7 @@ from functools import wraps
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, "packages", "markitdown", "src"))
 
-from markitdown import MarkItDown
+from markitdown import MarkItDown, StreamInfo
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "docflow-secret-key-123456"
@@ -1013,8 +1013,9 @@ def split_planalto_document(content):
     
     promulgation_idx = -1
     for idx, line in enumerate(lines):
-        clean_line = re.sub(r'^\s*(?:\*\*|\*)?', '', line).lstrip()
-        if clean_line[:1] in ("O", "A") and promulgation_pattern.match(line):
+        lookahead_line = " ".join(lines[idx:idx + 3])
+        clean_line = re.sub(r'^\s*(?:\*\*|\*)?', '', lookahead_line).lstrip()
+        if clean_line[:1] in ("O", "A") and promulgation_pattern.match(lookahead_line):
             promulgation_idx = idx
             break
             
@@ -1035,14 +1036,16 @@ def split_planalto_document(content):
 def generate_premium_header(header_text):
     # Clean encoding glitches first
     header_text = clean_planalto_encoding_glitches(header_text)
+    header_text = header_text.replace("\xa0", " ")
     
     # Strip links
     header_text = strip_relative_and_internal_links(header_text)
+    searchable_header = re.sub(r'[*_`]+', '', header_text)
     
     # Try to find the title: LEI Nº ... or DECRETO Nº ...
     title_match = re.search(
         r'\b(LEI|DECRETO|MEDIDA PROVISÓRIA|LEI COMPLEMENTAR)\s+(?:Nº|Nş|N[°o])\s*([\d.]+)(?:\s*,\s*DE\s+([^|.\n]+))?',
-        header_text,
+        searchable_header,
         re.I
     )
     
@@ -1053,12 +1056,12 @@ def generate_premium_header(header_text):
         if len(parts) >= 2:
             last_cell = parts[-1]
             if len(last_cell) > 20:
-                ementa = last_cell
+                ementa = last_cell.strip(" |")
                 
     if not ementa:
-        ementa_match = re.search(r'\b(dispõe|institui|altera|regula|cria|estabelece|autoriza)\b.*$', header_text, re.I)
+        ementa_match = re.search(r'\b(dispõe|institui|altera|regula|cria|estabelece|autoriza)\b.*$', searchable_header, re.I)
         if ementa_match:
-            ementa = ementa_match.group(0)
+            ementa = ementa_match.group(0).strip(" |")
             
     ementa = re.sub(r'\s+', ' ', ementa).strip()
     
@@ -1069,7 +1072,7 @@ def generate_premium_header(header_text):
         num_lbl = title_match.group(2)
         date_lbl = title_match.group(3)
         if date_lbl:
-            date_lbl = date_lbl.strip(" .")
+            date_lbl = re.sub(r'\s+', ' ', date_lbl).strip(" .*|")
             title_str = f"{type_lbl} Nº {num_lbl}, DE {date_lbl}"
         else:
             title_str = f"{type_lbl} Nº {num_lbl}"
@@ -1077,8 +1080,11 @@ def generate_premium_header(header_text):
         title_str = "LEGISLAÇÃO FEDERAL"
         
     # Append code descriptor if present (e.g. Código Tributário Nacional)
-    if "código" in header_text.lower():
-        code_match = re.search(r'([cC][óo]digo\s+[A-Za-zÀ-ÿ\s]+)', header_text)
+    if "código" in searchable_header.lower():
+        code_match = re.search(
+            r'([cC][óo]digo\s+[A-Za-zÀ-ÿ\s]+?)(?=\s+(?:Vig[êe]ncia|Vide|Produ[çc][ãa]o|Disp[õo]e)\b|$)',
+            searchable_header,
+        )
         if code_match:
             code_name = code_match.group(1).strip()
             title_str = f"{title_str} ({code_name})"
@@ -1247,7 +1253,17 @@ def convert():
             except Exception as e:
                 print("Error sanitizing HTML:", e)
 
-        result = md_converter.convert(temp_path)
+        if temp_path.lower().endswith((".html", ".htm")):
+            result = md_converter.convert(
+                temp_path,
+                stream_info=StreamInfo(
+                    mimetype="text/html",
+                    extension=os.path.splitext(temp_path)[1],
+                    charset="utf-8",
+                ),
+            )
+        else:
+            result = md_converter.convert(temp_path)
         content = result.text_content
         extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 

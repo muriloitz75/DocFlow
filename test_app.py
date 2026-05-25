@@ -472,9 +472,47 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json["success"])
         self.assertIn("Rep\u00fablica", response.json["content"])
-        self.assertIn("C\u00f3digo Tribut\u00e1rio", response.json["content"])
         self.assertNotIn("\u0413", response.json["content"])
         self.assertNotIn("\u0412", response.json["content"])
+
+    @unittest.mock.patch("requests.get")
+    def test_convert_via_legacy_planalto_html_has_clean_single_header(self, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.encoding = "ISO-8859-1"
+        mock_response.content = (
+            "<html><head><title>L5172COMPILADO</title></head><body>"
+            "<table><tr><td><img src='../Brastra.gif' alt='Brastra.gif (4376 bytes)'></td>"
+            "<td><strong>Presid\u00eancia da Rep\u00fablica<br>Casa Civil<br>"
+            "Subchefia para Assuntos Jur\u00eddicos</strong></td></tr></table>"
+            "<p><b>LEI N\u00ba 5.172, DE 25 DE OUTUBRO DE 1966</b>.</p>"
+            "<table><tr><td>Denominado C\u00f3digo Tribut\u00e1rio Nacional Vig\u00eancia "
+            "Produ\u00e7\u00e3o de efeitos</td><td>Disp\u00f5e sobre o Sistema Tribut\u00e1rio Nacional.</td></tr></table>"
+            "<p><strong>O<br>PRESIDENTE DA REP\u00daBLICA</strong> Fa\u00e7o saber que o Congresso Nacional decreta.</p>"
+            "<p><strong>DISPOSI\u00c7\u00c3O PRELIMINAR</strong></p>"
+            "<p>Art. 1\u00ba Esta Lei regula o sistema tribut\u00e1rio nacional.</p>"
+            "</body></html>"
+        ).encode("cp1252")
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        response = self.client.post(
+            "/api/convert",
+            data={
+                "url": "https://www.planalto.gov.br/ccivil_03/leis/l5172compilado.htm",
+                "option": "standard",
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        content = response.json["content"]
+        self.assertIn("# LEI N\u00ba 5.172, DE 25 DE OUTUBRO DE 1966 (C\u00f3digo Tribut\u00e1rio Nacional)", content)
+        self.assertIn("> **Ementa:** Disp\u00f5e sobre o Sistema Tribut\u00e1rio Nacional.", content)
+        self.assertNotIn("Brastra.gif", content)
+        self.assertNotIn("L5172COMPILADO", content)
+        self.assertNotIn("\u0413", content)
+        self.assertNotIn("\u0412", content)
 
     def test_planalto_split_does_not_treat_lowercase_congress_continuation_as_promulgation(self):
         content = "\n".join([
