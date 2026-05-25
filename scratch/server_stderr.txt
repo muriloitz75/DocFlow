@@ -29,3 +29,8 @@ Press CTRL+C to quit
 127.0.0.1 - - [24/May/2026 23:13:27] "POST /api/convert HTTP/1.1" 200 -
 127.0.0.1 - - [24/May/2026 23:14:04] "GET /image/image.gif HTTP/1.1" 304 -
 127.0.0.1 - - [24/May/2026 23:14:34] "POST /api/convert HTTP/1.1" 200 -
+127.0.0.1 - - [24/May/2026 23:28:25] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/May/2026 23:28:25] "GET /api/auth/status HTTP/1.1" 200 -
+127.0.0.1 - - [24/May/2026 23:28:26] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [24/May/2026 23:28:34] "GET /image/image.gif HTTP/1.1" 304 -
+127.0.0.1 - - [24/May/2026 23:28:36] "POST /api/convert HTTP/1.1" 200 -

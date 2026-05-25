@@ -122,5 +122,14 @@ class _CustomMarkdownify(markdownify.MarkdownConverter):
             return "[x] " if el.has_attr("checked") else "[ ] "
         return ""
 
+    def convert_strike(
+        self,
+        el: Any,
+        text: str,
+        convert_as_inline: Optional[bool] = False,
+        **kwargs,
+    ) -> str:
+        return "~~%s~~" % text if text else ""
+
     def convert_soup(self, soup: Any) -> str:
         return super().convert_soup(soup)  # type: ignore

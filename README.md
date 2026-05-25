@@ -22,7 +22,7 @@ O DocFlow oferece uma interface gráfica no navegador para converter arquivos de
 | Texto | TXT, MD |
 | Outros | EPUB, ZIP |
 
-Limites: **100 MB** por upload de arquivo. Suporte a extração e conversão de textos diretamente via **Links/URLs** copiados da web (como o portal do Planalto).
+Limites: **500 MB** por upload de arquivo (configurado no backend Flask e validado dinamicamente no frontend). Suporte a extração e conversão de textos diretamente via **Links/URLs** copiados da web (como o portal do Planalto).
 
 ### Modos de saída
 
@@ -169,6 +169,7 @@ O sistema contém lógicas dedicadas (no Backend e no Frontend) para melhorar dr
 - **Destaque Visual Inteligente** — a própria interface aplica colorização automática da taxonomia legal (Artigos em Laranja, Parágrafos em Verde, Incisos em Azul e Alíneas em Roxo), ignorando menções no meio do texto e aplicando apenas para as aberturas de bloco.
 - **Remoção de duplicatas** — detecta quando o PDF gerou o documento em duplicata (anexos inteiros idênticos) e remove a segunda cópia.
 - **Correção de deslocamentos** — repara transposições de texto específicas de PDFs gerados por escâneres e protege menções legais (ex: de leis e parágrafos) para que não quebrem o formato do documento.
+- **Preservação de textos revogados (strikethrough)** — mapeia e converte tags HTML como `<strike>`, `<del>` e `<s>` para `~~` no Markdown, mantendo a diferenciação visual e a semântica jurídica de termos e artigos revogados ou alterados no portal do Planalto.
 
 ---
 

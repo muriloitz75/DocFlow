@@ -773,6 +773,13 @@ class WebInterfaceTestCase(unittest.TestCase):
         # The content after premature </body> must be fully preserved
         self.assertIn("Texto após o fechamento precoce do body", content)
 
+    def test_html_strike_tag_converted_to_markdown_strikethrough(self):
+        html_with_strike = "<html><body><p>Texto <strike>riscado</strike> do Planalto.</p></body></html>"
+        response = self.post_file(html_with_strike.encode("utf-8"), "documento.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn("~~riscado~~", response.json["content"])
+
     @unittest.mock.patch("requests.get")
     def test_dictionary_endpoint_success(self, mock_get):
         mock_response = unittest.mock.Mock()
