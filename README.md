@@ -187,9 +187,10 @@ Os testes cobrem os endpoints da API, os modos de conversão e as funções de l
 
 O projeto está totalmente preparado e configurado para deploy imediato no **Railway**. Os seguintes arquivos gerenciam essa infraestrutura:
 
-- **`Procfile`** — define o comando de inicialização do servidor de produção utilizando o **Gunicorn** (servidor WSGI robusto de nível industrial):
+- **`gunicorn.conf.py`** — arquivo de configuração global do Gunicorn. Define o tempo limite do worker em **300 segundos** (para evitar timeouts no processamento de arquivos PDF extensos) e restringe o número de workers a **1** para poupar memória RAM no container.
+- **`Procfile`** — define o comando de inicialização do servidor web do Gunicorn:
   ```text
-  web: gunicorn --bind 0.0.0.0:$PORT app:app
+  web: gunicorn --bind 0.0.0.0:$PORT --timeout 300 app:app
   ```
 - **`runtime.txt`** — fixa a versão do Python no Railway para `python-3.11.9`.
 - **`requirements.txt`** — lista todas as dependências externas puras e independentes de caminhos locais, garantindo cacheamento ultra-rápido no Railpack.
@@ -198,6 +199,8 @@ O projeto está totalmente preparado e configurado para deploy imediato no **Rai
 1. O Railway detecta a configuração do Python automaticamente.
 2. Instala pacotes do sistema como **`ffmpeg`** (utilizado pelo `pydub`).
 3. Instala as dependências e executa o servidor de produção respondendo a requisições de forma robusta e otimizada.
+
+> ℹ️ Para instruções completas sobre o fluxo de deploy e os limites/otimizações de produção aplicados, consulte o arquivo [DEPLOY.md](DEPLOY.md).
 
 ---
 
