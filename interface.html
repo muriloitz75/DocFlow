@@ -3201,7 +3201,17 @@
             try {
                 const response = await fetch("/api/convert", { method: "POST", body: formData });
                 if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
-                const data = await response.json().catch(() => ({}));
+                
+                let data = {};
+                let responseText = "";
+                try {
+                    responseText = await response.text();
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    const errorSnippet = responseText ? responseText.substring(0, 150).replace(/<[^>]*>/g, '').trim() : "";
+                    throw new Error(`Erro do Servidor (${response.status}): ${errorSnippet || "Resposta inválida."}`);
+                }
+                
                 if (!response.ok || !data.success) { throw new Error(data.error || "Não foi possível converter o conteúdo."); }
                 
                 convertedContent = data.content || "";
