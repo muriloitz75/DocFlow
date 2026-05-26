@@ -616,22 +616,28 @@ class PdfConverter(DocumentConverter):
             markdown_chunks: list[str] = []
 
             with pdfplumber.open(pdf_bytes) as pdf:
-                for page_idx, page in enumerate(pdf.pages):
-                    page_content = _extract_form_content_from_words(page)
+                # Se o PDF for grande (mais de 15 páginas), usamos a extração rápida com pdfminer.six direto.
+                # Isso previne WORKER TIMEOUT e estouro de memória (OOM) em servidores de produção com recursos limitados.
+                if len(pdf.pages) > 15:
+                    pdf_bytes.seek(0)
+                    markdown = pdfminer.high_level.extract_text(pdf_bytes)
+                else:
+                    for page_idx, page in enumerate(pdf.pages):
+                        page_content = _extract_form_content_from_words(page)
 
-                    if page_content is not None:
-                        if page_content.strip():
-                            markdown_chunks.append(page_content.strip())
-                    else:
-                        text = extract_text_with_layout_and_columns(page)
-                        if text and text.strip():
-                            markdown_chunks.append(text.strip())
+                        if page_content is not None:
+                            if page_content.strip():
+                                markdown_chunks.append(page_content.strip())
+                        else:
+                            text = extract_text_with_layout_and_columns(page)
+                            if text and text.strip():
+                                markdown_chunks.append(text.strip())
 
-                    page.close()  # Free cached page data immediately
+                        page.close()  # Free cached page data immediately
 
-            # Join pages using form feed (\f) so downstream post-processing
-            # can segment pages and remove repeated headers/footers accurately.
-            markdown = "\f".join(markdown_chunks).strip()
+                    # Join pages using form feed (\f) so downstream post-processing
+                    # can segment pages and remove repeated headers/footers accurately.
+                    markdown = "\f".join(markdown_chunks).strip()
 
         except Exception:
             # Fallback if pdfplumber fails
