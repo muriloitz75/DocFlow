@@ -24,29 +24,26 @@ async def main():
         await page.click("#convertBtn")
         await page.wait_for_timeout(2000)
 
-        # Check annotation toggle button is enabled
-        annot_btn = page.locator("#annotToggleBtn")
-        is_disabled = await annot_btn.get_attribute("disabled")
-        print(f"annotToggleBtn disabled: {is_disabled}")
+        # Check annotation collapse tab is visible after convert
+        tab_visible = await page.locator("#annotCollapseTab").is_visible()
+        print(f"Tab retrátil visível pós-conversão: {tab_visible}")
 
-        # Click annotation toggle to open the panel
-        await annot_btn.click()
+        # Click collapse tab to open the panel
+        await page.locator("#annotCollapseBtn").click()
         await page.wait_for_timeout(400)
 
         toolbar_visible = await page.locator("#annotationToolbar").is_visible()
-        tab_visible = await page.locator("#annotCollapseTab").is_visible()
         close_btn_exists = await page.locator("#closeAnnotToolbarBtn").count()
         icon_d = await page.locator("#annotCollapseIcon").get_attribute("d")
 
         print(f"Toolbar visível: {toolbar_visible}")
-        print(f"Tab retrátil visível: {tab_visible}")
         print(f"Botão X ainda existe: {close_btn_exists > 0}")
         print(f"Ícone da seta (deve ser down): {icon_d}")
 
         await page.screenshot(path="scratch/annot_open.png")
         print("Screenshot salvo: annot_open.png")
 
-        # Click collapse tab
+        # Click collapse tab again to collapse
         await page.locator("#annotCollapseBtn").click()
         await page.wait_for_timeout(400)
 
