@@ -798,12 +798,17 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertTrue(response.json["success"])
         self.assertEqual(response.json["word"], "teste")
         self.assertEqual(len(response.json["definitions"]), 1)
+        self.assertEqual(len(response.json["results"]), 1)
         
         definition = response.json["definitions"][0]
         self.assertEqual(definition["orth"], "Teste")
         self.assertEqual(definition["gram"], "substantivo masculino")
+        self.assertEqual(definition["class"], "substantivo masculino")
         self.assertIn("Ato ou efeito de testar", definition["definitions"])
+        self.assertIn("Ato ou efeito de testar", definition["meanings"])
         self.assertEqual(definition["etym"], "(Lat. *testu*)")
+        self.assertEqual(definition["etymology"], "(Lat. *testu*)")
+
 
 
 if __name__ == "__main__":

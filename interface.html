@@ -1120,6 +1120,7 @@
             border-left: 1px solid #ddd;
             border-right: 1px solid #ddd;
             overflow-x: auto;
+            white-space: normal;
         }
         
         .preview.html-preview {
@@ -1132,6 +1133,7 @@
             margin: 0 auto;
             padding: 40px 60px;
             overflow-x: auto;
+            white-space: normal;
         }
 
         .preview.html-preview h1, .preview.html-preview h2 {
@@ -2210,7 +2212,7 @@
                         <ul class="toc-list" id="tocList"></ul>
                         <div class="toc-resize-handle" id="tocResizeHandle" title="Arrastar para ajustar largura"></div>
                     </nav>
-                    <pre class="preview markdown-preview preview-empty" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></pre>
+                    <div class="preview markdown-preview preview-empty" id="outputArea"><span class="empty-state"><span><strong>Aguardando</strong><span>Seu conteúdo aparecerá aqui.</span></span></span></div>
                     <canvas id="penCanvas"></canvas>
                     
                     <!-- Painel do Dicionário Integrado -->
@@ -2761,8 +2763,9 @@
             searchCount.textContent = "";
             searchPrevBtn.disabled = true;
             searchNextBtn.disabled = true;
-            // Fecha o sumário ao resetar
-            tocPanel.classList.remove("visible");
+            // Fecha o sumário e o dicionário ao resetar
+            closeToc();
+            closeDictPanel();
             tocList.innerHTML = "";
             tocBadge.textContent = "0";
         }

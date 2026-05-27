@@ -1453,8 +1453,11 @@ def get_dictionary_definition():
                 parsed_entries.append({
                     "orth": orth,
                     "gram": gram_friendly,
+                    "class": gram_friendly,
                     "definitions": defs,
-                    "etym": etym
+                    "meanings": defs,
+                    "etym": etym,
+                    "etymology": etym
                 })
             except Exception as parse_err:
                 print(f"Error parsing dictionary XML: {parse_err}")
@@ -1463,7 +1466,8 @@ def get_dictionary_definition():
         return jsonify({
             "success": True,
             "word": word_clean,
-            "definitions": parsed_entries
+            "definitions": parsed_entries,
+            "results": parsed_entries
         })
         
     except Exception as e:
