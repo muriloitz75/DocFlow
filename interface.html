@@ -2036,6 +2036,274 @@
 
 
 
+        /* Gazette Norm Index Styling */
+        .gazette-index-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            overflow-y: auto;
+            background-color: var(--bg);
+        }
+
+        .gazette-header {
+            background: var(--surface);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 20px 24px;
+            font-family: var(--font-sans);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .gazette-header-icon {
+            font-size: 32px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .gazette-header-text {
+            flex: 1;
+        }
+
+        .gazette-header-title {
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .gazette-header-subtitle {
+            font-size: 13px;
+            font-family: var(--font-mono);
+            color: var(--muted);
+        }
+
+        .gazette-norms-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .gazette-norm-card {
+            background: var(--surface);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        .gazette-norm-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--accent);
+        }
+
+        .gazette-norm-card:hover .gazette-card-arrow {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        .gazette-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .gazette-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border: 1px solid var(--ink);
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            background: #e6e4df;
+            white-space: nowrap;
+        }
+
+        /* Cores dos badges de tipos de normas */
+        .badge-lei, .badge-lei-complementar, .badge-lei-ordinaria {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .badge-decreto, .badge-decreto-legislativo {
+            background-color: #3498db;
+            color: white;
+        }
+        .badge-portaria, .badge-portaria-conjunta {
+            background-color: #e67e22;
+            color: white;
+        }
+        .badge-resolucao {
+            background-color: #9b59b6;
+            color: white;
+        }
+        .badge-instrucao-normativa {
+            background-color: #1abc9c;
+            color: white;
+        }
+        .badge-deliberacao {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .badge-edital {
+            background-color: #f1c40f;
+            color: var(--ink);
+        }
+        .badge-ato, .badge-ato-normativo {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .gazette-card-number {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .gazette-card-ementa {
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--ink);
+            flex-grow: 1;
+            /* Truncar ementa em 4 linhas */
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gazette-card-footer {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--muted);
+            border-top: 1px dashed var(--ink);
+            padding-top: 8px;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .gazette-card-arrow {
+            opacity: 0;
+            transition: opacity 0.15s, transform 0.15s;
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        /* Gazette Index Document Layout */
+        .gazette-index-document {
+            white-space: normal;
+            font-family: var(--font-sans);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 60px;
+            background: var(--surface);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            color: var(--ink);
+            text-align: left;
+        }
+
+        .gazette-index-document h1 {
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 28px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+
+        .gazette-index-document .gazette-index-subtitle {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .gazette-index-document hr {
+            border: none;
+            border-top: var(--border);
+            margin: 24px 0;
+        }
+
+        .gazette-index-document h2 {
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 1.5em;
+            margin-bottom: 8px;
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+
+        .gazette-index-document .gazette-index-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .gazette-index-document blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 16px;
+            margin: 16px 0;
+            font-style: italic;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .extract-norm-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--ink);
+            color: var(--surface);
+            border: var(--border);
+            padding: 8px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--accent);
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin-top: 12px;
+            text-decoration: none;
+        }
+
+        .extract-norm-link:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--accent);
+            color: var(--surface);
+        }
+
+        .extract-norm-link:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--accent);
+        }
+
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
             .shell { padding: 12px; }
@@ -2076,6 +2344,7 @@
                     <div class="segmented" id="inputTypeSegmented" role="tablist" aria-label="Tipo de entrada">
                         <button class="segment active" type="button" data-type="file" style="flex: 1;">Arquivo</button>
                         <button class="segment" type="button" data-type="url" style="flex: 1;">URL</button>
+                        <button class="segment" type="button" data-type="gazette" style="flex: 1;">Diário Oficial</button>
                     </div>
                 </div>
 
@@ -2168,6 +2437,7 @@
                             <button class="tool-btn" id="downloadBtn" type="button" disabled>Baixar</button>
                             <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
                             <button class="tool-btn" id="saveDocBtn" type="button" disabled title="Salvar estado atual">Salvar</button>
+                            <button class="tool-btn" id="backToGazetteIndexBtn" type="button" style="display: none; background: var(--accent); color: white; border-color: var(--ink);">← Voltar ao Índice</button>
                         </div>
 
                         <button class="panel-action-btn" id="maximizePanelBtn" type="button" title="Maximizar tela de resultado">
@@ -2585,6 +2855,7 @@
         const urlZoneContainer = document.getElementById("urlZoneContainer");
         const urlInput = document.getElementById("urlInput");
         const inputTypeButtons = document.querySelectorAll("#inputTypeSegmented .segment");
+        const backToGazetteIndexBtn = document.getElementById("backToGazetteIndexBtn");
 
         // Elementos de Carimbo
         const stampCreateModal = document.getElementById("stampCreateModal");
@@ -2645,16 +2916,23 @@
         ]);
 
         let selectedFile = null;
-        let activeInputType = "file"; // 'file' ou 'url'
+        let activeInputType = "file"; // 'file', 'url', ou 'gazette'
         let selectedOption = "standard";
         let selectedFormat = "markdown";
         let convertedContent = "";
         let currentZoom = 1.0;
         let maxUploadBytes = 500 * 1024 * 1024;
+        
+        let gazetteCacheId = null;
+        let gazetteNorms = [];
+        let gazetteIndexHtml = null;
+        let currentGazetteFilename = null;
 
         function getActiveFilename() {
             if (activeInputType === "file") {
                 return selectedFile ? selectedFile.name : "sem arquivo";
+            } else if (activeInputType === "gazette") {
+                return currentGazetteFilename || "sem arquivo";
             } else {
                 const urlVal = urlInput.value.trim();
                 if (urlVal) {
@@ -3115,13 +3393,26 @@
                 activeInputType = button.dataset.type;
                 
                 const htmlFormatBtn = document.querySelector('#formatSegmented .segment[data-format="html"]');
+                const jsonFormatBtn = document.querySelector('#formatSegmented .segment[data-format="json"]');
                 const abntModeBtn = document.querySelector('#modeSegmented .segment[data-option="abnt"]');
                 const mdFormatBtn = document.querySelector('#formatSegmented .segment[data-format="markdown"]');
+                const formatSegmented = document.getElementById("formatSegmented");
+                
+                const urlLabel = urlZoneContainer.querySelector(".settings-label");
+                const urlSub = urlZoneContainer.querySelector(".upload-sub");
+                
+                // Resetar botão voltar
+                backToGazetteIndexBtn.style.display = "none";
 
                 if (activeInputType === "file") {
                     if (htmlFormatBtn) htmlFormatBtn.style.display = "";
+                    if (jsonFormatBtn) jsonFormatBtn.style.display = "";
                     fileInputContainer.style.display = "block";
                     urlZoneContainer.style.display = "none";
+                    convertBtn.textContent = "Converter";
+                    
+                    if (formatSegmented) formatSegmented.parentElement.style.display = "";
+                    
                     convertBtn.disabled = !selectedFile;
                     clearBtn.disabled = !selectedFile;
                     if (selectedFile) {
@@ -3129,8 +3420,9 @@
                     } else {
                         setStatus("Selecione um arquivo para iniciar.");
                     }
-                } else {
+                } else if (activeInputType === "url") {
                     if (htmlFormatBtn) htmlFormatBtn.style.display = "none";
+                    if (jsonFormatBtn) jsonFormatBtn.style.display = "";
                     if (selectedFormat === "html" && mdFormatBtn) {
                         mdFormatBtn.click();
                     }
@@ -3139,6 +3431,14 @@
                     }
                     fileInputContainer.style.display = "none";
                     urlZoneContainer.style.display = "flex";
+                    
+                    if (formatSegmented) formatSegmented.parentElement.style.display = "";
+                    
+                    urlLabel.textContent = "Endereço URL";
+                    urlInput.placeholder = "https://exemplo.com/documento.html";
+                    urlSub.textContent = "Insira a URL de um site, artigo ou lei pública para converter.";
+                    convertBtn.textContent = "Converter";
+                    
                     const urlVal = urlInput.value.trim();
                     convertBtn.disabled = !urlVal;
                     clearBtn.disabled = !urlVal;
@@ -3147,13 +3447,40 @@
                     } else {
                         setStatus("Insira uma URL para iniciar.");
                     }
+                } else if (activeInputType === "gazette") {
+                    // Forçar Markdown e ocultar formato HTML/JSON
+                    if (mdFormatBtn) mdFormatBtn.click();
+                    if (abntModeBtn) abntModeBtn.click();
+                    
+                    if (htmlFormatBtn) htmlFormatBtn.style.display = "none";
+                    if (jsonFormatBtn) jsonFormatBtn.style.display = "none";
+                    
+                    fileInputContainer.style.display = "none";
+                    urlZoneContainer.style.display = "flex";
+                    
+                    // Ocultar formatos já que é sempre Markdown
+                    if (formatSegmented) formatSegmented.parentElement.style.display = "none";
+                    
+                    urlLabel.textContent = "URL do Diário Oficial (PDF)";
+                    urlInput.placeholder = "https://diariooficial.imperatriz.ma.gov.br/...";
+                    urlSub.textContent = "Insira a URL de publicação em PDF do Diário Oficial para extrair o índice.";
+                    convertBtn.textContent = "Carregar Índice";
+                    
+                    const urlVal = urlInput.value.trim();
+                    convertBtn.disabled = !urlVal;
+                    clearBtn.disabled = !urlVal;
+                    if (urlVal) {
+                        setStatus("URL do Diário Oficial pronta para carregar.", "success");
+                    } else {
+                        setStatus("Insira a URL do PDF do Diário Oficial.");
+                    }
                 }
                 resetOutput();
             });
         });
 
         urlInput.addEventListener("input", () => {
-            if (activeInputType === "url") {
+            if (activeInputType === "url" || activeInputType === "gazette") {
                 const urlVal = urlInput.value.trim();
                 convertBtn.disabled = !urlVal;
                 clearBtn.disabled = !urlVal;
@@ -3171,6 +3498,52 @@
 
         convertBtn.addEventListener("click", async () => {
             currentDocId = null;
+            
+            if (activeInputType === "gazette") {
+                let urlVal = urlInput.value.trim();
+                if (!urlVal) return;
+                
+                if (!urlVal.match(/^[a-zA-Z]+:\/\//)) {
+                    urlVal = "https://" + urlVal;
+                }
+                
+                convertBtn.disabled = true;
+                setActions(false);
+                setLoading("Carregando índice do Diário Oficial...");
+                backToGazetteIndexBtn.style.display = "none";
+                
+                outputArea.classList.remove("abnt-preview", "html-preview");
+                outputArea.classList.add("markdown-preview", "preview-empty");
+                outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Processando..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>CARREGANDO ÍNDICE</strong><span>Escanear o PDF pode levar alguns instantes...</span></span></span>';
+                
+                try {
+                    const response = await fetch("/api/gazette/index", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url: urlVal })
+                    });
+                    
+                    if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
+                    
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || "Não foi possível carregar o índice.");
+                    }
+                    
+                    gazetteCacheId = data.cache_id;
+                    gazetteNorms = data.norms;
+                    
+                    renderGazetteIndex(data.total_pages, data.norms);
+                    setStatus("Índice carregado com sucesso.", "success");
+                } catch (error) {
+                    resetOutput();
+                    setStatus(error.message, "error");
+                } finally {
+                    convertBtn.disabled = !urlInput.value.trim();
+                }
+                return;
+            }
+            
             const formData = new FormData();
             let displayName = "documento";
             
@@ -3254,13 +3627,204 @@
                 fileStrip.classList.remove("has-file");
                 uploadZone.classList.remove("has-file");
                 setStatus("Selecione um arquivo para iniciar.");
-            } else {
+            } else if (activeInputType === "url") {
                 urlInput.value = "";
                 setStatus("Insira uma URL para iniciar.");
+            } else if (activeInputType === "gazette") {
+                urlInput.value = "";
+                gazetteCacheId = null;
+                gazetteNorms = [];
+                gazetteIndexHtml = null;
+                currentGazetteFilename = null;
+                backToGazetteIndexBtn.style.display = "none";
+                setStatus("Insira a URL do PDF do Diário Oficial.");
             }
             convertBtn.disabled = true;
             clearBtn.disabled = true;
             resetOutput();
+        });
+
+        function normalizeForCssClass(text) {
+            // Strip accents and normalize for CSS class names
+            return text.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-');
+        }
+
+        function renderGazetteIndex(totalPages, norms) {
+            outputArea.classList.remove("abnt-preview", "html-preview", "preview-empty");
+            outputArea.classList.add("markdown-preview");
+            
+            if (!norms || norms.length === 0) {
+                outputArea.innerHTML = `
+                    <div class="gazette-index-document">
+                        <h1>Índice do Diário Oficial</h1>
+                        <p class="gazette-index-subtitle">${totalPages} páginas • Nenhuma norma encontrada com os padrões especificados.</p>
+                    </div>
+                `;
+                gazetteIndexHtml = outputArea.innerHTML;
+                convertedContent = "";
+                buildToc();
+                return;
+            }
+            
+            // Contar tipos para exibir no header
+            const typeCounts = {};
+            norms.forEach(n => { typeCounts[n.tipo] = (typeCounts[n.tipo] || 0) + 1; });
+            const typesSummary = Object.entries(typeCounts)
+                .map(([tipo, count]) => `${count} ${tipo.toLowerCase()}${count > 1 ? 's' : ''}`)
+                .join(', ');
+
+            let normsHtml = "";
+            norms.forEach((norm) => {
+                const badgeClass = `badge-${normalizeForCssClass(norm.tipo)}`;
+                const ementaText = norm.ementa || 'Ementa não disponível.';
+                normsHtml += `
+                    <div class="gazette-index-item" id="gazette-norm-section-${norm.id}">
+                        <h2>
+                            <span class="gazette-badge ${badgeClass}">${escapeHtml(norm.tipo)}</span>
+                            <span>Nº ${escapeHtml(norm.numero)}</span>
+                        </h2>
+                        <div class="gazette-index-meta">Páginas ${norm.start_page}–${norm.end_page}</div>
+                        <blockquote>
+                            ${escapeHtml(ementaText)}
+                        </blockquote>
+                        <button class="extract-norm-link" data-id="${norm.id}">
+                            Extrair e Visualizar Norma
+                        </button>
+                    </div>
+                `;
+            });
+            
+            outputArea.innerHTML = `
+                <div class="gazette-index-document">
+                    <h1>Índice do Diário Oficial</h1>
+                    <div class="gazette-index-subtitle">${totalPages} páginas • ${norms.length} normas identificadas — ${typesSummary}</div>
+                    <hr>
+                    <div class="gazette-index-list">
+                        ${normsHtml}
+                    </div>
+                </div>
+            `;
+            
+            gazetteIndexHtml = outputArea.innerHTML;
+            
+            // Ativar botões de extração
+            const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
+            extractBtns.forEach((btn) => {
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    extractGazetteNorm(btn.dataset.id);
+                });
+            });
+
+            // Definir convertedContent especial para que buildToc funcione e gere a lista na barra lateral
+            convertedContent = "GAZETTE_INDEX";
+            setActions(true);
+            buildToc();
+            openToc();
+        }
+
+        async function extractGazetteNorm(normId) {
+            const norm = gazetteNorms[normId];
+            if (!norm) return;
+            
+            setActions(false);
+            setLoading(`Extraindo e convertendo: ${norm.tipo} Nº ${norm.numero}...`);
+            outputArea.classList.add("preview-empty");
+            outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Processando..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>EXTRAINDO NORMA</strong><span>Convertendo apenas o trecho selecionado...</span></span></span>';
+            
+            try {
+                const response = await fetch("/api/gazette/extract", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        cache_id: gazetteCacheId,
+                        norm_id: normId,
+                        option: selectedOption
+                    })
+                });
+                
+                if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
+                
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Não foi possível extrair a norma.");
+                }
+                
+                convertedContent = data.content || "";
+                currentGazetteFilename = data.filename || `${norm.tipo}_${norm.numero}.md`;
+                applyFormat(convertedContent, data.mode);
+                updateMetrics(convertedContent, currentGazetteFilename);
+
+                backToGazetteIndexBtn.style.display = "block";
+                setActions(Boolean(convertedContent));
+                if (saveDocBtn) saveDocBtn.disabled = !Boolean(convertedContent);
+                
+                const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
+                setStatus(`Norma extraída com sucesso em modo ${modeLabel}.`, "success");
+            } catch (error) {
+                if (gazetteIndexHtml) {
+                    outputArea.classList.remove("preview-empty");
+                    outputArea.innerHTML = gazetteIndexHtml;
+                    
+                    // Re-associar botões de extração
+                    const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
+                    extractBtns.forEach((btn) => {
+                        btn.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            extractGazetteNorm(btn.dataset.id);
+                        });
+                    });
+                    
+                    convertedContent = "GAZETTE_INDEX";
+                    setActions(true);
+                    buildToc();
+                } else {
+                    resetOutput();
+                }
+                setStatus(error.message, "error");
+            }
+        }
+
+        backToGazetteIndexBtn.addEventListener("click", () => {
+            if (gazetteIndexHtml) {
+                currentGazetteFilename = null;
+                outputArea.classList.remove("abnt-preview", "html-preview", "preview-empty");
+                outputArea.classList.add("markdown-preview");
+                outputArea.innerHTML = gazetteIndexHtml;
+                
+                // Re-associar botões de extração
+                const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
+                extractBtns.forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        extractGazetteNorm(btn.dataset.id);
+                    });
+                });
+                
+                convertedContent = "GAZETTE_INDEX";
+                updateMetrics("", "sem arquivo");
+                
+                currentZoom = 1.0;
+                outputArea.style.removeProperty("--preview-zoom");
+                if (zoomVal) zoomVal.textContent = "100%";
+                
+                setActions(true);
+                searchBar.classList.remove("visible");
+                searchInput.value = "";
+                searchCount.textContent = "";
+                searchPrevBtn.disabled = true;
+                searchNextBtn.disabled = true;
+                
+                buildToc();
+                openToc();
+                closeDictPanel();
+                
+                backToGazetteIndexBtn.style.display = "none";
+                setStatus("Índice de normas restaurado.", "success");
+            }
         });
 
         copyBtn.addEventListener("click", async () => {

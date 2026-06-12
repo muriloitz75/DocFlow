@@ -809,6 +809,207 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(definition["etym"], "(Lat. *testu*)")
         self.assertEqual(definition["etymology"], "(Lat. *testu*)")
 
+    def test_is_index_page_detects_inline_dots(self):
+        """Padrão clássico ........ 20 em múltiplas linhas deve ser detectado como sumário."""
+        text = (
+            "PORTARIA Nº 066 DE 08 DE JUNHO DE 2026 – SEFAZGO ................... 20\n"
+            "PORTARIA Nº 064 DE 03 DE JUNHO DE 2026 – SEFAZGO ................... 22\n"
+        )
+        self.assertTrue(webapp.is_index_page(text))
+
+    def test_is_index_page_detects_dot_only_lines(self):
+        """Linhas compostas apenas por pontos (líder em coluna separada) devem ser detectadas."""
+        text = (
+            "PORTARIA Nº 066\n"
+            "...........................\n"
+            "20\n"
+            "PORTARIA Nº 064\n"
+            "...........................\n"
+            "22\n"
+        )
+        self.assertTrue(webapp.is_index_page(text))
+
+    def test_is_index_page_false_for_normal_content(self):
+        text = "Art. 1º Fica criado o programa de assistência social.\nArt. 2º Esta lei entra em vigor na data de publicação."
+        self.assertFalse(webapp.is_index_page(text))
+
+    def test_get_norm_title_pattern(self):
+        pattern = webapp.get_norm_title_pattern("PORTARIA", "102/2024")
+        self.assertIn("PORTARIA", pattern)
+        self.assertIn("102/2024", pattern)
+
+    def test_slice_norm_markdown(self):
+        markdown = (
+            "# Cabeçalho\n"
+            "## PORTARIA Nº 102/2024\n"
+            "Conteúdo da Portaria 102.\n"
+            "## DECRETO Nº 543/2024\n"
+            "Conteúdo do Decreto."
+        )
+        pattern_current = webapp.get_norm_title_pattern("PORTARIA", "102/2024")
+        pattern_next = webapp.get_norm_title_pattern("DECRETO", "543/2024")
+
+        sliced = webapp.slice_norm_markdown(markdown, pattern_current, pattern_next)
+        self.assertIn("PORTARIA Nº 102/2024", sliced)
+        self.assertIn("Conteúdo da Portaria 102.", sliced)
+        self.assertNotIn("DECRETO Nº 543/2024", sliced)
+
+    def test_slice_norm_markdown_no_match_returns_none(self):
+        markdown = "Conteúdo sem nenhuma norma identificável."
+        pattern = webapp.get_norm_title_pattern("PORTARIA", "999/2024")
+        result = webapp.slice_norm_markdown(markdown, pattern)
+        self.assertIsNone(result)
+
+    @unittest.mock.patch("pdfplumber.open")
+    def test_scan_gazette_index(self, mock_pdfplumber_open):
+        mock_pdf = unittest.mock.MagicMock()
+        mock_page1 = unittest.mock.MagicMock()
+        mock_page1.extract_text.return_value = "DIARIO OFICIAL\nPrefeitura Municipal\nPORTARIA Nº 102/2024\nNomear servidor X."
+        mock_page2 = unittest.mock.MagicMock()
+        mock_page2.extract_text.return_value = "DECRETO Nº 543-A/2024\nRegulamenta o transito."
+        
+        mock_pdf.pages = [mock_page1, mock_page2]
+        mock_pdfplumber_open.return_value.__enter__.return_value = mock_pdf
+        
+        result = webapp.scan_gazette_index("dummy.pdf")
+        self.assertEqual(result["total_pages"], 2)
+        self.assertEqual(len(result["norms"]), 2)
+        
+        norm1 = result["norms"][0]
+        self.assertEqual(norm1["tipo"], "PORTARIA")
+        self.assertEqual(norm1["numero"], "102/2024")
+        self.assertEqual(norm1["start_page"], 1)
+        self.assertEqual(norm1["end_page"], 2)
+        
+        norm2 = result["norms"][1]
+        self.assertEqual(norm2["tipo"], "DECRETO")
+        self.assertEqual(norm2["numero"], "543-A/2024")
+        self.assertEqual(norm2["start_page"], 2)
+        self.assertEqual(norm2["end_page"], 2)
+
+    @unittest.mock.patch("requests.get")
+    @unittest.mock.patch("pdfplumber.open")
+    def test_gazette_index_endpoint_success(self, mock_pdfplumber_open, mock_get):
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"%PDF-1.4 mock pdf data"
+        mock_response.headers = {"Content-Type": "application/pdf"}
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        mock_pdf = unittest.mock.MagicMock()
+        mock_page = unittest.mock.MagicMock()
+        mock_page.extract_text.return_value = "DECRETO Nº 123/2024\nEmenta de teste"
+        mock_pdf.pages = [mock_page]
+        mock_pdfplumber_open.return_value.__enter__.return_value = mock_pdf
+
+        # Set session as logged_in to bypass auth
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+
+        response = self.client.post(
+            "/api/gazette/index",
+            json={"url": "https://exemplo.com/diario.pdf"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["total_pages"], 1)
+        self.assertEqual(len(response.json["norms"]), 1)
+        self.assertEqual(response.json["norms"][0]["tipo"], "DECRETO")
+        self.assertEqual(response.json["norms"][0]["numero"], "123/2024")
+
+    @unittest.mock.patch("requests.get")
+    @unittest.mock.patch("pdfplumber.open")
+    def test_gazette_index_pdf_by_content_type(self, mock_pdfplumber_open, mock_get):
+        """URL sem extensão .pdf aceita quando Content-Type é application/pdf."""
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"%PDF-1.4 mock pdf data"
+        mock_response.headers = {"Content-Type": "application/pdf"}
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        mock_pdf = unittest.mock.MagicMock()
+        mock_page = unittest.mock.MagicMock()
+        mock_page.extract_text.return_value = "PORTARIA Nº 77/2024\nDesigna servidor."
+        mock_pdf.pages = [mock_page]
+        mock_pdfplumber_open.return_value.__enter__.return_value = mock_pdf
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+
+        response = self.client.post(
+            "/api/gazette/index",
+            json={"url": "https://exemplo.com/download?doc=77"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+
+    @unittest.mock.patch("requests.get")
+    @unittest.mock.patch("pdfplumber.open")
+    @unittest.mock.patch("app.md_converter.convert")
+    @unittest.mock.patch("pypdf.PdfReader")
+    @unittest.mock.patch("pypdf.PdfWriter")
+    def test_gazette_extract_endpoint_success(self, mock_pdfwriter, mock_pdfreader, mock_convert, mock_pdfplumber_open, mock_get):
+        # Configurar mock para PdfReader
+        mock_reader_instance = unittest.mock.MagicMock()
+        mock_reader_instance.pages = [unittest.mock.MagicMock(), unittest.mock.MagicMock()]
+        mock_pdfreader.return_value = mock_reader_instance
+        
+        # 1. First feed index cache
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"%PDF-1.4 mock pdf data"
+        mock_response.headers = {"Content-Type": "application/pdf"}
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        mock_pdf = unittest.mock.MagicMock()
+        mock_page1 = unittest.mock.MagicMock()
+        mock_page1.extract_text.return_value = "PORTARIA Nº 101/2024\nNomeia A"
+        mock_page2 = unittest.mock.MagicMock()
+        mock_page2.extract_text.return_value = "PORTARIA Nº 102/2024\nNomeia B"
+        mock_pdf.pages = [mock_page1, mock_page2]
+        mock_pdfplumber_open.return_value.__enter__.return_value = mock_pdf
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+
+        # Call index
+        response_idx = self.client.post(
+            "/api/gazette/index",
+            json={"url": "https://exemplo.com/diario.pdf"}
+        )
+        cache_id = response_idx.json["cache_id"]
+
+        # 2. Extract
+        mock_result = unittest.mock.MagicMock()
+        mock_result.text_content = (
+            "PORTARIA Nº 101/2024\n"
+            "Nomeia A\n"
+            "PORTARIA Nº 102/2024\n"
+            "Nomeia B"
+        )
+        mock_convert.return_value = mock_result
+
+        response_ext = self.client.post(
+            "/api/gazette/extract",
+            json={
+                "cache_id": cache_id,
+                "norm_id": 0,
+                "option": "standard"
+            }
+        )
+
+        self.assertEqual(response_ext.status_code, 200)
+        self.assertTrue(response_ext.json["success"])
+        # Should be sliced to only the first portaria
+        self.assertIn("PORTARIA Nº 101/2024", response_ext.json["content"])
+        self.assertNotIn("PORTARIA Nº 102/2024", response_ext.json["content"])
+
+
 
 
 if __name__ == "__main__":

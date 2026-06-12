@@ -19,6 +19,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, "packages", "markitdown", "src"))
 
 from markitdown import MarkItDown, StreamInfo
+from markitdown.converters._pdf_converter import extract_text_with_layout_and_columns
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "docflow-secret-key-123456"
@@ -58,6 +59,221 @@ app.config["JSON_SORT_KEYS"] = False
 
 # Inicializar MarkItDown
 md_converter = MarkItDown(enable_plugins=False)
+
+# Cache de diários oficiais — armazenado em disco para compatibilidade com multi-worker
+GAZETTE_CACHE_DIR = os.path.join(tempfile.gettempdir(), "markitdown-web", "gazette_cache")
+
+
+def _gazette_meta_path(cache_id):
+    return os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.json")
+
+
+def gazette_cache_get(cache_id):
+    meta_path = _gazette_meta_path(cache_id)
+    if not os.path.exists(meta_path):
+        return None
+    try:
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        pdf_path = os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.pdf")
+        if not os.path.exists(pdf_path):
+            return None
+        return {"pdf_path": pdf_path, "norms": meta["norms"], "total_pages": meta["total_pages"]}
+    except Exception:
+        return None
+
+
+def gazette_cache_set(cache_id, pdf_path, norms, total_pages):
+    os.makedirs(GAZETTE_CACHE_DIR, exist_ok=True)
+    meta = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "total_pages": total_pages,
+        "norms": norms,
+    }
+    with open(_gazette_meta_path(cache_id), "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False)
+
+
+GAZETTE_NORM_RE = re.compile(
+    r"^\s*("
+    r"LEI\s+COMPLEMENTAR|LEI\s+ORDIN[ÁA]RIA|LEI|"
+    r"DECRETO\s+LEGISLATIVO|DECRETO|"
+    r"PORTARIA\s+CONJUNTA|PORTARIA|"
+    r"RESOLU[ÇC][ÃA]O|RESOLUCAO|"
+    r"INSTRU[ÇC][ÃA]O\s+NORMATIVA|"
+    r"DELIBERA[ÇC][ÃA]O|DELIBERACAO|"
+    r"EDITAL|"
+    r"ATO\s+NORMATIVO|ATO"
+    r")\s+(?:Nº|N[°ºo]\.?)\s*([\w.\/-]+)",
+    re.IGNORECASE | re.MULTILINE
+)
+
+
+def is_index_page(text):
+    """Verificar se o texto de uma página corresponde a um sumário/índice."""
+    # Cabeçalho explícito de índice/sumário
+    if re.search(r"^\s*(Índice|Sumário|Sumario|SUMÁRIO|ÍNDICE)\b", text, re.IGNORECASE | re.MULTILINE):
+        return True
+
+    # Padrão clássico: "........ 20" ao final de cada linha (requer re.MULTILINE)
+    inline_dots = re.compile(r"\.{3,}\s*\d+\s*$", re.MULTILINE)
+    if len(inline_dots.findall(text)) >= 2:
+        return True
+
+    # Linhas compostas apenas por pontos (líder de tabulação de sumários)
+    dot_only_line = re.compile(r"^\s*\.{5,}\s*\d*\s*$", re.MULTILINE)
+    if len(dot_only_line.findall(text)) >= 2:
+        return True
+
+    return False
+
+
+def scan_gazette_index(pdf_path):
+    """Escanear PDF do Diário Oficial para identificar as normas e suas faixas de páginas."""
+    import pdfplumber
+    
+    norms = []
+    total_pages = 0
+    seen_norms = set()
+    
+    with pdfplumber.open(pdf_path) as pdf:
+        total_pages = len(pdf.pages)
+        for page_idx, page in enumerate(pdf.pages):
+            page_num = page_idx + 1
+            
+            # Usar extração com layout/colunas
+            text = extract_text_with_layout_and_columns(page) or ""
+            
+            # Pular páginas de índice
+            if is_index_page(text):
+                continue
+                
+            for match in GAZETTE_NORM_RE.finditer(text):
+                tipo = match.group(1).strip().upper()
+                numero = match.group(2).strip()
+                
+                # De-duplicar normas idênticas detectadas no mesmo diário
+                norm_key = (tipo, numero)
+                if norm_key in seen_norms:
+                    continue
+                seen_norms.add(norm_key)
+                
+                # Extrair ementa
+                start_pos = match.end()
+                rest_of_text = text[start_pos:].strip()
+
+                # Remover linhas de pontos (líderes de sumário residuais) antes de montar a ementa
+                rest_of_text = re.sub(r"\.{3,}[\s\d]*", " ", rest_of_text)
+                # Limpar quebras de linha e espaços múltiplos
+                rest_of_text = re.sub(r'\s+', ' ', rest_of_text).strip()
+
+                # Remover data introdutória residual: ", DE 11 DE JUNHO DE 2026" ou ". DE 30 DE MARÇO..."
+                rest_of_text = re.sub(
+                    r'^[,.]?\s*DE\s+\d{1,2}\s+DE\s+\w+\s+DE\s+\d{4}[\s.]*',
+                    '', rest_of_text, flags=re.IGNORECASE
+                ).strip()
+
+                # Remover ocorrência duplicada do próprio título da norma no início da ementa
+                dup_title_pattern = re.compile(
+                    r'^' + r'\s+'.join(re.escape(w) for w in tipo.split())
+                    + r'\s+(?:Nº|N[°ºo]\.?)\s*' + re.escape(numero)
+                    + r'[,.]?\s*(?:DE\s+\d{1,2}\s+DE\s+\w+\s+DE\s+\d{4}[\s.]*)?',
+                    re.IGNORECASE
+                )
+                rest_of_text = dup_title_pattern.sub('', rest_of_text).strip()
+
+                # Tentar pegar as primeiras ~200 letras como ementa
+                ementa = rest_of_text[:200]
+                if len(rest_of_text) > 200:
+                    # Cortar na última palavra completa
+                    last_space = ementa.rfind(' ')
+                    if last_space > 100:
+                        ementa = ementa[:last_space]
+                    ementa += "..."
+                    
+                norms.append({
+                    "id": len(norms),
+                    "tipo": tipo,
+                    "numero": numero,
+                    "ementa": ementa,
+                    "start_page": page_num,
+                    "end_page": page_num
+                })
+                
+    # Ajustar a página de fim para cada norma detectada
+    for i in range(len(norms)):
+        if i < len(norms) - 1:
+            norms[i]["end_page"] = norms[i+1]["start_page"]
+        else:
+            norms[i]["end_page"] = total_pages
+            
+    return {
+        "total_pages": total_pages,
+        "norms": norms
+    }
+
+
+def cleanup_gazette_cache():
+    """Remover PDFs em cache com mais de 30 minutos."""
+    if not os.path.isdir(GAZETTE_CACHE_DIR):
+        return
+    now = datetime.now(timezone.utc)
+    for fname in os.listdir(GAZETTE_CACHE_DIR):
+        if not fname.endswith(".json"):
+            continue
+        meta_path = os.path.join(GAZETTE_CACHE_DIR, fname)
+        try:
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            created_at = datetime.fromisoformat(meta["created_at"])
+            if (now - created_at).total_seconds() > 1800:
+                pdf_path = os.path.join(GAZETTE_CACHE_DIR, fname[:-5] + ".pdf")
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+                os.remove(meta_path)
+        except Exception as e:
+            print(f"Erro ao limpar cache de diário: {e}")
+
+
+def get_norm_title_pattern(tipo, numero):
+    """Gerar regex para localizar o cabeçalho de uma norma."""
+    escaped_num = re.escape(numero)
+    tipo_pattern = r"\s+".join(re.escape(word) for word in tipo.split())
+    return r"(?:#+\s*|\*\*|^\s*)?" + tipo_pattern + r"\s+(?:Nº|N[°ºo]\.?)\s*" + escaped_num
+
+
+def slice_norm_markdown(markdown, norm_title_pattern, next_norm_title_pattern=None):
+    """Fatiar o Markdown para isolar apenas o texto da norma desejada. Retorna None se o título não for localizado."""
+    match_start = re.search(norm_title_pattern, markdown, re.IGNORECASE | re.MULTILINE)
+    if not match_start:
+        return None
+        
+    start_pos = match_start.start()
+    
+    # 1. Tentar encontrar o Código Identificador que encerra a publicação
+    match_code = re.search(
+        r'(?:C[óo]d\.?\s*Identificador|C[óo]digo\s+[iI]dentificador)\s*:\s*([A-Za-z0-9$]+)',
+        markdown[match_start.end():],
+        re.IGNORECASE
+    )
+    
+    end_pos = None
+    if match_code:
+        end_pos = match_start.end() + match_code.end()
+        
+    # 2. Se houver padrão da próxima norma, usar a menor posição entre o Código e o início da próxima norma
+    if next_norm_title_pattern:
+        match_end = re.search(next_norm_title_pattern, markdown[match_start.end():], re.IGNORECASE | re.MULTILINE)
+        if match_end:
+            next_norm_pos = match_start.end() + match_end.start()
+            if end_pos is None or next_norm_pos < end_pos:
+                end_pos = next_norm_pos
+                
+    if end_pos is not None:
+        return markdown[start_pos:end_pos].strip()
+        
+    return markdown[start_pos:].strip()
+
 
 
 def allowed_file(filename):
@@ -1159,7 +1375,12 @@ def convert():
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 }
-                response = requests.get(url, headers=headers, timeout=15)
+                try:
+                    response = requests.get(url, headers=headers, timeout=15)
+                except requests.exceptions.SSLError:
+                    import urllib3
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                    response = requests.get(url, headers=headers, timeout=15, verify=False)
                 response.raise_for_status()
             except Exception as req_err:
                 return jsonify({
@@ -1338,6 +1559,262 @@ def convert():
         }), 500
     finally:
         if temp_dir and os.path.isdir(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@app.route("/api/gazette/index", methods=["POST"])
+@login_required
+def gazette_index():
+    cleanup_gazette_cache()
+    
+    # Suportar JSON e Form data
+    url = ""
+    if request.is_json:
+        url = request.json.get("url", "").strip()
+    else:
+        url = request.form.get("url", "").strip()
+        
+    if not url:
+        return jsonify({"success": False, "error": "URL não fornecida."}), 400
+        
+    if not (url.startswith("http://") or url.startswith("https://")):
+        if "://" not in url:
+            url = "https://" + url
+        else:
+            return jsonify({
+                "success": False,
+                "error": "URL inválida. O link deve começar com http:// ou https://",
+            }), 400
+            
+    import requests
+    from urllib.parse import urlparse
+    
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+        except requests.exceptions.SSLError:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            response = requests.get(url, headers=headers, timeout=15, verify=False)
+        response.raise_for_status()
+    except Exception as req_err:
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao baixar a URL: {str(req_err)}",
+        }), 400
+        
+    # Detectar se é PDF pela extensão da URL ou pelo Content-Type da resposta
+    content_type = response.headers.get("Content-Type", "").lower()
+    is_pdf_by_content_type = "application/pdf" in content_type or "application/octet-stream" in content_type
+
+    parsed_url = urlparse(url)
+    url_path = parsed_url.path
+    url_filename = os.path.basename(url_path) if url_path else ""
+    if not url_filename or "." not in url_filename:
+        filename = "diario.pdf" if is_pdf_by_content_type else ""
+    else:
+        filename = secure_filename(url_filename)
+        if not filename or "." not in filename:
+            filename = "diario.pdf" if is_pdf_by_content_type else ""
+
+    if not filename.lower().endswith(".pdf"):
+        if is_pdf_by_content_type:
+            filename = "diario.pdf"
+        else:
+            return jsonify({
+                "success": False,
+                "error": "O arquivo da URL deve ser um PDF (verifique a extensão ou o tipo de conteúdo retornado pelo servidor).",
+            }), 400
+
+    # Salvar em cache no disco (compatível com multi-worker)
+    os.makedirs(GAZETTE_CACHE_DIR, exist_ok=True)
+    cache_id = f"gazette-{uuid4().hex}"
+    pdf_path = os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.pdf")
+
+    with open(pdf_path, "wb") as f:
+        f.write(response.content)
+
+    try:
+        scan_result = scan_gazette_index(pdf_path)
+        gazette_cache_set(cache_id, pdf_path, scan_result["norms"], scan_result["total_pages"])
+
+        return jsonify({
+            "success": True,
+            "cache_id": cache_id,
+            "total_pages": scan_result["total_pages"],
+            "norms": scan_result["norms"]
+        })
+    except Exception as e:
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao escanear o Diário Oficial: {str(e)}"
+        }), 500
+
+
+@app.route("/api/gazette/extract", methods=["POST"])
+@login_required
+def gazette_extract():
+    cleanup_gazette_cache()
+    
+    # Suportar JSON e Form data
+    data = {}
+    if request.is_json:
+        data = request.json
+    else:
+        data = request.form
+        
+    cache_id = data.get("cache_id", "")
+    norm_id_raw = data.get("norm_id")
+    option = data.get("option", "standard")
+    
+    if not cache_id or norm_id_raw is None:
+        return jsonify({"success": False, "error": "cache_id e norm_id são obrigatórios."}), 400
+
+    # Sanitizar cache_id para prevenir path traversal
+    if not re.fullmatch(r'gazette-[0-9a-f]{32}', cache_id):
+        return jsonify({"success": False, "error": "cache_id inválido."}), 400
+        
+    try:
+        norm_id = int(norm_id_raw)
+    except ValueError:
+        return jsonify({"success": False, "error": "norm_id deve ser um inteiro."}), 400
+        
+    cache_item = gazette_cache_get(cache_id)
+    if not cache_item:
+        return jsonify({"success": False, "error": "Documento não encontrado no cache ou expirado."}), 404
+        
+    norms = cache_item["norms"]
+    if norm_id < 0 or norm_id >= len(norms):
+        return jsonify({"success": False, "error": "Norma inválida."}), 400
+        
+    selected_norm = norms[norm_id]
+    start_page = selected_norm["start_page"]
+    end_page = selected_norm["end_page"]
+    
+    # Extrair as páginas do PDF para um arquivo temporário
+    from pypdf import PdfReader, PdfWriter
+    
+    temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"extract-{uuid4().hex}")
+    os.makedirs(temp_dir, exist_ok=True)
+    extracted_pdf_path = os.path.join(temp_dir, "extracted.pdf")
+    
+    try:
+        reader = PdfReader(cache_item["pdf_path"])
+        writer = PdfWriter()
+        
+        # start_page e end_page são 1-indexed.
+        for page_idx in range(start_page - 1, min(end_page, len(reader.pages))):
+            writer.add_page(reader.pages[page_idx])
+            
+        with open(extracted_pdf_path, "wb") as f:
+            writer.write(f)
+            
+        # Converter o PDF extraído para Markdown usando extração por colunas diretamente
+        import pdfplumber
+        content_parts = []
+        with pdfplumber.open(extracted_pdf_path) as pdf:
+            for page in pdf.pages:
+                page_text = extract_text_with_layout_and_columns(page) or ""
+                if page_text.strip():
+                    content_parts.append(page_text.strip())
+        content = "\n\n".join(content_parts)
+        
+        # Aplicar limpeza e formatação legal padrão
+        content = clean_pdf_headers_footers(content)
+        content = format_pdf_markdown_model2(content)
+        
+        # Delimitação Exata (Fatiamento)
+        current_pattern = get_norm_title_pattern(selected_norm["tipo"], selected_norm["numero"])
+        
+        next_pattern = None
+        if norm_id < len(norms) - 1:
+            next_norm = norms[norm_id + 1]
+            next_pattern = get_norm_title_pattern(next_norm["tipo"], next_norm["numero"])
+            
+        sliced = slice_norm_markdown(content, current_pattern, next_pattern)
+        if sliced is None:
+            # Título não localizado no Markdown após conversão — exibe o trecho completo com aviso
+            content = (
+                f"> **Aviso:** O título da norma não foi localizado com precisão no texto extraído. "
+                f"Exibindo o conteúdo completo das páginas {start_page}–{end_page}.\n\n"
+                + content
+            )
+        else:
+            content = sliced
+
+        # Deduplicar título da norma que pode aparecer repetido (cabeçalho + corpo)
+        tipo_esc = r'\s+'.join(re.escape(w) for w in selected_norm['tipo'].split())
+        num_esc = re.escape(selected_norm['numero'])
+        dup_title_re = re.compile(
+            r'('
+            + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc
+            + r'[^\n]*\n)'
+            + r'\s*'
+            + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
+            re.IGNORECASE
+        )
+        content = dup_title_re.sub(r'\1', content)
+
+        # Gerar cabeçalho premium com banner para a norma extraída
+        norm_title = f"{selected_norm['tipo']} Nº {selected_norm['numero']}"
+        norm_ementa = selected_norm.get('ementa', '')
+        premium_banner = f"# {norm_title}\n\n"
+        if norm_ementa:
+            premium_banner += f"> **Ementa:** {norm_ementa}\n\n"
+        premium_banner += "---\n\n"
+
+        # Verificar se o conteúdo já começa com o título da norma para evitar duplicação com o banner
+        first_line = content.lstrip().split('\n', 1)[0] if content.strip() else ''
+        title_already_present = re.search(
+            tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
+            first_line, re.IGNORECASE
+        )
+        if title_already_present:
+            # Remover a primeira linha (título cru) pois o banner já o inclui formatado
+            lines = content.lstrip().split('\n', 1)
+            content = lines[1].lstrip() if len(lines) > 1 else ''
+
+        content = premium_banner + content
+
+        # Aplicar as opções de formatação solicitadas
+        if option == "compact":
+            content = compact_markdown(content)
+        elif option == "abnt":
+            content = polish_legal_markdown_model2(content)
+            
+        original_length = len(content)
+        truncated = False
+        if original_length > 10_000_000:
+            content = content[:10_000_000] + "\n\n... [conteúdo truncado]"
+            truncated = True
+            
+        # Nome do arquivo de saída
+        filename = f"{selected_norm['tipo']}_{selected_norm['numero'].replace('/', '_')}.md"
+        
+        return jsonify({
+            "success": True,
+            "content": content,
+            "filename": filename,
+            "norm_title": norm_title,
+            "mode": option,
+            "characters": len(content),
+            "originalCharacters": original_length,
+            "truncated": truncated
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao extrair/converter a norma: {str(e)}"
+        }), 500
+        
+    finally:
+        if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
