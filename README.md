@@ -172,6 +172,7 @@ O sistema contém lógicas dedicadas (no Backend e no Frontend) para melhorar dr
 - **Preservação de textos revogados (strikethrough)** — mapeia e converte tags HTML como `<strike>`, `<del>` e `<s>` para `~~` no Markdown, mantendo a diferenciação visual e a semântica jurídica de termos e artigos revogados ou alterados no portal do Planalto.
 - **Índice Editorial de Diários Oficiais e Hierarquia de Links** — reconstrói o índice do Diário Oficial na interface preservando a tipografia e o alinhamento originais (líderes pontilhados, recuos e cores por nível hierárquico) e cria atalhos de extração rápida integrados com a detecção de normas no corpo do texto.
 - **Divisão de Layout de Colunas (Dual-Column PDF)** — detecta dinamicamente e fatia páginas com duas colunas (comum em Diários Oficiais) utilizando uma heurística rigorosa (baseada na recorrência de lacunas verticais, densidade de texto e contagem de termos cruzados no gutter) para evitar divisões falsas em páginas de coluna única contendo tabelas, assinaturas ou listas justificadas, preservando também cabeçalhos de largura total acima das colunas.
+- **Busca Avançada por Dispositivo com Destaque e Rolagem no Sumário (TOC)** — ao realizar uma busca textual por artigos (como `Art. 546`, `artigo 77` ou apenas `546`), o sistema utiliza um normalizador inteligente de ordinais (removendo símbolos como `º` e `°`) para localizar o dispositivo e destacar em tempo real o título correspondente no sumário lateral, posicionando-o automaticamente no campo de visão através de rolagem suave.
 
 ---
 
