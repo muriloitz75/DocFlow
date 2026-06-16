@@ -170,6 +170,8 @@ O sistema contém lógicas dedicadas (no Backend e no Frontend) para melhorar dr
 - **Remoção de duplicatas** — detecta quando o PDF gerou o documento em duplicata (anexos inteiros idênticos) e remove a segunda cópia.
 - **Correção de deslocamentos** — repara transposições de texto específicas de PDFs gerados por escâneres e protege menções legais (ex: de leis e parágrafos) para que não quebrem o formato do documento.
 - **Preservação de textos revogados (strikethrough)** — mapeia e converte tags HTML como `<strike>`, `<del>` e `<s>` para `~~` no Markdown, mantendo a diferenciação visual e a semântica jurídica de termos e artigos revogados ou alterados no portal do Planalto.
+- **Índice Editorial de Diários Oficiais e Hierarquia de Links** — reconstrói o índice do Diário Oficial na interface preservando a tipografia e o alinhamento originais (líderes pontilhados, recuos e cores por nível hierárquico) e cria atalhos de extração rápida integrados com a detecção de normas no corpo do texto.
+- **Divisão de Layout de Colunas (Dual-Column PDF)** — detecta dinamicamente e fatia páginas com duas colunas (comum em Diários Oficiais) utilizando uma heurística rigorosa (baseada na recorrência de lacunas verticais, densidade de texto e contagem de termos cruzados no gutter) para evitar divisões falsas em páginas de coluna única contendo tabelas, assinaturas ou listas justificadas, preservando também cabeçalhos de largura total acima das colunas.
 
 ---
 

@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import sys
 import json
+import unicodedata
 from datetime import datetime, timezone
 from uuid import uuid4
 from functools import wraps
@@ -78,17 +79,25 @@ def gazette_cache_get(cache_id):
         pdf_path = os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.pdf")
         if not os.path.exists(pdf_path):
             return None
-        return {"pdf_path": pdf_path, "norms": meta["norms"], "total_pages": meta["total_pages"]}
+        return {
+            "pdf_path": pdf_path,
+            "norms": meta["norms"],
+            "total_pages": meta["total_pages"],
+            "index_text": meta.get("index_text", ""),
+            "index_entries": meta.get("index_entries", []),
+        }
     except Exception:
         return None
 
 
-def gazette_cache_set(cache_id, pdf_path, norms, total_pages):
+def gazette_cache_set(cache_id, pdf_path, norms, total_pages, index_text="", index_entries=None):
     os.makedirs(GAZETTE_CACHE_DIR, exist_ok=True)
     meta = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "total_pages": total_pages,
         "norms": norms,
+        "index_text": index_text,
+        "index_entries": index_entries or [],
     }
     with open(_gazette_meta_path(cache_id), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False)
@@ -128,6 +137,264 @@ def is_index_page(text):
     return False
 
 
+def _normalize_gazette_index_key(value):
+    value = unicodedata.normalize("NFKD", value or "")
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def _normalize_gazette_search_text(value):
+    value = unicodedata.normalize("NFKD", value or "")
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _gazette_index_row_levels(parsed):
+    indent_values = sorted({row["indent"] for row in parsed})
+    indent_levels = {indent: min(position, 2) for position, indent in enumerate(indent_values)}
+    section_prefixes = (
+        "gabinete", "secretaria", "comissão", "comissao", "prefeitura",
+        "câmara", "camara", "procuradoria", "controladoria", "fundação", "fundacao",
+    )
+
+    for row in parsed:
+        level = indent_levels.get(row["indent"], 0)
+        if len(indent_values) < 2:
+            lowered = row["text"].lower()
+            if lowered.startswith(section_prefixes):
+                level = 0
+            elif re.search(
+                r"\b(?:n[º°o]\.?\s*)?\d+[./-]\d+|\bde\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}",
+                row["text"], re.IGNORECASE,
+            ):
+                level = 2
+            else:
+                level = 1
+        row["level"] = level
+        row["role"] = ("section", "category", "document")[level]
+
+
+def _infer_gazette_document_identity(category, title):
+    explicit = re.match(
+        r"^\s*(.*?)\s+N(?:º|°|o\.)\s*([\w./-]+)", title, re.IGNORECASE,
+    )
+    if explicit:
+        tipo = explicit.group(1).strip() or category.strip()
+        return tipo.upper(), explicit.group(2).strip()
+
+    number_only = re.match(r"^\s*N(?:º|°|o\.)\s*([\w./-]+)", title, re.IGNORECASE)
+    if number_only:
+        return category.strip().upper(), number_only.group(1).strip()
+
+    if re.match(r"^\s*ERRATA\b", title, re.IGNORECASE):
+        return "ERRATA", ""
+
+    loose_number = re.search(r"\b(\d+[./-]\d+(?:[\w./-]*))\b", title)
+    if loose_number and category:
+        return category.strip().upper(), loose_number.group(1).strip()
+
+    first_phrase = re.split(r"\s[-–—]\s|[.:]", title, maxsplit=1)[0].strip()
+    return (first_phrase or category or "DOCUMENTO").upper(), ""
+
+
+def _find_gazette_title_page(title, indexed_page, body_pages):
+    normalized_title = _normalize_gazette_search_text(title)
+    if len(normalized_title) < 8:
+        return None, None
+
+    ordered_pages = sorted(body_pages.items(), key=lambda item: (abs(item[0] - indexed_page), item[0]))
+    for page_num, page_text in ordered_pages:
+        normalized_page = _normalize_gazette_search_text(page_text)
+        position = normalized_page.find(normalized_title)
+        if position >= 0:
+            return page_num, position
+    return None, None
+
+
+def _add_index_document_candidates(index_entries, norms, body_pages):
+    current_category = ""
+    existing_titles = {
+        _normalize_gazette_index_key(
+            norm.get("title") or f"{norm.get('tipo', '')} Nº {norm.get('numero', '')}"
+        )
+        for norm in norms
+    }
+
+    for entry in index_entries:
+        if entry["role"] == "section":
+            current_category = ""
+            continue
+        if entry["role"] == "category":
+            current_category = entry["text"]
+            continue
+        if entry["role"] != "document" or entry.get("norm_id") is not None:
+            continue
+
+        title = entry["text"].strip()
+        title_key = _normalize_gazette_index_key(title)
+        if not title_key or title_key in existing_titles:
+            continue
+
+        page_num, body_position = _find_gazette_title_page(title, entry["page"], body_pages)
+        search_key_len = len(_normalize_gazette_search_text(title))
+
+        if page_num is None:
+            # Fallback: título composto pode não aparecer verbatim no corpo.
+            # Tentar com prefixo de 4 ou 3 palavras normalizadas.
+            words = _normalize_gazette_search_text(title).split()
+            ordered_pages = sorted(
+                body_pages.items(), key=lambda kv: (abs(kv[0] - entry["page"]), kv[0])
+            )
+            for prefix_len in (4, 3):
+                if len(words) < prefix_len:
+                    continue
+                short_key = " ".join(words[:prefix_len])
+                if len(short_key) < 8:
+                    continue
+                for pg, pg_text in ordered_pages:
+                    pos = _normalize_gazette_search_text(pg_text).find(short_key)
+                    if pos >= 0:
+                        page_num, body_position, search_key_len = pg, pos, len(short_key)
+                        break
+                if page_num is not None:
+                    break
+            if page_num is None:
+                continue
+
+        tipo, numero = _infer_gazette_document_identity(current_category, title)
+        page_text = body_pages[page_num]
+        normalized_page = _normalize_gazette_search_text(page_text)
+        remainder = normalized_page[body_position + search_key_len:].strip()
+        ementa = remainder[:200]
+        if len(remainder) > 200:
+            ementa = ementa.rsplit(" ", 1)[0] + "..."
+
+        norms.append({
+            "id": len(norms),
+            "tipo": tipo,
+            "numero": numero,
+            "title": title,
+            "ementa": ementa,
+            "start_page": page_num,
+            "end_page": page_num,
+            "_body_order": (page_num, body_position),
+        })
+        existing_titles.add(title_key)
+
+
+def _linked_gazette_norm_ids(index_entries):
+    linked_ids = []
+    for entry in index_entries or []:
+        norm_id = entry.get("norm_id")
+        if entry.get("role") == "document" and norm_id is not None and norm_id not in linked_ids:
+            linked_ids.append(norm_id)
+    return linked_ids
+
+
+def _next_linked_gazette_norm_id(index_entries, norm_id):
+    linked_ids = _linked_gazette_norm_ids(index_entries)
+    try:
+        position = linked_ids.index(norm_id)
+    except ValueError:
+        return None
+    if position + 1 >= len(linked_ids):
+        return None
+    return linked_ids[position + 1]
+
+
+def _apply_linked_gazette_page_ranges(norms, index_entries, total_pages):
+    norms_by_id = {norm["id"]: norm for norm in norms}
+    linked_ids = _linked_gazette_norm_ids(index_entries)
+    for position, norm_id in enumerate(linked_ids):
+        norm = norms_by_id.get(norm_id)
+        if not norm:
+            continue
+        if position + 1 < len(linked_ids):
+            next_norm = norms_by_id.get(linked_ids[position + 1])
+            if next_norm:
+                norm["end_page"] = next_norm["start_page"]
+        else:
+            norm["end_page"] = total_pages
+
+
+def parse_gazette_index_rows(index_text, norms):
+    """Transform extracted index text into visual rows linked to detected norms."""
+    raw_lines = (index_text or "").splitlines()
+    parsed = []
+    index = 0
+
+    while index < len(raw_lines):
+        raw_line = raw_lines[index].rstrip()
+        stripped = raw_line.strip()
+        index += 1
+
+        if not stripped or re.fullmatch(r"(?:índice|indice|sumário|sumario)", stripped, re.IGNORECASE):
+            continue
+
+        inline_match = re.match(r"^(.*?)(?:\.\s*){3,}(\d+)\s*$", raw_line)
+        if inline_match:
+            text = inline_match.group(1).strip()
+            page = int(inline_match.group(2))
+        elif index + 1 < len(raw_lines) and re.fullmatch(r"\s*(?:\.\s*){3,}", raw_lines[index]):
+            page_match = re.fullmatch(r"\s*(\d+)\s*", raw_lines[index + 1])
+            if not page_match:
+                continue
+            text = stripped
+            page = int(page_match.group(1))
+            index += 2
+        else:
+            continue
+
+        if text:
+            parsed.append({
+                "text": text,
+                "page": page,
+                "indent": len(raw_line) - len(raw_line.lstrip()),
+            })
+
+    _gazette_index_row_levels(parsed)
+
+    norm_keys = []
+    for norm in norms or []:
+        norm_keys.append((
+            norm.get("id"),
+            _normalize_gazette_index_key(norm.get("tipo")),
+            _normalize_gazette_index_key(norm.get("numero")),
+            _normalize_gazette_index_key(norm.get("title")),
+        ))
+
+    rows = []
+    current_category = ""
+    for row in parsed:
+        if row["role"] == "section":
+            current_category = ""
+        elif row["role"] == "category":
+            current_category = row["text"]
+
+        match_text = row["text"]
+        if row["role"] == "document" and current_category:
+            match_text = f"{current_category} {match_text}"
+        normalized_text = _normalize_gazette_index_key(match_text)
+        norm_id = None
+        row_text_key = _normalize_gazette_index_key(row["text"])
+        for candidate_id, type_key, number_key, title_key in norm_keys:
+            if title_key and title_key == row_text_key:
+                norm_id = candidate_id
+                break
+            if type_key and number_key and type_key in normalized_text and number_key in normalized_text:
+                norm_id = candidate_id
+                break
+        rows.append({
+            "text": row["text"],
+            "page": row["page"],
+            "level": row["level"],
+            "role": row["role"],
+            "norm_id": norm_id,
+        })
+
+    return rows
+
+
 def scan_gazette_index(pdf_path):
     """Escanear PDF do Diário Oficial para identificar as normas e suas faixas de páginas."""
     import pdfplumber
@@ -135,6 +402,8 @@ def scan_gazette_index(pdf_path):
     norms = []
     total_pages = 0
     seen_norms = set()
+    index_text_parts = []
+    body_pages = {}
     
     with pdfplumber.open(pdf_path) as pdf:
         total_pages = len(pdf.pages)
@@ -144,9 +413,12 @@ def scan_gazette_index(pdf_path):
             # Usar extração com layout/colunas
             text = extract_text_with_layout_and_columns(page) or ""
             
-            # Pular páginas de índice
+            # Se for página de índice, capturar seu texto
             if is_index_page(text):
+                index_text_parts.append(text)
                 continue
+
+            body_pages[page_num] = text
                 
             for match in GAZETTE_NORM_RE.finditer(text):
                 tipo = match.group(1).strip().upper()
@@ -157,7 +429,14 @@ def scan_gazette_index(pdf_path):
                 if norm_key in seen_norms:
                     continue
                 seen_norms.add(norm_key)
-                
+
+                # Ignorar citações: "LEI X Nº Y, que dispõe..." no meio de outra norma
+                # é uma referência cruzada, não uma publicação nesta edição.
+                _rest_preview = text[match.end():match.end() + 80].strip()
+                if re.match(r'^,\s*que\b', _rest_preview, re.IGNORECASE):
+                    seen_norms.discard(norm_key)
+                    continue
+
                 # Extrair ementa
                 start_pos = match.end()
                 rest_of_text = text[start_pos:].strip()
@@ -197,19 +476,33 @@ def scan_gazette_index(pdf_path):
                     "numero": numero,
                     "ementa": ementa,
                     "start_page": page_num,
-                    "end_page": page_num
+                    "end_page": page_num,
+                    "_body_order": (page_num, match.start()),
                 })
-                
+
+    index_text = "\n".join(index_text_parts)
+    preliminary_entries = parse_gazette_index_rows(index_text, norms)
+    _add_index_document_candidates(preliminary_entries, norms, body_pages)
+    norms.sort(key=lambda norm: norm.get("_body_order", (norm["start_page"], 0)))
+    for norm_id, norm in enumerate(norms):
+        norm["id"] = norm_id
+
     # Ajustar a página de fim para cada norma detectada
     for i in range(len(norms)):
         if i < len(norms) - 1:
             norms[i]["end_page"] = norms[i+1]["start_page"]
         else:
             norms[i]["end_page"] = total_pages
+        norms[i].pop("_body_order", None)
             
+    index_entries = parse_gazette_index_rows(index_text, norms)
+    _apply_linked_gazette_page_ranges(norms, index_entries, total_pages)
+
     return {
         "total_pages": total_pages,
-        "norms": norms
+        "norms": norms,
+        "index_text": index_text,
+        "index_entries": index_entries,
     }
 
 
@@ -235,8 +528,11 @@ def cleanup_gazette_cache():
             print(f"Erro ao limpar cache de diário: {e}")
 
 
-def get_norm_title_pattern(tipo, numero):
+def get_norm_title_pattern(tipo, numero, title=None):
     """Gerar regex para localizar o cabeçalho de uma norma."""
+    if title and not numero:
+        words = re.findall(r"[\wÀ-ÿ]+", title, re.UNICODE)
+        return r"(?:#+\s*|\*\*|^\s*)?" + r"[\W_]+".join(re.escape(word) for word in words)
     escaped_num = re.escape(numero)
     tipo_pattern = r"\s+".join(re.escape(word) for word in tipo.split())
     return r"(?:#+\s*|\*\*|^\s*)?" + tipo_pattern + r"\s+(?:Nº|N[°ºo]\.?)\s*" + escaped_num
@@ -250,24 +546,28 @@ def slice_norm_markdown(markdown, norm_title_pattern, next_norm_title_pattern=No
         
     start_pos = match_start.start()
     
-    # 1. Tentar encontrar o Código Identificador que encerra a publicação
-    match_code = re.search(
-        r'(?:C[óo]d\.?\s*Identificador|C[óo]digo\s+[iI]dentificador)\s*:\s*([A-Za-z0-9$]+)',
-        markdown[match_start.end():],
-        re.IGNORECASE
-    )
-    
-    end_pos = None
-    if match_code:
-        end_pos = match_start.end() + match_code.end()
-        
-    # 2. Se houver padrão da próxima norma, usar a menor posição entre o Código e o início da próxima norma
+    search_tail = markdown[match_start.end():]
+    next_norm_pos = None
     if next_norm_title_pattern:
-        match_end = re.search(next_norm_title_pattern, markdown[match_start.end():], re.IGNORECASE | re.MULTILINE)
+        match_end = re.search(next_norm_title_pattern, search_tail, re.IGNORECASE | re.MULTILINE)
         if match_end:
             next_norm_pos = match_start.end() + match_end.start()
-            if end_pos is None or next_norm_pos < end_pos:
-                end_pos = next_norm_pos
+
+    # Códigos de uma publicação anterior podem aparecer depois do título atual
+    # em páginas com transição de colunas. Use o último código antes da próxima norma.
+    code_search_end = next_norm_pos if next_norm_pos is not None else len(markdown)
+    code_matches = list(re.finditer(
+        r'(?:C[óo]d\.?\s*Identificador|C[óo]digo\s+[iI]dentificador)\s*:\s*([A-Za-z0-9$]+)',
+        markdown[match_start.end():code_search_end],
+        re.IGNORECASE
+    ))
+    
+    end_pos = None
+    if code_matches:
+        end_pos = match_start.end() + code_matches[-1].end()
+        
+    if next_norm_pos is not None and (end_pos is None or next_norm_pos < end_pos):
+        end_pos = next_norm_pos
                 
     if end_pos is not None:
         return markdown[start_pos:end_pos].strip()
@@ -397,7 +697,7 @@ VALID_ROMANS = {
 
 def split_inline_legal_elements(text):
     """Detectar e separar em novas linhas elementos estruturais grudados in-line por notas legislativas."""
-    boundary = r'(?:[).;]|Produ[\u00e7c][\u00e3a]o\s+de\s+efeitos|Vig[\u00eae]ncia|Vide\b)'
+    boundary = r'(?:[).;:]|Produ[\u00e7c][\u00e3a]o\s+de\s+efeitos|Vig[\u00eae]ncia|Vide\b)'
     
     # Split Art.
     text = re.sub(
@@ -1474,7 +1774,20 @@ def convert():
             except Exception as e:
                 print("Error sanitizing HTML:", e)
 
-        if temp_path.lower().endswith((".html", ".htm")):
+        if temp_path.lower().endswith(".pdf"):
+            # Extração direta com pdfplumber + detecção de colunas para PDFs.
+            # Isso garante qualidade consistente independente do tamanho do PDF,
+            # evitando o fallback do PdfConverter para pdfminer em PDFs >15 páginas.
+            import pdfplumber
+            content_parts = []
+            with pdfplumber.open(temp_path) as pdf:
+                for page in pdf.pages:
+                    page_text = extract_text_with_layout_and_columns(page) or ""
+                    if page_text.strip():
+                        content_parts.append(page_text.strip())
+                    page.close()
+            content = "\f".join(content_parts)
+        elif temp_path.lower().endswith((".html", ".htm")):
             result = md_converter.convert(
                 temp_path,
                 stream_info=StreamInfo(
@@ -1483,9 +1796,10 @@ def convert():
                     charset="utf-8",
                 ),
             )
+            content = result.text_content
         else:
             result = md_converter.convert(temp_path)
-        content = result.text_content
+            content = result.text_content
         extension = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
         # Aplicar formatação de alta fidelidade para PDFs e também para documentos convertidos via URL/HTML
@@ -1639,13 +1953,22 @@ def gazette_index():
 
     try:
         scan_result = scan_gazette_index(pdf_path)
-        gazette_cache_set(cache_id, pdf_path, scan_result["norms"], scan_result["total_pages"])
+        gazette_cache_set(
+            cache_id,
+            pdf_path,
+            scan_result["norms"],
+            scan_result["total_pages"],
+            scan_result.get("index_text", ""),
+            scan_result.get("index_entries", []),
+        )
 
         return jsonify({
             "success": True,
             "cache_id": cache_id,
             "total_pages": scan_result["total_pages"],
-            "norms": scan_result["norms"]
+            "norms": scan_result["norms"],
+            "index_text": scan_result.get("index_text", ""),
+            "index_entries": scan_result.get("index_entries", []),
         })
     except Exception as e:
         if os.path.exists(pdf_path):
@@ -1722,19 +2045,24 @@ def gazette_extract():
                 page_text = extract_text_with_layout_and_columns(page) or ""
                 if page_text.strip():
                     content_parts.append(page_text.strip())
-        content = "\n\n".join(content_parts)
+        content = "\f".join(content_parts)
         
         # Aplicar limpeza e formatação legal padrão
         content = clean_pdf_headers_footers(content)
         content = format_pdf_markdown_model2(content)
         
         # Delimitação Exata (Fatiamento)
-        current_pattern = get_norm_title_pattern(selected_norm["tipo"], selected_norm["numero"])
+        current_pattern = get_norm_title_pattern(
+            selected_norm["tipo"], selected_norm["numero"], selected_norm.get("title")
+        )
         
         next_pattern = None
-        if norm_id < len(norms) - 1:
-            next_norm = norms[norm_id + 1]
-            next_pattern = get_norm_title_pattern(next_norm["tipo"], next_norm["numero"])
+        next_norm_id = _next_linked_gazette_norm_id(cache_item.get("index_entries", []), norm_id)
+        if next_norm_id is not None and 0 <= next_norm_id < len(norms):
+            next_norm = norms[next_norm_id]
+            next_pattern = get_norm_title_pattern(
+                next_norm["tipo"], next_norm["numero"], next_norm.get("title")
+            )
             
         sliced = slice_norm_markdown(content, current_pattern, next_pattern)
         if sliced is None:
@@ -1750,18 +2078,19 @@ def gazette_extract():
         # Deduplicar título da norma que pode aparecer repetido (cabeçalho + corpo)
         tipo_esc = r'\s+'.join(re.escape(w) for w in selected_norm['tipo'].split())
         num_esc = re.escape(selected_norm['numero'])
-        dup_title_re = re.compile(
-            r'('
-            + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc
-            + r'[^\n]*\n)'
-            + r'\s*'
-            + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
-            re.IGNORECASE
-        )
-        content = dup_title_re.sub(r'\1', content)
+        if selected_norm["numero"]:
+            dup_title_re = re.compile(
+                r'('
+                + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc
+                + r'[^\n]*\n)'
+                + r'\s*'
+                + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
+                re.IGNORECASE
+            )
+            content = dup_title_re.sub(r'\1', content)
 
         # Gerar cabeçalho premium com banner para a norma extraída
-        norm_title = f"{selected_norm['tipo']} Nº {selected_norm['numero']}"
+        norm_title = selected_norm.get("title") or f"{selected_norm['tipo']} Nº {selected_norm['numero']}"
         norm_ementa = selected_norm.get('ementa', '')
         premium_banner = f"# {norm_title}\n\n"
         if norm_ementa:
@@ -1770,10 +2099,7 @@ def gazette_extract():
 
         # Verificar se o conteúdo já começa com o título da norma para evitar duplicação com o banner
         first_line = content.lstrip().split('\n', 1)[0] if content.strip() else ''
-        title_already_present = re.search(
-            tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
-            first_line, re.IGNORECASE
-        )
+        title_already_present = re.search(current_pattern, first_line, re.IGNORECASE)
         if title_already_present:
             # Remover a primeira linha (título cru) pois o banner já o inclui formatado
             lines = content.lstrip().split('\n', 1)

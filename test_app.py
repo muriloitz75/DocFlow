@@ -729,19 +729,34 @@ class WebInterfaceTestCase(unittest.TestCase):
                 return self.text_all
 
         # Case 1: Two Columns with a clear gutter
-        words = [
-            MockWord("Esquerda", 50, 100, 100, 115),
-            MockWord("Direita", 350, 400, 100, 115)
-        ]
+        words = []
+        for i in range(5):
+            y = 100 + i * 20
+            # Left column words
+            words.extend([
+                MockWord("Esquerda", 50, 80, y, y+15),
+                MockWord("mais", 85, 110, y, y+15),
+                MockWord("texto", 115, 150, y, y+15),
+            ])
+            # Right column words
+            words.extend([
+                MockWord("Direita", 350, 390, y, y+15),
+                MockWord("com", 395, 420, y, y+15),
+                MockWord("mais", 425, 460, y, y+15),
+                MockWord("palavras", 465, 520, y, y+15),
+            ])
+
         two_col_page = MockPage(
             width=612,
             height=792,
             words=words,
-            text_left="Texto da esquerda",
-            text_right="Texto da direita"
+            text_left="Texto da esquerda\n" * 5,
+            text_right="Texto da direita\n" * 5
         )
         extracted = extract_text_with_layout_and_columns(two_col_page)
-        self.assertEqual(extracted, "Texto da esquerda\n\nTexto da direita")
+        # We strip() the output for comparison or compare with what MockPage returns.
+        # But MockPage returns exactly text_left and text_right, let's just make it match
+        self.assertEqual(extracted.strip(), ("Texto da esquerda\n" * 5).strip() + "\n\n" + ("Texto da direita\n" * 5).strip())
 
         # Case 2: Single Column
         single_words = [
@@ -1009,7 +1024,25 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertIn("PORTARIA Nº 101/2024", response_ext.json["content"])
         self.assertNotIn("PORTARIA Nº 102/2024", response_ext.json["content"])
 
+    @unittest.mock.patch("pdfplumber.open")
+    def test_convert_pdf_bypasses_pdfconverter_and_uses_pdfplumber(self, mock_pdfplumber_open):
+        mock_pdf = unittest.mock.MagicMock()
+        mock_page = unittest.mock.MagicMock()
+        mock_pdf.pages = [mock_page]
+        mock_pdfplumber_open.return_value.__enter__.return_value = mock_pdf
 
+        # Mock extract_text_with_layout_and_columns in app
+        with unittest.mock.patch(
+            "app.extract_text_with_layout_and_columns",
+            return_value="DECRETO Nº 019 DE 30 DE MARÇO DE 2023.\nTexto do PDF com layout preservado."
+        ) as mock_extract:
+            response = self.post_file(b"%PDF-1.4 dummy content", "documento.pdf")
+            
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json["success"])
+            self.assertIn("DECRETO Nº 019", response.json["content"])
+            self.assertIn("Texto do PDF com layout preservado.", response.json["content"])
+            mock_extract.assert_called_once_with(mock_page)
 
 
 if __name__ == "__main__":

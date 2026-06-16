@@ -173,3 +173,9 @@ test_uploads/
 tmp*/
 .markitdown_garbage/
 
+# Local development and scratch files
+scratch/
+teste/
+saved_docs/
+
+

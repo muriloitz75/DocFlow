@@ -517,41 +517,76 @@ def extract_text_with_layout_and_columns(page: Any) -> str:
     mid_start = width * 0.40
     mid_end = width * 0.60
 
-    # Sort word boundaries horizontally
-    spans = sorted([(w["x0"], w["x1"]) for w in middle_words])
+    # Detect recurring middle gaps per text row. A global union of every word span
+    # hides real columns whenever a title or header crosses the gutter once.
+    rows_by_y = {}
+    for word in middle_words:
+        y_key = round(word["top"] / 4) * 4
+        rows_by_y.setdefault(y_key, []).append(word)
 
-    # Merge overlapping intervals
-    union_intervals = []
-    for s in spans:
-        if not union_intervals:
-            union_intervals.append(s)
-        else:
-            prev_s = union_intervals[-1]
-            if s[0] <= prev_s[1]:
-                union_intervals[-1] = (prev_s[0], max(prev_s[1], s[1]))
-            else:
-                union_intervals.append(s)
-
-    # Detect gaps in the middle region
     gaps = []
-    for idx in range(len(union_intervals) - 1):
-        gap_start = union_intervals[idx][1]
-        gap_end = union_intervals[idx + 1][0]
-        if gap_start < mid_end and gap_end > mid_start:
-            overlap_start = max(gap_start, mid_start)
-            overlap_end = min(gap_end, mid_end)
-            if overlap_end - overlap_start > 15:  # At least 15 points wide vertical gap
-                gaps.append((overlap_start, overlap_end))
+    for row_words in rows_by_y.values():
+        row_words = sorted(row_words, key=lambda word: word["x0"])
+        midpoint = width / 2
+        has_left = any(word["x1"] <= midpoint for word in row_words)
+        has_right = any(word["x0"] >= midpoint for word in row_words)
+        if not (has_left and has_right):
+            continue
+
+        for left_word, right_word in zip(row_words, row_words[1:]):
+            gap_start = left_word["x1"]
+            gap_end = right_word["x0"]
+            if gap_start < mid_end and gap_end > mid_start:
+                overlap_start = max(gap_start, mid_start)
+                overlap_end = min(gap_end, mid_end)
+                if overlap_end - overlap_start > 15:
+                    gaps.append((overlap_start, overlap_end, min(word["top"] for word in row_words)))
 
     if gaps:
-        # Select the widest gap in the middle region as the column divider
-        gaps.sort(key=lambda g: g[1] - g[0], reverse=True)
-        gutter_start, gutter_end = gaps[0]
-        gutter_x = (gutter_start + gutter_end) / 2
+        # Prefer the most recurrent gutter center; width breaks ties.
+        gap_groups = []
+        for gap in sorted(gaps, key=lambda item: (item[0] + item[1]) / 2):
+            center = (gap[0] + gap[1]) / 2
+            if gap_groups and abs(center - gap_groups[-1]["center"]) <= 20:
+                group = gap_groups[-1]
+                group["gaps"].append(gap)
+                group["center"] = sum((item[0] + item[1]) / 2 for item in group["gaps"]) / len(group["gaps"])
+            else:
+                gap_groups.append({"center": center, "gaps": [gap]})
 
-        # Crop page into left and right columns spanning the full height to avoid content omission
-        left_box = (0, 0, gutter_x, page.height)
-        right_box = (gutter_x, 0, page.width, page.height)
+        best_group = max(
+            gap_groups,
+            key=lambda group: (
+                len(group["gaps"]),
+                max(gap[1] - gap[0] for gap in group["gaps"]),
+            ),
+        )
+        gutter_start, gutter_end, _ = max(
+            best_group["gaps"], key=lambda gap: gap[1] - gap[0]
+        )
+        gutter_x = (gutter_start + gutter_end) / 2
+        column_top = max(0, min(gap[2] for gap in best_group["gaps"]) - 100)
+
+        # Validar se o gutter_x é real com base em heurísticas de alinhamento, densidade e sobreposição.
+        # Evita divisão falsa em páginas de coluna única com tabelas, assinaturas ou listas justificadas.
+        gaps_in_group = len(best_group["gaps"])
+        total_rows = len(rows_by_y)
+        pct_dense_rows = sum(1 for row_words in rows_by_y.values() if len(row_words) >= 6) / total_rows if total_rows > 0 else 0
+
+        column_words = [w for w in middle_words if w["top"] >= column_top]
+        overlapping_words = [w for w in column_words if w["x0"] < gutter_x < w["x1"]]
+
+        if gaps_in_group < 4 or pct_dense_rows < 0.25 or len(overlapping_words) > 3:
+            return page.extract_text() or ""
+
+
+        # Preserve any full-width introduction above the recurring column region.
+        top_text = ""
+        if column_top > top_gate:
+            top_text = page.crop((0, 0, page.width, column_top)).extract_text() or ""
+
+        left_box = (0, column_top, gutter_x, page.height)
+        right_box = (gutter_x, column_top, page.width, page.height)
 
         left_page = page.crop(left_box)
         right_page = page.crop(right_box)
@@ -559,7 +594,8 @@ def extract_text_with_layout_and_columns(page: Any) -> str:
         left_text = left_page.extract_text() or ""
         right_text = right_page.extract_text() or ""
 
-        return left_text.strip() + "\n\n" + right_text.strip()
+        parts = [part.strip() for part in (top_text, left_text, right_text) if part and part.strip()]
+        return "\n\n".join(parts)
     else:
         # Fall back to standard extraction on the full page height
         return page.extract_text() or ""

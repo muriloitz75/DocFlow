@@ -2207,24 +2207,23 @@
         /* Gazette Index Document Layout */
         .gazette-index-document {
             white-space: normal;
-            font-family: var(--font-sans);
-            max-width: 800px;
+            font-family: "Times New Roman", Times, serif;
+            max-width: 920px;
             margin: 0 auto;
-            padding: 40px 60px;
-            background: var(--surface);
-            border: var(--border);
-            box-shadow: var(--shadow);
-            color: var(--ink);
+            padding: 22px 52px 42px;
+            background: #fff;
+            color: #111;
             text-align: left;
         }
 
         .gazette-index-document h1 {
-            font-family: var(--font-sans);
-            font-weight: 800;
-            font-size: 28px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
+            font-family: "Times New Roman", Times, serif;
+            font-weight: 700;
+            font-size: 30px;
+            text-transform: none;
+            text-align: center;
+            margin: 0 0 30px;
+            letter-spacing: 0;
             border-bottom: none !important;
             padding-bottom: 0 !important;
         }
@@ -2238,70 +2237,85 @@
             font-weight: 700;
         }
 
-        .gazette-index-document hr {
-            border: none;
-            border-top: var(--border);
-            margin: 24px 0;
-        }
-
-        .gazette-index-document h2 {
-            font-family: var(--font-sans);
-            font-weight: 800;
-            font-size: 18px;
+        .gazette-index-list {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 1.5em;
-            margin-bottom: 8px;
-            border-bottom: none !important;
-            padding-bottom: 0 !important;
+            flex-direction: column;
+            gap: 3px;
         }
 
-        .gazette-index-document .gazette-index-meta {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 12px;
+        .gazette-index-row {
+            width: 100%;
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            color: inherit;
+            font: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.28;
+            text-align: left;
         }
 
-        .gazette-index-document blockquote {
-            border-left: 4px solid var(--accent);
-            padding-left: 16px;
-            margin: 16px 0;
-            font-style: italic;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.5;
+        .gazette-index-row[data-level="0"] {
+            color: #003f86;
+            font-size: 20px;
+            margin-top: 5px;
         }
 
-        .extract-norm-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--ink);
-            color: var(--surface);
-            border: var(--border);
-            padding: 8px 16px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
+        .gazette-index-row[data-level="1"] {
+            color: #a00000;
+            padding-left: 20px;
+        }
+
+        .gazette-index-row[data-level="2"] {
+            color: #008000;
+            padding-left: 40px;
+            font-size: 17px;
+        }
+
+        .gazette-index-label {
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+
+        .gazette-index-leader {
+            flex: 1 1 40px;
+            min-width: 24px;
+            border-bottom: 2px dotted currentColor;
+            transform: translateY(-0.22em);
+        }
+
+        .gazette-index-page {
+            flex: 0 0 auto;
+            min-width: 1.2em;
+            text-align: right;
+        }
+
+        button.gazette-index-row.extract-norm-link {
             cursor: pointer;
-            box-shadow: 2px 2px 0px var(--accent);
-            transition: transform 0.1s, box-shadow 0.1s;
-            margin-top: 12px;
-            text-decoration: none;
+            border-radius: 2px;
+            transition: background-color 0.15s, outline-color 0.15s;
         }
 
-        .extract-norm-link:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 4px 4px 0px var(--accent);
-            color: var(--surface);
+        button.gazette-index-row.extract-norm-link:hover {
+            background: rgba(0, 128, 0, 0.08);
         }
 
-        .extract-norm-link:active {
-            transform: translate(2px, 2px);
-            box-shadow: 0px 0px 0px var(--accent);
+        button.gazette-index-row.extract-norm-link:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 700px) {
+            .gazette-index-document { padding: 20px 18px 32px; }
+            .gazette-index-document h1 { font-size: 26px; margin-bottom: 22px; }
+            .gazette-index-row { font-size: 15px; }
+            .gazette-index-row[data-level="0"] { font-size: 17px; }
+            .gazette-index-row[data-level="1"] { padding-left: 12px; }
+            .gazette-index-row[data-level="2"] { padding-left: 24px; font-size: 14px; }
         }
 
         @media (max-width: 900px) {
@@ -3533,7 +3547,7 @@
                     gazetteCacheId = data.cache_id;
                     gazetteNorms = data.norms;
                     
-                    renderGazetteIndex(data.total_pages, data.norms);
+                    renderGazetteIndex(data.total_pages, data.norms, data.index_entries);
                     setStatus("Índice carregado com sucesso.", "success");
                 } catch (error) {
                     resetOutput();
@@ -3644,22 +3658,33 @@
             resetOutput();
         });
 
-        function normalizeForCssClass(text) {
-            // Strip accents and normalize for CSS class names
-            return text.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-');
+        function bindGazetteIndexActions() {
+            outputArea.querySelectorAll(".extract-norm-link").forEach((row) => {
+                row.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    extractGazetteNorm(row.dataset.id);
+                });
+            });
         }
 
-        function renderGazetteIndex(totalPages, norms) {
+        function renderGazetteIndex(totalPages, norms, indexEntries) {
             outputArea.classList.remove("abnt-preview", "html-preview", "preview-empty");
             outputArea.classList.add("markdown-preview");
-            
-            if (!norms || norms.length === 0) {
+
+            const availableNorms = Array.isArray(norms) ? norms : [];
+            const sourceEntries = Array.isArray(indexEntries) ? indexEntries : [];
+            const entries = sourceEntries.length ? sourceEntries : availableNorms.map((norm) => ({
+                text: `${norm.tipo} Nº ${norm.numero}`,
+                page: norm.start_page,
+                level: 2,
+                role: "document",
+                norm_id: norm.id,
+            }));
+
+            if (!entries.length) {
                 outputArea.innerHTML = `
                     <div class="gazette-index-document">
-                        <h1>Índice do Diário Oficial</h1>
+                        <h1>Índice</h1>
                         <p class="gazette-index-subtitle">${totalPages} páginas • Nenhuma norma encontrada com os padrões especificados.</p>
                     </div>
                 `;
@@ -3668,66 +3693,46 @@
                 buildToc();
                 return;
             }
-            
-            // Contar tipos para exibir no header
-            const typeCounts = {};
-            norms.forEach(n => { typeCounts[n.tipo] = (typeCounts[n.tipo] || 0) + 1; });
-            const typesSummary = Object.entries(typeCounts)
-                .map(([tipo, count]) => `${count} ${tipo.toLowerCase()}${count > 1 ? 's' : ''}`)
-                .join(', ');
 
-            let normsHtml = "";
-            norms.forEach((norm) => {
-                const badgeClass = `badge-${normalizeForCssClass(norm.tipo)}`;
-                const ementaText = norm.ementa || 'Ementa não disponível.';
-                normsHtml += `
-                    <div class="gazette-index-item" id="gazette-norm-section-${norm.id}">
-                        <h2>
-                            <span class="gazette-badge ${badgeClass}">${escapeHtml(norm.tipo)}</span>
-                            <span>Nº ${escapeHtml(norm.numero)}</span>
-                        </h2>
-                        <div class="gazette-index-meta">Páginas ${norm.start_page}–${norm.end_page}</div>
-                        <blockquote>
-                            ${escapeHtml(ementaText)}
-                        </blockquote>
-                        <button class="extract-norm-link" data-id="${norm.id}">
-                            Extrair e Visualizar Norma
-                        </button>
-                    </div>
+            const rowsHtml = entries.map((entry) => {
+                const level = Math.max(0, Math.min(2, Number(entry.level) || 0));
+                const normId = entry.norm_id;
+                const hasLinkedNorm = normId !== null && normId !== undefined
+                    && availableNorms.some((norm) => String(norm.id) === String(normId));
+                const tag = hasLinkedNorm ? "button" : "div";
+                const actionAttributes = hasLinkedNorm
+                    ? ` type="button" class="gazette-index-row extract-norm-link" data-id="${escapeHtml(String(normId))}" title="Extrair e visualizar esta norma"`
+                    : ` class="gazette-index-row"`;
+                return `
+                    <${tag}${actionAttributes} data-level="${level}" data-role="${escapeHtml(entry.role || "document")}">
+                        <span class="gazette-index-label">${escapeHtml(entry.text || "")}</span>
+                        <span class="gazette-index-leader" aria-hidden="true"></span>
+                        <span class="gazette-index-page">${escapeHtml(String(entry.page ?? ""))}</span>
+                    </${tag}>
                 `;
-            });
-            
+            }).join("");
+
             outputArea.innerHTML = `
                 <div class="gazette-index-document">
-                    <h1>Índice do Diário Oficial</h1>
-                    <div class="gazette-index-subtitle">${totalPages} páginas • ${norms.length} normas identificadas — ${typesSummary}</div>
-                    <hr>
+                    <h1>Índice</h1>
                     <div class="gazette-index-list">
-                        ${normsHtml}
+                        ${rowsHtml}
                     </div>
                 </div>
             `;
-            
+
             gazetteIndexHtml = outputArea.innerHTML;
-            
-            // Ativar botões de extração
-            const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
-            extractBtns.forEach((btn) => {
-                btn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    extractGazetteNorm(btn.dataset.id);
-                });
-            });
+            bindGazetteIndexActions();
 
             // Definir convertedContent especial para que buildToc funcione e gere a lista na barra lateral
             convertedContent = "GAZETTE_INDEX";
             setActions(true);
             buildToc();
-            openToc();
+            closeToc();
         }
 
         async function extractGazetteNorm(normId) {
-            const norm = gazetteNorms[normId];
+            const norm = gazetteNorms.find((item) => String(item.id) === String(normId));
             if (!norm) return;
             
             setActions(false);
@@ -3769,14 +3774,7 @@
                     outputArea.classList.remove("preview-empty");
                     outputArea.innerHTML = gazetteIndexHtml;
                     
-                    // Re-associar botões de extração
-                    const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
-                    extractBtns.forEach((btn) => {
-                        btn.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            extractGazetteNorm(btn.dataset.id);
-                        });
-                    });
+                    bindGazetteIndexActions();
                     
                     convertedContent = "GAZETTE_INDEX";
                     setActions(true);
@@ -3795,14 +3793,7 @@
                 outputArea.classList.add("markdown-preview");
                 outputArea.innerHTML = gazetteIndexHtml;
                 
-                // Re-associar botões de extração
-                const extractBtns = outputArea.querySelectorAll(".extract-norm-link");
-                extractBtns.forEach((btn) => {
-                    btn.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        extractGazetteNorm(btn.dataset.id);
-                    });
-                });
+                bindGazetteIndexActions();
                 
                 convertedContent = "GAZETTE_INDEX";
                 updateMetrics("", "sem arquivo");
@@ -3819,7 +3810,7 @@
                 searchNextBtn.disabled = true;
                 
                 buildToc();
-                openToc();
+                closeToc();
                 closeDictPanel();
                 
                 backToGazetteIndexBtn.style.display = "none";
