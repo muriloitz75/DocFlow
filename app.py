@@ -676,8 +676,7 @@ STRUCTURAL_LINE_PATTERNS = [
 ]
 
 CITATION_PATTERN = re.compile(
-    r'^\s*(?:Arts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|inciso\b|al[\u00edi]nea\b|\s*da\s+Const|dos\b|das\b|s[\u00f4o]bre\b|\bcaput\b|deste\b|desta\b|combinado\b|c/c\b|;|,|\s*$)',
-    re.IGNORECASE
+    r'^\s*(?:[aA]rts?\.?|\u00a7\u00a7?)\s*\d+(?:\.[\u00ba\u00b0\u00aa\u015f]|[\u00ba\u00b0\u00aa\u015foa])?\.?\s*(?:,\s*|da\b|do\b|de\b|e\b|[iI]nciso\b|[aA]l[\u00edi]nea\b|\s*da\s+[cC]onst|[dD]os\b|[dD]as\b|[sS][\u00f4o]bre\b|\bcaput\b|[dD]este\b|[dD]esta\b|[cC]ombinado\b|[cC]/[cC]\b|;|,|\s*$)'
 )
 
 VALID_ROMANS = {
@@ -980,7 +979,7 @@ def _is_continuation_candidate(previous, current):
     clean_current = re.sub(r"^[\*_]+|[\*_]+$", "", current).strip()
     
     # Proibir mesclagem se a linha seguinte começar com termos ou símbolos estruturais de leis
-    if re.match(r"^(?:Art\.?|\u00a7|Par[\u00e1a]grafo\s+[\u00fau]nico)(?:\s|$)", clean_current, flags=re.I):
+    if re.match(r"^(?:Art\.?\s*\d+|Par[\u00e1a]grafo\s+[\u00fau]nico|\u00a7\s*\d+)(?:\s|$|\b)", clean_current, flags=re.I):
         if not CITATION_PATTERN.match(clean_current):
             return False
     if re.match(r"^[IVXLCDM]+\b", clean_current, flags=re.I):
@@ -1058,6 +1057,28 @@ def _repair_known_pdf_text_dislocations(content):
         content,
         flags=re.I | re.S,
     )
+
+
+def remove_prefix_paragraph_duplicates(blocks):
+    """Remove parágrafos consecutivos ou próximos que são prefixos de parágrafos mais completos (glitch comum de PDFs)."""
+    cleaned = []
+    for i in range(len(blocks)):
+        current = blocks[i].strip()
+        if not current:
+            cleaned.append(blocks[i])
+            continue
+        is_prefix = False
+        curr_clean = re.sub(r'[\*_#\s]+', '', current).lower()
+        for j in range(i + 1, min(len(blocks), i + 3)):
+            nxt = blocks[j].strip()
+            if nxt:
+                nxt_clean = re.sub(r'[\*_#\s]+', '', nxt).lower()
+                if nxt_clean.startswith(curr_clean) and len(nxt_clean) > len(curr_clean):
+                    is_prefix = True
+                    break
+        if not is_prefix:
+            cleaned.append(blocks[i])
+    return cleaned
 
 
 def polish_legal_markdown_model2(content):
@@ -1138,7 +1159,11 @@ def polish_legal_markdown_model2(content):
     polished = compact_markdown("\n".join(output))
     polished = _merge_spurious_continuation_breaks(polished)
     polished = _repair_known_pdf_text_dislocations(polished)
-    return compact_markdown(polished)
+    
+    # Deduplicate prefix paragraphs
+    paragraphs = polished.split("\n\n")
+    dedupped = remove_prefix_paragraph_duplicates(paragraphs)
+    return "\n\n".join(dedupped).strip()
 
 
 def format_pdf_markdown_model2(content):
@@ -1260,6 +1285,8 @@ def format_pdf_markdown_model2(content):
             index += 1
         append_block(_join_wrapped_lines(paragraph_lines))
 
+    # Deduplicate prefix paragraphs
+    output = remove_prefix_paragraph_duplicates(output)
     return polish_legal_markdown_model2("\n\n".join(output).strip())
 
 
@@ -1343,6 +1370,29 @@ def remove_duplicate_document_restart(content):
     return content
 
 
+def remove_prefix_duplicates(lines):
+    """Remove linhas consecutivas ou próximas que são prefixos de linhas mais completas (glitch comum de PDFs)."""
+    cleaned = []
+    for i in range(len(lines)):
+        current = lines[i].strip()
+        if not current:
+            cleaned.append(lines[i])
+            continue
+        is_prefix = False
+        # Verificar se alguma das próximas 3 linhas não-vazias começa com esta linha
+        for j in range(i + 1, min(len(lines), i + 4)):
+            nxt = lines[j].strip()
+            if nxt:
+                curr_clean = re.sub(r'\s+', '', current).lower()
+                nxt_clean = re.sub(r'\s+', '', nxt).lower()
+                if nxt_clean.startswith(curr_clean) and len(nxt_clean) > len(curr_clean):
+                    is_prefix = True
+                break
+        if not is_prefix:
+            cleaned.append(lines[i])
+    return cleaned
+
+
 def clean_pdf_headers_footers(content):
     """Remover cabeçalhos e rodapés repetidos da extração de PDFs."""
     content = remove_duplicate_document_restart(content)
@@ -1371,6 +1421,7 @@ def clean_pdf_headers_footers(content):
                 continue
             cleaned.append(line)
 
+        cleaned = remove_prefix_duplicates(cleaned)
         return compact_markdown("\n".join(cleaned))
 
     zones_by_page = []
@@ -1410,6 +1461,7 @@ def clean_pdf_headers_footers(content):
                 continue
             cleaned_lines.append(line.rstrip())
 
+        cleaned_lines = remove_prefix_duplicates(cleaned_lines)
         cleaned_pages.append("\n".join(cleaned_lines).strip())
 
     return compact_markdown("\n\n".join(page for page in cleaned_pages if page))

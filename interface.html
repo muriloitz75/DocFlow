@@ -659,6 +659,20 @@
             box-shadow: 0 0 0 2px var(--ink);
         }
 
+        mark.toc-search-highlight {
+            background: rgba(255, 62, 0, 0.3);
+            color: inherit;
+            font-weight: bold;
+            border-bottom: 2px solid var(--accent);
+            border-radius: 0;
+        }
+
+        .toc-item.toc-item-highlight {
+            background: rgba(255, 62, 0, 0.08);
+            border-left-color: var(--accent);
+            font-weight: 800;
+        }
+
         /* SELECTION POPOVER */
         .selection-popover {
             position: fixed;
@@ -3966,6 +3980,7 @@
             searchPrevBtn.disabled = true;
             searchNextBtn.disabled = true;
             searchCurrentIndex = -1;
+            highlightTocSearch("");
         }
 
         function clearSearchHighlights() {
@@ -4038,10 +4053,12 @@
                 searchMarks[0].classList.add("active");
                 searchMarks[0].scrollIntoView({ behavior: "smooth", block: "center" });
                 searchCount.textContent = `1 / ${total}`;
+                highlightTocSearch(query);
             } else {
                 searchPrevBtn.disabled = true;
                 searchNextBtn.disabled = true;
                 searchCount.textContent = "0 / 0";
+                highlightTocSearch(query);
             }
         }
 
@@ -4052,6 +4069,78 @@
             searchMarks[searchCurrentIndex].classList.add("active");
             searchMarks[searchCurrentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
             searchCount.textContent = `${searchCurrentIndex + 1} / ${searchMarks.length}`;
+        }
+
+        function highlightTocSearch(query) {
+            const tocItems = tocList.querySelectorAll(".toc-item");
+            if (!tocItems.length) return;
+
+            function normalizeArtNum(artStr) {
+                if (!artStr) return "";
+                return artStr.toLowerCase()
+                    .replace(/[ºª°oa](?=\b|-)/g, "")
+                    .replace(/\s+/g, "")
+                    .trim();
+            }
+
+            const cleanQuery = query ? query.toLowerCase().trim() : "";
+            let searchArtNum = null;
+            
+            if (cleanQuery) {
+                // Tenta casar "art 546", "art. 546", "artigo 546", "art.546", etc.
+                let artMatch = cleanQuery.match(/(?:art(?:igo)?s?\.?\s*)([0-9]+(?:\s*(?:º|ª|°|[oa])?\s*-[A-Za-z0-9]+)?)/i);
+                if (!artMatch) {
+                    // Se a query for apenas dígitos ou dígitos com sufixos
+                    artMatch = cleanQuery.match(/^([0-9]+(?:\s*(?:º|ª|°|[oa])?\s*-[A-Za-z0-9]+)?)(?:º|ª|°|[oa])?$/i);
+                }
+                if (artMatch) {
+                    searchArtNum = artMatch[1];
+                }
+            }
+
+            const normalizedSearchArtNum = searchArtNum ? normalizeArtNum(searchArtNum) : null;
+
+            tocItems.forEach(li => {
+                const originalText = li.title || li.textContent;
+                if (!cleanQuery) {
+                    li.innerHTML = originalText;
+                    li.classList.remove("toc-item-highlight");
+                    return;
+                }
+
+                let isCovered = false;
+                if (normalizedSearchArtNum) {
+                    const articlesJson = li.getAttribute("data-articles");
+                    const articles = articlesJson ? JSON.parse(articlesJson) : [];
+                    isCovered = articles.some(art => normalizeArtNum(art) === normalizedSearchArtNum);
+                }
+
+                const lowerText = originalText.toLowerCase();
+                const hasTextMatch = lowerText.includes(cleanQuery);
+
+                if (hasTextMatch || isCovered) {
+                    li.classList.add("toc-item-highlight");
+
+                    if (hasTextMatch) {
+                        const escapedQuery = cleanQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regex = new RegExp(`(${escapedQuery})`, "gi");
+                        li.innerHTML = originalText.replace(regex, `<mark class="toc-search-highlight">$1</mark>`);
+                    } else {
+                        li.innerHTML = originalText;
+                    }
+                } else {
+                    li.innerHTML = originalText;
+                    li.classList.remove("toc-item-highlight");
+                }
+            });
+
+            // Rolagem suave para o primeiro item destacado no sumário
+            if (cleanQuery) {
+                const firstHighlighted = tocList.querySelector(".toc-item-highlight");
+                if (firstHighlighted) {
+                    firstHighlighted.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
+            }
         }
 
         let searchDebounce = null;
@@ -4746,6 +4835,8 @@
                     allSubArticles.push(...headingElements[j].articles);
                 }
 
+                h.allSubArticles = allSubArticles;
+
                 if (allSubArticles.length > 0) {
                     const firstArt = formatArtNumber(allSubArticles[0]);
                     const lastArt = formatArtNumber(allSubArticles[allSubArticles.length - 1]);
@@ -4772,6 +4863,7 @@
                 li.className = "toc-item";
                 li.setAttribute("data-level", String(h.level));
                 li.setAttribute("data-index", String(i));
+                li.setAttribute("data-articles", JSON.stringify(h.allSubArticles || []));
                 li.textContent = h.displayText;
                 li.title = h.displayText;
 
