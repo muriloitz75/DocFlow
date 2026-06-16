@@ -5851,6 +5851,7 @@
                         doc_id: currentDocId,
                         filename: getActiveFilename(),
                         mode: selectedOption,
+                        format: selectedFormat,
                         markdown: convertedContent,
                         html: outputArea.innerHTML
                     })
@@ -5893,11 +5894,12 @@
                         
                         const dateStr = new Date(doc.timestamp).toLocaleString("pt-BR");
                         
+                        const formatStr = doc.format ? ` | Formato: ${doc.format.toUpperCase()}` : "";
                         const infoDiv = document.createElement("div");
                         infoDiv.style.cssText = "cursor: pointer; flex: 1;";
                         infoDiv.innerHTML = `
                             <div style="font-weight: bold; font-family: var(--font-sans); font-size: 14px;">${doc.filename}</div>
-                            <div style="font-size: 11px; opacity: 0.7; font-family: var(--font-mono); margin-top: 4px;">Modo: ${doc.mode} | Salvo em: ${dateStr}</div>
+                            <div style="font-size: 11px; opacity: 0.7; font-family: var(--font-mono); margin-top: 4px;">Modo: ${doc.mode}${formatStr} | Salvo em: ${dateStr}</div>
                         `;
                         infoDiv.addEventListener("click", () => loadDocument(doc.id));
 
@@ -5940,16 +5942,35 @@
                     currentDocId = doc.id;
                     convertedContent = doc.markdown;
                     selectedOption = doc.mode;
+                    selectedFormat = doc.format || "markdown";
                     
-                    // Atualiza a visualização sem re-processar o markdown (preserva o innerHTML salvo com os <mark>)
-                    outputArea.className = "preview html-preview"; // Assume que está formatado com HTML completo
-                    outputArea.innerHTML = doc.html;
-                    initializeExistingStamps();
-                    
-                    // Restaura botões
+                    // Restaura botões de modo
                     modeSegmented.querySelectorAll(".segment").forEach(btn => {
                         btn.classList.toggle("active", btn.dataset.option === selectedOption);
                     });
+
+                    // Restaura botões de formato
+                    const formatSegmented = document.getElementById("formatSegmented");
+                    if (formatSegmented) {
+                        formatSegmented.querySelectorAll(".segment").forEach(btn => {
+                            btn.classList.toggle("active", btn.dataset.format === selectedFormat);
+                        });
+                    }
+                    
+                    // Atualiza a visualização sem re-processar o markdown (preserva o innerHTML salvo com os <mark>)
+                    outputArea.classList.remove("preview-empty", "html-preview", "markdown-preview", "abnt-preview");
+                    if (selectedFormat === "html") {
+                        outputArea.classList.add("html-preview");
+                    } else if (selectedFormat === "json") {
+                        outputArea.classList.add("markdown-preview");
+                    } else if (selectedOption === "abnt") {
+                        outputArea.classList.add("abnt-preview");
+                    } else {
+                        outputArea.classList.add("markdown-preview");
+                    }
+                    
+                    outputArea.innerHTML = doc.html;
+                    initializeExistingStamps();
                     
                     // Atualiza métricas
                     updateMetrics(convertedContent, doc.original_filename);

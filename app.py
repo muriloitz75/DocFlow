@@ -2340,6 +2340,7 @@ def save_document():
                 "original_filename": filename,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "mode": data.get("mode", "standard"),
+                "format": data.get("format", "markdown"),
                 "markdown": data["markdown"],
                 "html": data["html"]
             }, f, ensure_ascii=False, indent=2)
@@ -2367,6 +2368,7 @@ def list_saved_documents():
                             "filename": data.get("original_filename", filename),
                             "timestamp": data.get("timestamp", ""),
                             "mode": data.get("mode", "standard"),
+                            "format": data.get("format", "markdown"),
                             "size": os.path.getsize(filepath)
                         })
                 except Exception:
