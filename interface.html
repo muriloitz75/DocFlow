@@ -6208,7 +6208,17 @@
                     currentDocId = doc.id;
                     convertedContent = doc.markdown;
                     selectedOption = doc.mode;
-                    selectedFormat = doc.format || "markdown";
+                    
+                    // Se o formato não estiver salvo (documento legado), infere dinamicamente baseado no HTML salvo
+                    if (doc.format) {
+                        selectedFormat = doc.format;
+                    } else if (doc.mode === "abnt") {
+                        selectedFormat = "markdown";
+                    } else if (doc.html && (doc.html.includes("<p>") || doc.html.includes("<ul>") || doc.html.includes("<table>") || doc.html.includes("<blockquote>"))) {
+                        selectedFormat = "html";
+                    } else {
+                        selectedFormat = "markdown";
+                    }
                     
                     // Restaura botões de modo
                     modeSegmented.querySelectorAll(".segment").forEach(btn => {
