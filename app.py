@@ -668,9 +668,10 @@ LEGAL_HEADING_PATTERNS = [
 STRUCTURAL_LINE_PATTERNS = [
     re.compile(r"^#{1,6}\s+\S+"),
     re.compile(r"^Art\.?\s*\d+", re.I),
+    re.compile(r"^Par[\u00e1a]grafo\s+[\u00fau]nico\b", re.I),
     re.compile(r"^§\s*\d+"),
     re.compile(r"^[IVXLCDM]+\s*[-–—]", re.I),
-    re.compile(r"^[a-z]\)\s+", re.I),
+    re.compile(r"^[a-z](?:\)|\s*[-–—])\s+"),
     re.compile(r"^\|"),
     re.compile(r"^```"),
 ]
@@ -902,6 +903,20 @@ def _format_paragraph_start(text):
     return f"{prefix} {rest}".strip()
 
 
+def _format_alinea_start(text):
+    alinea_pattern = re.compile(r"^([a-z])(?:\)|\s*[-–—])\s+(.*)$")
+    match = alinea_pattern.match(text)
+    if not match:
+        return text
+
+    letter = match.group(1).lower()
+    rest = match.group(2).strip()
+    if not rest:
+        return text
+
+    return f"{letter}) {rest}".strip()
+
+
 def _format_inciso_start(text):
     inciso_pattern = re.compile(
         r"^(?:\*\*|\*|)?([IVXLCDM]+)(?:\*\*|\*|)?\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])(.*)$", re.I
@@ -919,6 +934,49 @@ def _format_inciso_start(text):
         return text
         
     return f"{roman_num} - {rest}".strip()
+
+
+def _roman_for_index(index):
+    romans = [
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+    ]
+    if 1 <= index <= len(romans):
+        return romans[index - 1]
+    return None
+
+
+def _restore_orphan_legal_items(text):
+    """Recriar incisos quando a extração do PDF removeu os algarismos romanos."""
+    if ":" not in text:
+        return text
+    if re.search(r"(?m)^\s*(?:[IVXLCDM]+\s*[-–—]|[a-z]\))\s+", text, flags=re.I):
+        return text
+
+    prefix, _, tail = text.partition(":")
+    clean_tail = tail.strip()
+    if clean_tail.count(";") < 2:
+        return text
+
+    if not re.match(r"^(?:\*\*)?(?:Art\.|§|Par[\u00e1a]grafo)", prefix.strip(), flags=re.I):
+        return text
+
+    parts = [part.strip() for part in re.split(r";\s*", clean_tail) if part.strip()]
+    if len(parts) < 3:
+        return text
+
+    restored = []
+    for idx, part in enumerate(parts, start=1):
+        roman = _roman_for_index(idx)
+        if not roman:
+            return text
+        terminal = "." if idx == len(parts) else ";"
+        item = part.rstrip(" .;")
+        if not item or _starts_structural_block(item):
+            return text
+        restored.append(f"{roman} - {item}{terminal}")
+
+    return f"{prefix.strip()}:\n\n" + "\n\n".join(restored)
 
 
 def _join_wrapped_lines(lines):
@@ -988,6 +1046,11 @@ def _is_continuation_candidate(previous, current):
         return False
     if re.match(r"^[-*+•]", clean_current):
         return False
+
+    # Se a linha atual começa com letra minúscula (e não foi vetada pelas regras anteriores como alíneas),
+    # ela é uma continuação da linha anterior, mesmo que a anterior termine com pontuação terminal (como ';').
+    if clean_current and clean_current[0].islower():
+        return True
 
     previous_has_terminal = bool(re.search(r"[.!?:;]$", previous))
     if not previous_has_terminal:
@@ -1151,7 +1214,9 @@ def polish_legal_markdown_model2(content):
             line = _format_article_start(line)
             line = _format_paragraph_start(line)
             line = _format_inciso_start(line)
-        line = re.sub(r"\s+([,.;:!?])", r"\1", line)
+            line = _format_alinea_start(line)
+        line = re.sub(r"\s+([:;,.!?])", r"\1", line)
+        line = _restore_orphan_legal_items(line)
         line = _split_official_clauses(line)
         output.append(line)
         index += 1
@@ -1247,6 +1312,7 @@ def format_pdf_markdown_model2(content):
             paragraph = _join_wrapped_lines(paragraph_lines)
             paragraph = _format_article_start(paragraph)
             paragraph = _format_paragraph_start(paragraph)
+            paragraph = _restore_orphan_legal_items(paragraph)
             append_block(paragraph)
             continue
 
@@ -1272,6 +1338,24 @@ def format_pdf_markdown_model2(content):
             append_block(item_text)
             continue
 
+        is_alinea = re.match(r"^[a-z](?:\)|\s*[-–—])\s+", line)
+        if is_alinea:
+            item_lines = [line]
+            index += 1
+            while index < len(source_lines):
+                next_line = _normalize_text_line(source_lines[index])
+                if not next_line:
+                    index += 1
+                    break
+                if _starts_structural_block(next_line):
+                    break
+                item_lines.append(next_line)
+                index += 1
+            item_text = _join_wrapped_lines(item_lines)
+            item_text = _format_alinea_start(item_text)
+            append_block(item_text)
+            continue
+
         paragraph_lines = [line]
         index += 1
         while index < len(source_lines):
@@ -1283,7 +1367,9 @@ def format_pdf_markdown_model2(content):
                 break
             paragraph_lines.append(next_line)
             index += 1
-        append_block(_join_wrapped_lines(paragraph_lines))
+        paragraph = _join_wrapped_lines(paragraph_lines)
+        paragraph = _restore_orphan_legal_items(paragraph)
+        append_block(paragraph)
 
     # Deduplicate prefix paragraphs
     output = remove_prefix_paragraph_duplicates(output)
@@ -1295,6 +1381,7 @@ def _header_footer_key(line):
     text = re.sub(r"\s+", " ", line).strip()
     text = re.sub(r"\b\d{1,4}\s*/\s*\d{1,4}\b", "", text)
     text = re.sub(r"\b(?:p[aá]g(?:ina)?|page)\s+\d+(?:\s+(?:de|of)\s+\d+)?\b", "", text, flags=re.I)
+
     return text.strip(" -–—|•\t").lower()
 
 

@@ -193,6 +193,59 @@ class WebInterfaceTestCase(unittest.TestCase):
             result,
         )
 
+    def test_model2_restores_orphan_inciso_sequence_after_article_colon(self):
+        content = (
+            "Art. 223. Fica dispensada a inscrição em Dívida Ativa do Município "
+            "em desacordo com:\n"
+            "súmula vinculante editada pelo Supremo Tribunal Federal, nos termos do art. 103-A da Constituição Federal de 1988;\n"
+            "decisões proferidas pelo Supremo Tribunal Federal, em sede de controle abstrato de constitucionalidade;\n"
+            "acórdão proferido pelo Supremo Tribunal Federal, em sede de recurso extraordinário, com repercussão geral reconhecida;\n"
+            "acórdão proferido pelo Superior Tribunal de Justiça, em sede de recurso especial repetitivo;\n"
+            "enunciado de súmula do Supremo Tribunal Federal e do Superior Tribunal de Justiça."
+        )
+
+        result = webapp.format_pdf_markdown_model2(content)
+
+        self.assertIn("**Art. 223.** Fica dispensada", result)
+        self.assertIn("I - súmula vinculante editada", result)
+        self.assertIn("II - decisões proferidas", result)
+        self.assertIn("III - acórdão proferido pelo Supremo Tribunal Federal", result)
+        self.assertIn("IV - acórdão proferido pelo Superior Tribunal de Justiça", result)
+        self.assertIn("V - enunciado de súmula", result)
+
+    def test_convert_real_decreto_pdf_preserves_art_223_incisos(self):
+        pdf_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "teste",
+            "DECRETO 019-2023.pdf",
+        )
+        if not os.path.exists(pdf_path):
+            self.skipTest("PDF de regressão não encontrado em teste/DECRETO 019-2023.pdf")
+
+        with open(pdf_path, "rb") as pdf_file:
+            response = self.client.post(
+                "/api/convert",
+                data={
+                    "option": "standard",
+                    "file": (pdf_file, "DECRETO 019-2023.pdf"),
+                },
+                content_type="multipart/form-data",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.json["content"]
+        start = content.find("Art. 223")
+        self.assertNotEqual(start, -1)
+        excerpt = content[start:start + 1800]
+
+        self.assertIn("I - súmula vinculante editada", excerpt)
+        self.assertIn("II - decisões proferidas", excerpt)
+        self.assertIn("III - acórdão proferido pelo Supremo Tribunal Federal", excerpt)
+        self.assertIn("IV - acórdão proferido pelo Superior Tribunal de Justiça", excerpt)
+        self.assertIn("V - enunciado de súmula", excerpt)
+        self.assertIn("VI - orientação vinculante", excerpt)
+        self.assertNotIn("PREFEITURA MUNICIPAL DE IMPERATRIZ", excerpt)
+
     def test_model2_polish_strips_abnt_heading_numbers(self):
         content = "# 1 LIVRO I - DOS TRIBUTOS\n\n## 1.1 TÍTULO I - DISPOSIÇÕES GERAIS"
 
