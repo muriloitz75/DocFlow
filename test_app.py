@@ -952,7 +952,7 @@ class WebInterfaceTestCase(unittest.TestCase):
     def test_dictionary_endpoint_success(self, mock_get):
         mock_response = unittest.mock.Mock()
         mock_response.status_code = 200
-        mock_response.content = b'[{"word":"teste","xml":"<entry id=\\"teste\\"><form><orth>Teste</orth></form><sense><gramGrp>m.</gramGrp><def>Ato ou efeito de testar.\\nSubmiss\\u00e3o a exame.</def></sense><etym orig=\\"Lat\\">(Lat. _testu_)</etym></entry>"}]'
+        mock_response.content = '[{"word":"teste","xml":"<entry id=\\"teste\\"><form><orth>Teste</orth></form><sense><gramGrp>m.</gramGrp><def>Ato ou efeito de testar.\\nSubmissão a exame com acentuação.</def></sense><etym orig=\\"Lat\\">(Lat. _testu_)</etym></entry>"}]'.encode("utf-8")
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -973,7 +973,7 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(definition["gram"], "substantivo masculino")
         self.assertEqual(definition["class"], "substantivo masculino")
         self.assertIn("Ato ou efeito de testar", definition["definitions"])
-        self.assertIn("Ato ou efeito de testar", definition["meanings"])
+        self.assertIn("Submissão a exame com acentuação", definition["definitions"])
         self.assertEqual(definition["etym"], "(Lat. *testu*)")
         self.assertEqual(definition["etymology"], "(Lat. *testu*)")
 

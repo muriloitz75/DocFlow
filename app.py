@@ -2364,12 +2364,12 @@ def get_dictionary_definition():
             
         response.raise_for_status()
         
-        # Decode as latin-1 to perfectly preserve Portuguese accents
+        # Decode as utf-8 to perfectly preserve Portuguese accents
         try:
-            raw_text = response.content.decode("latin-1")
+            raw_text = response.content.decode("utf-8")
             entries_data = json.loads(raw_text)
         except Exception:
-            # Fallback to standard response decoding if latin-1 fails
+            # Fallback to standard response decoding if utf-8 fails
             entries_data = response.json()
             
         if not entries_data or not isinstance(entries_data, list):
