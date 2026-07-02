@@ -1071,6 +1071,18 @@
             color: var(--accent);
         }
 
+        .toc-item.device-match {
+            background: #bbf7d0;
+            border-left-color: #10b981;
+            color: #065f46;
+        }
+
+        .toc-item.device-match.active {
+            background: #86efac;
+            border-left-color: #059669;
+            color: #064e3b;
+        }
+
         .toc-item[data-level="1"] {
             font-weight: 800;
             font-size: 13px;
@@ -2205,7 +2217,7 @@
                 <div class="search-bar" id="searchBar">
                     <div class="search-input-wrap">
                         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        <input type="text" class="search-input" id="searchInput" placeholder="Buscar no texto..." autocomplete="off">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Buscar dispositivo (Art. 223, § 2) ou texto..." autocomplete="off">
                     </div>
                     <span class="search-count" id="searchCount"></span>
                     <button class="search-nav-btn" id="searchPrevBtn" type="button" disabled title="Anterior (Shift+Enter)">
@@ -2787,6 +2799,9 @@
             searchCount.textContent = "";
             searchPrevBtn.disabled = true;
             searchNextBtn.disabled = true;
+            searchCurrentIndex = -1;
+            activeDeviceQuery = null;
+            clearTocDeviceHighlight();
             // Fecha o sumário e o dicionário ao resetar
             closeToc();
             closeDictPanel();
@@ -3439,6 +3454,134 @@
         // ===== BUSCA NO PREVIEW =====
         let searchMarks = [];
         let searchCurrentIndex = -1;
+        let activeDeviceQuery = null;
+
+        function parseDeviceQuery(query) {
+            const q = query.trim();
+            if (!q) return null;
+
+            let match = q.match(/^art\.?\s*(\d+(?:-[A-Za-z])?)(?:º|°|o)?\.?$/i);
+            if (match) return { type: "art", num: match[1] };
+
+            match = q.match(/^(\d+(?:-[A-Za-z])?)(?:º|°|o)?\.?$/);
+            if (match) return { type: "art", num: match[1] };
+
+            match = q.match(/^§\s*(\d+)(?:º|°|o)?\.?$/i);
+            if (match) return { type: "par", num: match[1] };
+
+            match = q.match(/^par\.?\s*(\d+)(?:º|°|o)?\.?$/i);
+            if (match) return { type: "par", num: match[1] };
+
+            match = q.match(/^(?:par[aá]grafo\s+)?[uú]nico\.?$/i);
+            if (match) return { type: "unico" };
+
+            match = q.match(/^(?:inciso\s+)?([IVXLCDM]+)\.?$/i);
+            if (match && match[1].length <= 8) return { type: "inciso", roman: match[1].toUpperCase() };
+
+            match = q.match(/^(?:al[ií]nea\s+)?([a-z])\)?\.?$/i);
+            if (match) return { type: "alinea", letter: match[1].toLowerCase() };
+
+            return null;
+        }
+
+        function buildDeviceRegex(deviceQuery) {
+            if (deviceQuery.type === "art") {
+                const num = deviceQuery.num.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`(?:\\*\\*)?Art\\.\\s*${num}(?:º|°|o|\\.)?`, "gi");
+            }
+            if (deviceQuery.type === "par") {
+                const num = deviceQuery.num.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`(?:\\*\\*)?§\\s*${num}(?:º|°|o)?`, "gi");
+            }
+            if (deviceQuery.type === "unico") {
+                return /(?:\*\*)?Par[aá]grafo\s+[uú]nico\.?/gi;
+            }
+            if (deviceQuery.type === "inciso") {
+                const roman = deviceQuery.roman.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`(?:\\*\\*)?${roman}(?:\\*\\*)?\\s*[-–—]`, "gi");
+            }
+            if (deviceQuery.type === "alinea") {
+                const letter = deviceQuery.letter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`(?:\\*\\*)?${letter}\\)\\s+`, "gi");
+            }
+            return null;
+        }
+
+        function clearTocDeviceHighlight() {
+            if (!tocList) return;
+            tocList.querySelectorAll(".toc-item.device-match").forEach((item) => {
+                item.classList.remove("device-match");
+            });
+        }
+
+        function getTocIndexForNode(node) {
+            const target = node && node.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+            if (!target || !outputArea.contains(target)) return null;
+
+            const headings = [...outputArea.querySelectorAll("h1, h2, h3, h4, h5, h6, [id^='toc-heading-']")];
+            if (!headings.length) return null;
+
+            let bestIndex = null;
+            headings.forEach((heading, i) => {
+                if (heading.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                    const parsed = parseInt((heading.id || "").replace("toc-heading-", ""), 10);
+                    bestIndex = Number.isNaN(parsed) ? i : parsed;
+                }
+            });
+            return bestIndex;
+        }
+
+        function highlightTocForDevice(index) {
+            clearTocDeviceHighlight();
+            if (index === null || index === undefined) return;
+
+            const item = tocList.querySelector(`.toc-item[data-index="${index}"]`);
+            if (!item) return;
+
+            item.classList.add("device-match");
+            if (tocPanel.classList.contains("visible")) {
+                item.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        function updateTocDeviceHighlightFromMark(markElement) {
+            if (!markElement) {
+                clearTocDeviceHighlight();
+                return;
+            }
+            highlightTocForDevice(getTocIndexForNode(markElement));
+        }
+
+        function wrapDeviceMatches(textNode, regex) {
+            const text = textNode.textContent;
+            regex.lastIndex = 0;
+            const fragment = document.createDocumentFragment();
+            let lastIdx = 0;
+            let match;
+            let matchCount = 0;
+
+            while ((match = regex.exec(text)) !== null) {
+                if (match.index > lastIdx) {
+                    fragment.appendChild(document.createTextNode(text.substring(lastIdx, match.index)));
+                }
+                const mark = document.createElement("mark");
+                mark.className = "search-highlight";
+                mark.textContent = match[0];
+                fragment.appendChild(mark);
+                searchMarks.push(mark);
+                matchCount += 1;
+                lastIdx = match.index + match[0].length;
+            }
+
+            if (matchCount === 0) return false;
+
+            if (lastIdx < text.length) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+            }
+
+            textNode.parentNode.replaceChild(fragment, textNode);
+            return true;
+        }
 
         function openSearch() {
             searchBar.classList.add("visible");
@@ -3450,6 +3593,8 @@
             searchBar.classList.remove("visible");
             searchInput.value = "";
             clearSearchHighlights();
+            clearTocDeviceHighlight();
+            activeDeviceQuery = null;
             searchCount.textContent = "";
             searchPrevBtn.disabled = true;
             searchNextBtn.disabled = true;
@@ -3498,7 +3643,9 @@
 
         function performSearch(query) {
             clearSearchHighlights();
+            clearTocDeviceHighlight();
             searchCurrentIndex = -1;
+            activeDeviceQuery = null;
 
             if (!query || !convertedContent) {
                 searchCount.textContent = "";
@@ -3507,37 +3654,49 @@
                 return;
             }
 
-            const textNodes = getTextNodesIn(outputArea);
-            const lowerQuery = query.toLowerCase();
+            const deviceQuery = parseDeviceQuery(query);
+            if (deviceQuery) {
+                const regex = buildDeviceRegex(deviceQuery);
+                if (regex) {
+                    activeDeviceQuery = deviceQuery;
+                    const textNodes = getTextNodesIn(outputArea);
+                    textNodes.forEach((node) => {
+                        wrapDeviceMatches(node, regex);
+                    });
+                }
+            } else {
+                const textNodes = getTextNodesIn(outputArea);
+                const lowerQuery = query.toLowerCase();
 
-            textNodes.forEach(node => {
-                const text = node.textContent;
-                const lowerText = text.toLowerCase();
-                if (!lowerText.includes(lowerQuery)) return;
+                textNodes.forEach(node => {
+                    const text = node.textContent;
+                    const lowerText = text.toLowerCase();
+                    if (!lowerText.includes(lowerQuery)) return;
 
-                const fragment = document.createDocumentFragment();
-                let lastIdx = 0;
-                let idx = lowerText.indexOf(lowerQuery, 0);
+                    const fragment = document.createDocumentFragment();
+                    let lastIdx = 0;
+                    let idx = lowerText.indexOf(lowerQuery, 0);
 
-                while (idx !== -1) {
-                    if (idx > lastIdx) {
-                        fragment.appendChild(document.createTextNode(text.substring(lastIdx, idx)));
+                    while (idx !== -1) {
+                        if (idx > lastIdx) {
+                            fragment.appendChild(document.createTextNode(text.substring(lastIdx, idx)));
+                        }
+                        const mark = document.createElement("mark");
+                        mark.className = "search-highlight";
+                        mark.textContent = text.substring(idx, idx + query.length);
+                        fragment.appendChild(mark);
+                        searchMarks.push(mark);
+                        lastIdx = idx + query.length;
+                        idx = lowerText.indexOf(lowerQuery, lastIdx);
                     }
-                    const mark = document.createElement("mark");
-                    mark.className = "search-highlight";
-                    mark.textContent = text.substring(idx, idx + query.length);
-                    fragment.appendChild(mark);
-                    searchMarks.push(mark);
-                    lastIdx = idx + query.length;
-                    idx = lowerText.indexOf(lowerQuery, lastIdx);
-                }
 
-                if (lastIdx < text.length) {
-                    fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
-                }
+                    if (lastIdx < text.length) {
+                        fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+                    }
 
-                node.parentNode.replaceChild(fragment, node);
-            });
+                    node.parentNode.replaceChild(fragment, node);
+                });
+            }
 
             const total = searchMarks.length;
             if (total > 0) {
@@ -3549,8 +3708,11 @@
                 firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
                 searchCount.textContent = `1 / ${total}`;
                 highlightTocSearch(query);
-                // Sincroniza o destaque do sumário com o primeiro resultado da busca
-                syncTocHighlightToActiveMark(firstMark);
+                if (activeDeviceQuery) {
+                    updateTocDeviceHighlightFromMark(firstMark);
+                } else {
+                    syncTocHighlightToActiveMark(firstMark);
+                }
             } else {
                 searchPrevBtn.disabled = true;
                 searchNextBtn.disabled = true;
@@ -3568,8 +3730,11 @@
             activeMark.scrollIntoView({ behavior: "smooth", block: "center" });
             searchCount.textContent = `${searchCurrentIndex + 1} / ${searchMarks.length}`;
 
-            // Sincroniza o destaque do sumário com o resultado ativo da busca
-            syncTocHighlightToActiveMark(activeMark);
+            if (activeDeviceQuery) {
+                updateTocDeviceHighlightFromMark(activeMark);
+            } else {
+                syncTocHighlightToActiveMark(activeMark);
+            }
         }
 
         function syncTocHighlightToActiveMark(activeMark) {
@@ -4505,6 +4670,14 @@
             if (tocToggleHandle) {
                 tocToggleHandle.style.opacity = "0";
                 tocToggleHandle.style.pointerEvents = "none";
+            }
+            
+            // Rola automaticamente para o item com destaque em verde ao abrir o sumário
+            const activeDeviceItem = tocList.querySelector(".toc-item.device-match");
+            if (activeDeviceItem) {
+                setTimeout(() => {
+                    activeDeviceItem.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 250);
             }
         }
 
@@ -5599,7 +5772,17 @@
                     currentDocId = doc.id;
                     convertedContent = doc.markdown;
                     selectedOption = doc.mode;
-                    selectedFormat = doc.format || "markdown";
+                    
+                    // Se o formato não estiver salvo (documento legado), infere dinamicamente baseado no HTML salvo
+                    if (doc.format) {
+                        selectedFormat = doc.format;
+                    } else if (doc.mode === "abnt") {
+                        selectedFormat = "markdown";
+                    } else if (doc.html && (doc.html.includes("<p>") || doc.html.includes("<ul>") || doc.html.includes("<table>") || doc.html.includes("<blockquote>"))) {
+                        selectedFormat = "html";
+                    } else {
+                        selectedFormat = "markdown";
+                    }
                     
                     // Restaura botões de modo
                     modeSegmented.querySelectorAll(".segment").forEach(btn => {
