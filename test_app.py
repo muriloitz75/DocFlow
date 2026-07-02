@@ -987,20 +987,39 @@ class WebInterfaceTestCase(unittest.TestCase):
         mock_response_200.content = '[{"word":"servico","xml":"<entry id=\\"servico\\"><form><orth>Serviço</orth></form><sense><gramGrp>m.</gramGrp><def>Ato ou efeito de servir.</def></sense></entry>"}]'.encode("utf-8")
         mock_response_200.raise_for_status.return_value = None
         
+        # Test case 1: serviços -> serviço
         mock_get.side_effect = [mock_response_404, mock_response_200]
         
         with self.client.session_transaction() as sess:
             sess["logged_in"] = True
             
-        response = self.client.get("/api/dictionary?word=servi\u00e7os")
+        response = self.client.get("/api/dictionary?word=serviços")
         
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json["success"])
-        self.assertEqual(response.json["word"], "servi\u00e7os")
-        self.assertEqual(response.json["singular"], "servi\u00e7o")
+        self.assertEqual(response.json["word"], "serviços")
+        self.assertEqual(response.json["singular"], "serviço")
         self.assertEqual(len(response.json["definitions"]), 1)
         self.assertEqual(response.json["definitions"][0]["orth"], "Serviço")
         self.assertIn("Ato ou efeito de servir", response.json["definitions"][0]["definitions"])
+
+        # Test case 2: qualificações -> qualificação
+        mock_response_200_qualificacao = unittest.mock.Mock()
+        mock_response_200_qualificacao.status_code = 200
+        mock_response_200_qualificacao.content = '[{"word":"qualificacao","xml":"<entry id=\\"qualificacao\\"><form><orth>Qualificação</orth></form><sense><gramGrp>f.</gramGrp><def>Ato ou efeito de qualificar.</def></sense></entry>"}]'.encode("utf-8")
+        mock_response_200_qualificacao.raise_for_status.return_value = None
+        
+        mock_get.side_effect = [mock_response_404, mock_response_200_qualificacao]
+        
+        response = self.client.get("/api/dictionary?word=qualificações")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["word"], "qualificações")
+        self.assertEqual(response.json["singular"], "qualificação")
+        self.assertEqual(len(response.json["definitions"]), 1)
+        self.assertEqual(response.json["definitions"][0]["orth"], "Qualificação")
+        self.assertIn("Ato ou efeito de qualificar", response.json["definitions"][0]["definitions"])
 
 
 
