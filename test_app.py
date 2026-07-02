@@ -977,6 +977,31 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(definition["etym"], "(Lat. *testu*)")
         self.assertEqual(definition["etymology"], "(Lat. *testu*)")
 
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_endpoint_plural_fallback(self, mock_get):
+        mock_response_404 = unittest.mock.Mock()
+        mock_response_404.status_code = 404
+        
+        mock_response_200 = unittest.mock.Mock()
+        mock_response_200.status_code = 200
+        mock_response_200.content = '[{"word":"servico","xml":"<entry id=\\"servico\\"><form><orth>Serviço</orth></form><sense><gramGrp>m.</gramGrp><def>Ato ou efeito de servir.</def></sense></entry>"}]'.encode("utf-8")
+        mock_response_200.raise_for_status.return_value = None
+        
+        mock_get.side_effect = [mock_response_404, mock_response_200]
+        
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+            
+        response = self.client.get("/api/dictionary?word=servi\u00e7os")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["word"], "servi\u00e7os")
+        self.assertEqual(response.json["singular"], "servi\u00e7o")
+        self.assertEqual(len(response.json["definitions"]), 1)
+        self.assertEqual(response.json["definitions"][0]["orth"], "Serviço")
+        self.assertIn("Ato ou efeito de servir", response.json["definitions"][0]["definitions"])
+
 
 
     @unittest.mock.patch("pdfplumber.open")

@@ -2329,6 +2329,51 @@ def health():
     })
 
 
+def get_singular_candidates(word):
+    word = word.lower().strip()
+    if not word or len(word) <= 2:
+        return []
+    
+    candidates = []
+    
+    # 1. Ends in "ões" -> "ão" (e.g., funções -> função)
+    if word.endswith("ões"):
+        candidates.append(word[:-3] + "ão")
+    
+    # 2. Ends in "ães" -> "ão" or "ã" (e.g., cães -> cão)
+    elif word.endswith("ães"):
+        candidates.append(word[:-3] + "ão")
+        candidates.append(word[:-3] + "ã")
+        
+    # 3. Ends in "ns" -> "m" (e.g., homens -> homem)
+    elif word.endswith("ns"):
+        candidates.append(word[:-2] + "m")
+        
+    # 4. Ends in "is" -> "l" (e.g., animais -> animal, papéis -> papel)
+    elif word.endswith("ais"):
+        candidates.append(word[:-3] + "al")
+    elif word.endswith("éis") or word.endswith("eis"):
+        candidates.append(word[:-3] + "el")
+    elif word.endswith("óis") or word.endswith("ois"):
+        candidates.append(word[:-3] + "ol")
+    elif word.endswith("uis"):
+        candidates.append(word[:-3] + "ul")
+    elif word.endswith("is"):
+        candidates.append(word[:-2] + "il")
+            
+    # 5. Ends in "res" -> "r", "zes" -> "z", "ses" -> "s", "nes" -> "n"
+    elif word.endswith("res") or word.endswith("zes") or word.endswith("ses") or word.endswith("nes"):
+        candidates.append(word[:-2])
+        
+    # 6. Default: Ends in "s" -> drop "s" (e.g., serviços -> serviço)
+    if word.endswith("s") and not word.endswith("ss"):
+        candidate = word[:-1]
+        if candidate not in candidates:
+            candidates.append(candidate)
+            
+    return candidates
+
+
 @app.route("/api/dictionary", methods=["GET"])
 @login_required
 def get_dictionary_definition():
@@ -2346,38 +2391,47 @@ def get_dictionary_definition():
         import requests
         from bs4 import BeautifulSoup
         
-        url = f"https://api.dicionario-aberto.net/word/{word_clean.lower()}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         
-        response = requests.get(url, headers=headers, timeout=10)
+        def fetch_word_from_api(w):
+            w_url = f"https://api.dicionario-aberto.net/word/{w.lower()}"
+            try:
+                res = requests.get(w_url, headers=headers, timeout=10)
+                if res.status_code == 200:
+                    try:
+                        raw_text = res.content.decode("utf-8")
+                        data = json.loads(raw_text)
+                        if data and isinstance(data, list):
+                            return data, w
+                    except Exception:
+                        try:
+                            data = res.json()
+                            if data and isinstance(data, list):
+                                return data, w
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            return None, w
+
+        entries_data, matched_word = fetch_word_from_api(word_clean)
         
-        # Word not found
-        if response.status_code == 404:
-            return jsonify({
-                "success": True, 
-                "word": word_clean, 
-                "definitions": [], 
-                "message": f"A palavra '{word_clean}' não foi encontrada no dicionário."
-            })
-            
-        response.raise_for_status()
+        # If the word failed or returned empty, try singular candidates
+        if not entries_data:
+            candidates = get_singular_candidates(word_clean)
+            for cand in candidates:
+                entries_data, matched_word = fetch_word_from_api(cand)
+                if entries_data:
+                    break
         
-        # Decode as utf-8 to perfectly preserve Portuguese accents
-        try:
-            raw_text = response.content.decode("utf-8")
-            entries_data = json.loads(raw_text)
-        except Exception:
-            # Fallback to standard response decoding if utf-8 fails
-            entries_data = response.json()
-            
         if not entries_data or not isinstance(entries_data, list):
             return jsonify({
                 "success": True, 
                 "word": word_clean, 
                 "definitions": [], 
-                "message": f"A palavra '{word_clean}' não possui definições registradas."
+                "message": f"A palavra '{word_clean}' não foi encontrada no dicionário."
             })
             
         parsed_entries = []
@@ -2443,6 +2497,7 @@ def get_dictionary_definition():
         return jsonify({
             "success": True,
             "word": word_clean,
+            "singular": matched_word if matched_word != word_clean else None,
             "definitions": parsed_entries,
             "results": parsed_entries
         })
