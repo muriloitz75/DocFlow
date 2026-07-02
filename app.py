@@ -11,6 +11,7 @@ import tempfile
 import sys
 import json
 import unicodedata
+import time
 from datetime import datetime, timezone
 from uuid import uuid4
 from functools import wraps
@@ -61,518 +62,22 @@ app.config["JSON_SORT_KEYS"] = False
 # Inicializar MarkItDown
 md_converter = MarkItDown(enable_plugins=False)
 
-# Cache de diários oficiais — armazenado em disco para compatibilidade com multi-worker
-GAZETTE_CACHE_DIR = os.path.join(tempfile.gettempdir(), "markitdown-web", "gazette_cache")
 
 
-def _gazette_meta_path(cache_id):
-    return os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.json")
 
 
-def gazette_cache_get(cache_id):
-    meta_path = _gazette_meta_path(cache_id)
-    if not os.path.exists(meta_path):
-        return None
-    try:
-        with open(meta_path, "r", encoding="utf-8") as f:
-            meta = json.load(f)
-        pdf_path = os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.pdf")
-        if not os.path.exists(pdf_path):
-            return None
-        return {
-            "pdf_path": pdf_path,
-            "norms": meta["norms"],
-            "total_pages": meta["total_pages"],
-            "index_text": meta.get("index_text", ""),
-            "index_entries": meta.get("index_entries", []),
-        }
-    except Exception:
-        return None
 
 
-def gazette_cache_set(cache_id, pdf_path, norms, total_pages, index_text="", index_entries=None):
-    os.makedirs(GAZETTE_CACHE_DIR, exist_ok=True)
-    meta = {
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "total_pages": total_pages,
-        "norms": norms,
-        "index_text": index_text,
-        "index_entries": index_entries or [],
-    }
-    with open(_gazette_meta_path(cache_id), "w", encoding="utf-8") as f:
-        json.dump(meta, f, ensure_ascii=False)
 
 
-GAZETTE_NORM_RE = re.compile(
-    r"^\s*("
-    r"LEI\s+COMPLEMENTAR|LEI\s+ORDIN[ÁA]RIA|LEI|"
-    r"DECRETO\s+LEGISLATIVO|DECRETO|"
-    r"PORTARIA\s+CONJUNTA|PORTARIA|"
-    r"RESOLU[ÇC][ÃA]O|RESOLUCAO|"
-    r"INSTRU[ÇC][ÃA]O\s+NORMATIVA|"
-    r"DELIBERA[ÇC][ÃA]O|DELIBERACAO|"
-    r"EDITAL|"
-    r"ATO\s+NORMATIVO|ATO"
-    r")\s+(?:Nº|N[°ºo]\.?)\s*([\w.\/-]+)",
-    re.IGNORECASE | re.MULTILINE
-)
 
 
-def is_index_page(text):
-    """Verificar se o texto de uma página corresponde a um sumário/índice."""
-    # Cabeçalho explícito de índice/sumário
-    if re.search(r"^\s*(Índice|Sumário|Sumario|SUMÁRIO|ÍNDICE)\b", text, re.IGNORECASE | re.MULTILINE):
-        return True
 
-    # Padrão clássico: "........ 20" ao final de cada linha (requer re.MULTILINE)
-    inline_dots = re.compile(r"\.{3,}\s*\d+\s*$", re.MULTILINE)
-    if len(inline_dots.findall(text)) >= 2:
-        return True
 
-    # Linhas compostas apenas por pontos (líder de tabulação de sumários)
-    dot_only_line = re.compile(r"^\s*\.{5,}\s*\d*\s*$", re.MULTILINE)
-    if len(dot_only_line.findall(text)) >= 2:
-        return True
 
-    return False
 
 
-def _normalize_gazette_index_key(value):
-    value = unicodedata.normalize("NFKD", value or "")
-    value = "".join(char for char in value if not unicodedata.combining(char))
-    return re.sub(r"[^a-z0-9]+", "", value.lower())
 
-
-def _normalize_gazette_search_text(value):
-    value = unicodedata.normalize("NFKD", value or "")
-    value = "".join(char for char in value if not unicodedata.combining(char))
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
-
-
-def _gazette_index_row_levels(parsed):
-    indent_values = sorted({row["indent"] for row in parsed})
-    indent_levels = {indent: min(position, 2) for position, indent in enumerate(indent_values)}
-    section_prefixes = (
-        "gabinete", "secretaria", "comissão", "comissao", "prefeitura",
-        "câmara", "camara", "procuradoria", "controladoria", "fundação", "fundacao",
-    )
-
-    for row in parsed:
-        level = indent_levels.get(row["indent"], 0)
-        if len(indent_values) < 2:
-            lowered = row["text"].lower()
-            if lowered.startswith(section_prefixes):
-                level = 0
-            elif re.search(
-                r"\b(?:n[º°o]\.?\s*)?\d+[./-]\d+|\bde\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}",
-                row["text"], re.IGNORECASE,
-            ):
-                level = 2
-            else:
-                level = 1
-        row["level"] = level
-        row["role"] = ("section", "category", "document")[level]
-
-
-def _infer_gazette_document_identity(category, title):
-    explicit = re.match(
-        r"^\s*(.*?)\s+N(?:º|°|o\.)\s*([\w./-]+)", title, re.IGNORECASE,
-    )
-    if explicit:
-        tipo = explicit.group(1).strip() or category.strip()
-        return tipo.upper(), explicit.group(2).strip()
-
-    number_only = re.match(r"^\s*N(?:º|°|o\.)\s*([\w./-]+)", title, re.IGNORECASE)
-    if number_only:
-        return category.strip().upper(), number_only.group(1).strip()
-
-    if re.match(r"^\s*ERRATA\b", title, re.IGNORECASE):
-        return "ERRATA", ""
-
-    loose_number = re.search(r"\b(\d+[./-]\d+(?:[\w./-]*))\b", title)
-    if loose_number and category:
-        return category.strip().upper(), loose_number.group(1).strip()
-
-    first_phrase = re.split(r"\s[-–—]\s|[.:]", title, maxsplit=1)[0].strip()
-    return (first_phrase or category or "DOCUMENTO").upper(), ""
-
-
-def _find_gazette_title_page(title, indexed_page, body_pages):
-    normalized_title = _normalize_gazette_search_text(title)
-    if len(normalized_title) < 8:
-        return None, None
-
-    ordered_pages = sorted(body_pages.items(), key=lambda item: (abs(item[0] - indexed_page), item[0]))
-    for page_num, page_text in ordered_pages:
-        normalized_page = _normalize_gazette_search_text(page_text)
-        position = normalized_page.find(normalized_title)
-        if position >= 0:
-            return page_num, position
-    return None, None
-
-
-def _add_index_document_candidates(index_entries, norms, body_pages):
-    current_category = ""
-    existing_titles = {
-        _normalize_gazette_index_key(
-            norm.get("title") or f"{norm.get('tipo', '')} Nº {norm.get('numero', '')}"
-        )
-        for norm in norms
-    }
-
-    for entry in index_entries:
-        if entry["role"] == "section":
-            current_category = ""
-            continue
-        if entry["role"] == "category":
-            current_category = entry["text"]
-            continue
-        if entry["role"] != "document" or entry.get("norm_id") is not None:
-            continue
-
-        title = entry["text"].strip()
-        title_key = _normalize_gazette_index_key(title)
-        if not title_key or title_key in existing_titles:
-            continue
-
-        page_num, body_position = _find_gazette_title_page(title, entry["page"], body_pages)
-        search_key_len = len(_normalize_gazette_search_text(title))
-
-        if page_num is None:
-            # Fallback: título composto pode não aparecer verbatim no corpo.
-            # Tentar com prefixo de 4 ou 3 palavras normalizadas.
-            words = _normalize_gazette_search_text(title).split()
-            ordered_pages = sorted(
-                body_pages.items(), key=lambda kv: (abs(kv[0] - entry["page"]), kv[0])
-            )
-            for prefix_len in (4, 3):
-                if len(words) < prefix_len:
-                    continue
-                short_key = " ".join(words[:prefix_len])
-                if len(short_key) < 8:
-                    continue
-                for pg, pg_text in ordered_pages:
-                    pos = _normalize_gazette_search_text(pg_text).find(short_key)
-                    if pos >= 0:
-                        page_num, body_position, search_key_len = pg, pos, len(short_key)
-                        break
-                if page_num is not None:
-                    break
-            if page_num is None:
-                continue
-
-        tipo, numero = _infer_gazette_document_identity(current_category, title)
-        page_text = body_pages[page_num]
-        normalized_page = _normalize_gazette_search_text(page_text)
-        remainder = normalized_page[body_position + search_key_len:].strip()
-        ementa = remainder[:200]
-        if len(remainder) > 200:
-            ementa = ementa.rsplit(" ", 1)[0] + "..."
-
-        norms.append({
-            "id": len(norms),
-            "tipo": tipo,
-            "numero": numero,
-            "title": title,
-            "ementa": ementa,
-            "start_page": page_num,
-            "end_page": page_num,
-            "_body_order": (page_num, body_position),
-        })
-        existing_titles.add(title_key)
-
-
-def _linked_gazette_norm_ids(index_entries):
-    linked_ids = []
-    for entry in index_entries or []:
-        norm_id = entry.get("norm_id")
-        if entry.get("role") == "document" and norm_id is not None and norm_id not in linked_ids:
-            linked_ids.append(norm_id)
-    return linked_ids
-
-
-def _next_linked_gazette_norm_id(index_entries, norm_id):
-    linked_ids = _linked_gazette_norm_ids(index_entries)
-    try:
-        position = linked_ids.index(norm_id)
-    except ValueError:
-        return None
-    if position + 1 >= len(linked_ids):
-        return None
-    return linked_ids[position + 1]
-
-
-def _apply_linked_gazette_page_ranges(norms, index_entries, total_pages):
-    norms_by_id = {norm["id"]: norm for norm in norms}
-    linked_ids = _linked_gazette_norm_ids(index_entries)
-    for position, norm_id in enumerate(linked_ids):
-        norm = norms_by_id.get(norm_id)
-        if not norm:
-            continue
-        if position + 1 < len(linked_ids):
-            next_norm = norms_by_id.get(linked_ids[position + 1])
-            if next_norm:
-                norm["end_page"] = next_norm["start_page"]
-        else:
-            norm["end_page"] = total_pages
-
-
-def parse_gazette_index_rows(index_text, norms):
-    """Transform extracted index text into visual rows linked to detected norms."""
-    raw_lines = (index_text or "").splitlines()
-    parsed = []
-    index = 0
-
-    while index < len(raw_lines):
-        raw_line = raw_lines[index].rstrip()
-        stripped = raw_line.strip()
-        index += 1
-
-        if not stripped or re.fullmatch(r"(?:índice|indice|sumário|sumario)", stripped, re.IGNORECASE):
-            continue
-
-        inline_match = re.match(r"^(.*?)(?:\.\s*){3,}(\d+)\s*$", raw_line)
-        if inline_match:
-            text = inline_match.group(1).strip()
-            page = int(inline_match.group(2))
-        elif index + 1 < len(raw_lines) and re.fullmatch(r"\s*(?:\.\s*){3,}", raw_lines[index]):
-            page_match = re.fullmatch(r"\s*(\d+)\s*", raw_lines[index + 1])
-            if not page_match:
-                continue
-            text = stripped
-            page = int(page_match.group(1))
-            index += 2
-        else:
-            continue
-
-        if text:
-            parsed.append({
-                "text": text,
-                "page": page,
-                "indent": len(raw_line) - len(raw_line.lstrip()),
-            })
-
-    _gazette_index_row_levels(parsed)
-
-    norm_keys = []
-    for norm in norms or []:
-        norm_keys.append((
-            norm.get("id"),
-            _normalize_gazette_index_key(norm.get("tipo")),
-            _normalize_gazette_index_key(norm.get("numero")),
-            _normalize_gazette_index_key(norm.get("title")),
-        ))
-
-    rows = []
-    current_category = ""
-    for row in parsed:
-        if row["role"] == "section":
-            current_category = ""
-        elif row["role"] == "category":
-            current_category = row["text"]
-
-        match_text = row["text"]
-        if row["role"] == "document" and current_category:
-            match_text = f"{current_category} {match_text}"
-        normalized_text = _normalize_gazette_index_key(match_text)
-        norm_id = None
-        row_text_key = _normalize_gazette_index_key(row["text"])
-        for candidate_id, type_key, number_key, title_key in norm_keys:
-            if title_key and title_key == row_text_key:
-                norm_id = candidate_id
-                break
-            if type_key and number_key and type_key in normalized_text and number_key in normalized_text:
-                norm_id = candidate_id
-                break
-        rows.append({
-            "text": row["text"],
-            "page": row["page"],
-            "level": row["level"],
-            "role": row["role"],
-            "norm_id": norm_id,
-        })
-
-    return rows
-
-
-def scan_gazette_index(pdf_path):
-    """Escanear PDF do Diário Oficial para identificar as normas e suas faixas de páginas."""
-    import pdfplumber
-    
-    norms = []
-    total_pages = 0
-    seen_norms = set()
-    index_text_parts = []
-    body_pages = {}
-    
-    with pdfplumber.open(pdf_path) as pdf:
-        total_pages = len(pdf.pages)
-        for page_idx, page in enumerate(pdf.pages):
-            page_num = page_idx + 1
-            
-            # Usar extração com layout/colunas
-            text = extract_text_with_layout_and_columns(page) or ""
-            
-            # Se for página de índice, capturar seu texto
-            if is_index_page(text):
-                index_text_parts.append(text)
-                continue
-
-            body_pages[page_num] = text
-                
-            for match in GAZETTE_NORM_RE.finditer(text):
-                tipo = match.group(1).strip().upper()
-                numero = match.group(2).strip()
-                
-                # De-duplicar normas idênticas detectadas no mesmo diário
-                norm_key = (tipo, numero)
-                if norm_key in seen_norms:
-                    continue
-                seen_norms.add(norm_key)
-
-                # Ignorar citações: "LEI X Nº Y, que dispõe..." no meio de outra norma
-                # é uma referência cruzada, não uma publicação nesta edição.
-                _rest_preview = text[match.end():match.end() + 80].strip()
-                if re.match(r'^,\s*que\b', _rest_preview, re.IGNORECASE):
-                    seen_norms.discard(norm_key)
-                    continue
-
-                # Extrair ementa
-                start_pos = match.end()
-                rest_of_text = text[start_pos:].strip()
-
-                # Remover linhas de pontos (líderes de sumário residuais) antes de montar a ementa
-                rest_of_text = re.sub(r"\.{3,}[\s\d]*", " ", rest_of_text)
-                # Limpar quebras de linha e espaços múltiplos
-                rest_of_text = re.sub(r'\s+', ' ', rest_of_text).strip()
-
-                # Remover data introdutória residual: ", DE 11 DE JUNHO DE 2026" ou ". DE 30 DE MARÇO..."
-                rest_of_text = re.sub(
-                    r'^[,.]?\s*DE\s+\d{1,2}\s+DE\s+\w+\s+DE\s+\d{4}[\s.]*',
-                    '', rest_of_text, flags=re.IGNORECASE
-                ).strip()
-
-                # Remover ocorrência duplicada do próprio título da norma no início da ementa
-                dup_title_pattern = re.compile(
-                    r'^' + r'\s+'.join(re.escape(w) for w in tipo.split())
-                    + r'\s+(?:Nº|N[°ºo]\.?)\s*' + re.escape(numero)
-                    + r'[,.]?\s*(?:DE\s+\d{1,2}\s+DE\s+\w+\s+DE\s+\d{4}[\s.]*)?',
-                    re.IGNORECASE
-                )
-                rest_of_text = dup_title_pattern.sub('', rest_of_text).strip()
-
-                # Tentar pegar as primeiras ~200 letras como ementa
-                ementa = rest_of_text[:200]
-                if len(rest_of_text) > 200:
-                    # Cortar na última palavra completa
-                    last_space = ementa.rfind(' ')
-                    if last_space > 100:
-                        ementa = ementa[:last_space]
-                    ementa += "..."
-                    
-                norms.append({
-                    "id": len(norms),
-                    "tipo": tipo,
-                    "numero": numero,
-                    "ementa": ementa,
-                    "start_page": page_num,
-                    "end_page": page_num,
-                    "_body_order": (page_num, match.start()),
-                })
-
-    index_text = "\n".join(index_text_parts)
-    preliminary_entries = parse_gazette_index_rows(index_text, norms)
-    _add_index_document_candidates(preliminary_entries, norms, body_pages)
-    norms.sort(key=lambda norm: norm.get("_body_order", (norm["start_page"], 0)))
-    for norm_id, norm in enumerate(norms):
-        norm["id"] = norm_id
-
-    # Ajustar a página de fim para cada norma detectada
-    for i in range(len(norms)):
-        if i < len(norms) - 1:
-            norms[i]["end_page"] = norms[i+1]["start_page"]
-        else:
-            norms[i]["end_page"] = total_pages
-        norms[i].pop("_body_order", None)
-            
-    index_entries = parse_gazette_index_rows(index_text, norms)
-    _apply_linked_gazette_page_ranges(norms, index_entries, total_pages)
-
-    return {
-        "total_pages": total_pages,
-        "norms": norms,
-        "index_text": index_text,
-        "index_entries": index_entries,
-    }
-
-
-def cleanup_gazette_cache():
-    """Remover PDFs em cache com mais de 30 minutos."""
-    if not os.path.isdir(GAZETTE_CACHE_DIR):
-        return
-    now = datetime.now(timezone.utc)
-    for fname in os.listdir(GAZETTE_CACHE_DIR):
-        if not fname.endswith(".json"):
-            continue
-        meta_path = os.path.join(GAZETTE_CACHE_DIR, fname)
-        try:
-            with open(meta_path, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-            created_at = datetime.fromisoformat(meta["created_at"])
-            if (now - created_at).total_seconds() > 1800:
-                pdf_path = os.path.join(GAZETTE_CACHE_DIR, fname[:-5] + ".pdf")
-                if os.path.exists(pdf_path):
-                    os.remove(pdf_path)
-                os.remove(meta_path)
-        except Exception as e:
-            print(f"Erro ao limpar cache de diário: {e}")
-
-
-def get_norm_title_pattern(tipo, numero, title=None):
-    """Gerar regex para localizar o cabeçalho de uma norma."""
-    if title and not numero:
-        words = re.findall(r"[\wÀ-ÿ]+", title, re.UNICODE)
-        return r"(?:#+\s*|\*\*|^\s*)?" + r"[\W_]+".join(re.escape(word) for word in words)
-    escaped_num = re.escape(numero)
-    tipo_pattern = r"\s+".join(re.escape(word) for word in tipo.split())
-    return r"(?:#+\s*|\*\*|^\s*)?" + tipo_pattern + r"\s+(?:Nº|N[°ºo]\.?)\s*" + escaped_num
-
-
-def slice_norm_markdown(markdown, norm_title_pattern, next_norm_title_pattern=None):
-    """Fatiar o Markdown para isolar apenas o texto da norma desejada. Retorna None se o título não for localizado."""
-    match_start = re.search(norm_title_pattern, markdown, re.IGNORECASE | re.MULTILINE)
-    if not match_start:
-        return None
-        
-    start_pos = match_start.start()
-    
-    search_tail = markdown[match_start.end():]
-    next_norm_pos = None
-    if next_norm_title_pattern:
-        match_end = re.search(next_norm_title_pattern, search_tail, re.IGNORECASE | re.MULTILINE)
-        if match_end:
-            next_norm_pos = match_start.end() + match_end.start()
-
-    # Códigos de uma publicação anterior podem aparecer depois do título atual
-    # em páginas com transição de colunas. Use o último código antes da próxima norma.
-    code_search_end = next_norm_pos if next_norm_pos is not None else len(markdown)
-    code_matches = list(re.finditer(
-        r'(?:C[óo]d\.?\s*Identificador|C[óo]digo\s+[iI]dentificador)\s*:\s*([A-Za-z0-9$]+)',
-        markdown[match_start.end():code_search_end],
-        re.IGNORECASE
-    ))
-    
-    end_pos = None
-    if code_matches:
-        end_pos = match_start.end() + code_matches[-1].end()
-        
-    if next_norm_pos is not None and (end_pos is None or next_norm_pos < end_pos):
-        end_pos = next_norm_pos
-                
-    if end_pos is not None:
-        return markdown[start_pos:end_pos].strip()
-        
-    return markdown[start_pos:].strip()
 
 
 
@@ -1069,6 +574,7 @@ def remove_prefix_paragraph_duplicates(blocks):
             continue
         is_prefix = False
         curr_clean = re.sub(r'[\*_#\s]+', '', current).lower()
+        # Verifica se algum dos próximos 3 blocos não-vazios começa com o bloco atual
         for j in range(i + 1, min(len(blocks), i + 3)):
             nxt = blocks[j].strip()
             if nxt:
@@ -1196,6 +702,10 @@ def format_pdf_markdown_model2(content):
                 if _normalize_text_line(code_line).startswith("```"):
                     in_code_block = False
                 index += 1
+            # Garante que o estado não vaze caso o bloco de código não tenha
+            # sido fechado (último ``` ausente). Caso contrário, todo o
+            # processamento subsequente seria incorretamente ignorado.
+            in_code_block = False
             append_block("\n".join(code_lines))
             continue
 
@@ -1283,11 +793,23 @@ def format_pdf_markdown_model2(content):
                 break
             paragraph_lines.append(next_line)
             index += 1
-        append_block(_join_wrapped_lines(paragraph_lines))
+        paragraph = _join_wrapped_lines(paragraph_lines)
+        # Aplica formatação de parágrafo único em linhas que começam com
+        # "Parágrafo único" mas não foram capturadas pelo bloco is_art_or_par.
+        if not CITATION_PATTERN.match(paragraph):
+            paragraph = _format_article_start(paragraph)
+            paragraph = _format_paragraph_start(paragraph)
+        append_block(paragraph)
 
     # Deduplicate prefix paragraphs
     output = remove_prefix_paragraph_duplicates(output)
-    return polish_legal_markdown_model2("\n\n".join(output).strip())
+    # Aplica apenas as etapas finais únicas (split_official_clauses já é chamado
+    # em polish_legal_markdown_model2, mas aqui reaproveitamos as duas funções
+    # de polimento que não duplicam trabalho já feito por este pipeline).
+    polished = "\n\n".join(output).strip()
+    polished = _merge_spurious_continuation_breaks(polished)
+    polished = _repair_known_pdf_text_dislocations(polished)
+    return polished
 
 
 def _header_footer_key(line):
@@ -1379,15 +901,15 @@ def remove_prefix_duplicates(lines):
             cleaned.append(lines[i])
             continue
         is_prefix = False
-        # Verificar se alguma das próximas 3 linhas não-vazias começa com esta linha
+        curr_clean = re.sub(r'\s+', '', current).lower()
+        # Verifica se alguma das próximas 3 linhas não-vazias começa com a linha atual
         for j in range(i + 1, min(len(lines), i + 4)):
             nxt = lines[j].strip()
             if nxt:
-                curr_clean = re.sub(r'\s+', '', current).lower()
                 nxt_clean = re.sub(r'\s+', '', nxt).lower()
                 if nxt_clean.startswith(curr_clean) and len(nxt_clean) > len(curr_clean):
                     is_prefix = True
-                break
+                    break
         if not is_prefix:
             cleaned.append(lines[i])
     return cleaned
@@ -1729,10 +1251,13 @@ def convert():
                 }
                 try:
                     response = requests.get(url, headers=headers, timeout=15)
-                except requests.exceptions.SSLError:
-                    import urllib3
-                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                    response = requests.get(url, headers=headers, timeout=15, verify=False)
+                except (requests.exceptions.SSLError, requests.exceptions.ConnectionError) as ssl_conn_err:
+                    try:
+                        import urllib3
+                        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                        response = requests.get(url, headers=headers, timeout=15, verify=False)
+                    except Exception:
+                        raise ssl_conn_err
                 response.raise_for_status()
             except Exception as req_err:
                 return jsonify({
@@ -1743,40 +1268,81 @@ def convert():
             parsed_url = urlparse(url)
             url_path = parsed_url.path
             url_filename = os.path.basename(url_path) if url_path else ""
-            if not url_filename or "." not in url_filename:
+            
+            import mimetypes
+            content_type = ""
+            if hasattr(response, "headers") and response.headers is not None:
+                try:
+                    ct = response.headers.get("Content-Type", "")
+                    if isinstance(ct, str):
+                        content_type = ct.split(";")[0].strip().lower()
+                except Exception:
+                    pass
+            
+            filename = None
+            if url_filename and "." in url_filename:
+                secured = secure_filename(url_filename)
+                if secured and "." in secured:
+                    filename = secured
+
+            if not filename:
+                ext = mimetypes.guess_extension(content_type)
+                if ext:
+                    ext = ext.lstrip(".")
+                    if ext in ALLOWED_EXTENSIONS:
+                        filename = f"documento.{ext}"
+            
+            if not filename:
                 filename = "documento.html"
             else:
-                filename = secure_filename(url_filename)
-                if not filename or "." not in filename:
-                    filename = "documento.html"
-            
+                ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
+                if ext not in ALLOWED_EXTENSIONS:
+                    guessed_ext = mimetypes.guess_extension(content_type)
+                    if guessed_ext:
+                        guessed_ext = guessed_ext.lstrip(".")
+                        if guessed_ext in ALLOWED_EXTENSIONS:
+                            filename = filename.rsplit(".", 1)[0] + f".{guessed_ext}"
+                        else:
+                            filename = filename + ".html"
+                    else:
+                        filename = filename + ".html"
+
             if not allowed_file(filename):
-                filename = filename + ".html"
-                if not allowed_file(filename):
-                    return jsonify({
-                        "success": False,
-                        "error": f"Formato não suportado: {url_filename}",
-                    }), 400
+                return jsonify({
+                    "success": False,
+                    "error": f"Formato não suportado: {filename}",
+                }), 400
             
             orig_ext = filename.rsplit(".", 1)[1].lower() if "." in filename else "html"
             os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
             temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"upload-{uuid4().hex}")
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
-            html_str, _encoding = decode_html_bytes(
-                response.content,
-                default_encoding=response.encoding,
-                prefer_cp1252="planalto.gov.br" in url.lower(),
+            
+            is_html = (
+                orig_ext in ("html", "htm")
+                or "text/html" in content_type
+                or "application/xhtml+xml" in content_type
             )
-                
-            # Inject <meta charset="utf-8"> to force MarkItDown/BeautifulSoup to parse it as UTF-8
-            if "<head>" in html_str.lower():
-                html_str = re.sub(r'(<head\b[^>]*>)', r'\1<meta charset="utf-8">', html_str, flags=re.I)
+            
+            if is_html:
+                html_str, _encoding = decode_html_bytes(
+                    response.content,
+                    default_encoding=response.encoding,
+                    prefer_cp1252="planalto.gov.br" in url.lower(),
+                )
+                    
+                # Inject <meta charset="utf-8"> to force MarkItDown/BeautifulSoup to parse it as UTF-8
+                if "<head>" in html_str.lower():
+                    html_str = re.sub(r'(<head\b[^>]*>)', r'\1<meta charset="utf-8">', html_str, flags=re.I)
+                else:
+                    html_str = '<meta charset="utf-8">' + html_str
+                    
+                with open(temp_path, "w", encoding="utf-8") as f:
+                    f.write(html_str)
             else:
-                html_str = '<meta charset="utf-8">' + html_str
-                
-            with open(temp_path, "w", encoding="utf-8") as f:
-                f.write(html_str)
+                with open(temp_path, "wb") as f:
+                    f.write(response.content)
         else:
             if "file" not in request.files:
                 return jsonify({"success": False, "error": "Nenhum arquivo ou URL fornecido."}), 400
@@ -1793,7 +1359,11 @@ def convert():
             
             orig_ext = file.filename.rsplit(".", 1)[1].lower() if "." in file.filename else ""
             filename = secure_filename(file.filename)
-            if not filename or "." not in filename:
+            # secure_filename pode retornar apenas a extensão (ex: ".txt") quando
+            # o nome original contém caracteres não-ASCII. Nesse caso geramos um
+            # nome UUID para evitar arquivos com nome inválido/oculto na pasta temporária.
+            has_only_extension = bool(filename) and filename.startswith(".") and filename.count(".") == 1
+            if not filename or "." not in filename or has_only_extension:
                 filename = f"upload-{uuid4().hex}.{orig_ext}" if orig_ext else f"upload-{uuid4().hex}"
     
             os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -1801,7 +1371,6 @@ def convert():
             os.makedirs(temp_dir, exist_ok=False)
             temp_path = os.path.join(temp_dir, filename)
             file.save(temp_path)
-            filepath = temp_path
 
         # If the file is HTML, sanitize it to prevent truncation by premature </body> tags
         if temp_path.lower().endswith((".html", ".htm")):
@@ -1928,272 +1497,10 @@ def convert():
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@app.route("/api/gazette/index", methods=["POST"])
-@login_required
-def gazette_index():
-    cleanup_gazette_cache()
-    
-    # Suportar JSON e Form data
-    url = ""
-    if request.is_json:
-        url = request.json.get("url", "").strip()
-    else:
-        url = request.form.get("url", "").strip()
-        
-    if not url:
-        return jsonify({"success": False, "error": "URL não fornecida."}), 400
-        
-    if not (url.startswith("http://") or url.startswith("https://")):
-        if "://" not in url:
-            url = "https://" + url
-        else:
-            return jsonify({
-                "success": False,
-                "error": "URL inválida. O link deve começar com http:// ou https://",
-            }), 400
-            
-    import requests
-    from urllib.parse import urlparse
-    
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        try:
-            response = requests.get(url, headers=headers, timeout=15)
-        except requests.exceptions.SSLError:
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            response = requests.get(url, headers=headers, timeout=15, verify=False)
-        response.raise_for_status()
-    except Exception as req_err:
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao baixar a URL: {str(req_err)}",
-        }), 400
-        
-    # Detectar se é PDF pela extensão da URL ou pelo Content-Type da resposta
-    content_type = response.headers.get("Content-Type", "").lower()
-    is_pdf_by_content_type = "application/pdf" in content_type or "application/octet-stream" in content_type
-
-    parsed_url = urlparse(url)
-    url_path = parsed_url.path
-    url_filename = os.path.basename(url_path) if url_path else ""
-    if not url_filename or "." not in url_filename:
-        filename = "diario.pdf" if is_pdf_by_content_type else ""
-    else:
-        filename = secure_filename(url_filename)
-        if not filename or "." not in filename:
-            filename = "diario.pdf" if is_pdf_by_content_type else ""
-
-    if not filename.lower().endswith(".pdf"):
-        if is_pdf_by_content_type:
-            filename = "diario.pdf"
-        else:
-            return jsonify({
-                "success": False,
-                "error": "O arquivo da URL deve ser um PDF (verifique a extensão ou o tipo de conteúdo retornado pelo servidor).",
-            }), 400
-
-    # Salvar em cache no disco (compatível com multi-worker)
-    os.makedirs(GAZETTE_CACHE_DIR, exist_ok=True)
-    cache_id = f"gazette-{uuid4().hex}"
-    pdf_path = os.path.join(GAZETTE_CACHE_DIR, f"{cache_id}.pdf")
-
-    with open(pdf_path, "wb") as f:
-        f.write(response.content)
-
-    try:
-        scan_result = scan_gazette_index(pdf_path)
-        gazette_cache_set(
-            cache_id,
-            pdf_path,
-            scan_result["norms"],
-            scan_result["total_pages"],
-            scan_result.get("index_text", ""),
-            scan_result.get("index_entries", []),
-        )
-
-        return jsonify({
-            "success": True,
-            "cache_id": cache_id,
-            "total_pages": scan_result["total_pages"],
-            "norms": scan_result["norms"],
-            "index_text": scan_result.get("index_text", ""),
-            "index_entries": scan_result.get("index_entries", []),
-        })
-    except Exception as e:
-        if os.path.exists(pdf_path):
-            os.remove(pdf_path)
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao escanear o Diário Oficial: {str(e)}"
-        }), 500
 
 
-@app.route("/api/gazette/extract", methods=["POST"])
-@login_required
-def gazette_extract():
-    cleanup_gazette_cache()
-    
-    # Suportar JSON e Form data
-    data = {}
-    if request.is_json:
-        data = request.json
-    else:
-        data = request.form
-        
-    cache_id = data.get("cache_id", "")
-    norm_id_raw = data.get("norm_id")
-    option = data.get("option", "standard")
-    
-    if not cache_id or norm_id_raw is None:
-        return jsonify({"success": False, "error": "cache_id e norm_id são obrigatórios."}), 400
 
-    # Sanitizar cache_id para prevenir path traversal
-    if not re.fullmatch(r'gazette-[0-9a-f]{32}', cache_id):
-        return jsonify({"success": False, "error": "cache_id inválido."}), 400
-        
-    try:
-        norm_id = int(norm_id_raw)
-    except ValueError:
-        return jsonify({"success": False, "error": "norm_id deve ser um inteiro."}), 400
-        
-    cache_item = gazette_cache_get(cache_id)
-    if not cache_item:
-        return jsonify({"success": False, "error": "Documento não encontrado no cache ou expirado."}), 404
-        
-    norms = cache_item["norms"]
-    if norm_id < 0 or norm_id >= len(norms):
-        return jsonify({"success": False, "error": "Norma inválida."}), 400
-        
-    selected_norm = norms[norm_id]
-    start_page = selected_norm["start_page"]
-    end_page = selected_norm["end_page"]
-    
-    # Extrair as páginas do PDF para um arquivo temporário
-    from pypdf import PdfReader, PdfWriter
-    
-    temp_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"extract-{uuid4().hex}")
-    os.makedirs(temp_dir, exist_ok=True)
-    extracted_pdf_path = os.path.join(temp_dir, "extracted.pdf")
-    
-    try:
-        reader = PdfReader(cache_item["pdf_path"])
-        writer = PdfWriter()
-        
-        # start_page e end_page são 1-indexed.
-        for page_idx in range(start_page - 1, min(end_page, len(reader.pages))):
-            writer.add_page(reader.pages[page_idx])
-            
-        with open(extracted_pdf_path, "wb") as f:
-            writer.write(f)
-            
-        # Converter o PDF extraído para Markdown usando extração por colunas diretamente
-        import pdfplumber
-        content_parts = []
-        with pdfplumber.open(extracted_pdf_path) as pdf:
-            for page in pdf.pages:
-                page_text = extract_text_with_layout_and_columns(page) or ""
-                if page_text.strip():
-                    content_parts.append(page_text.strip())
-        content = "\f".join(content_parts)
-        
-        # Aplicar limpeza e formatação legal padrão
-        content = clean_pdf_headers_footers(content)
-        content = format_pdf_markdown_model2(content)
-        
-        # Delimitação Exata (Fatiamento)
-        current_pattern = get_norm_title_pattern(
-            selected_norm["tipo"], selected_norm["numero"], selected_norm.get("title")
-        )
-        
-        next_pattern = None
-        next_norm_id = _next_linked_gazette_norm_id(cache_item.get("index_entries", []), norm_id)
-        if next_norm_id is not None and 0 <= next_norm_id < len(norms):
-            next_norm = norms[next_norm_id]
-            next_pattern = get_norm_title_pattern(
-                next_norm["tipo"], next_norm["numero"], next_norm.get("title")
-            )
-            
-        sliced = slice_norm_markdown(content, current_pattern, next_pattern)
-        if sliced is None:
-            # Título não localizado no Markdown após conversão — exibe o trecho completo com aviso
-            content = (
-                f"> **Aviso:** O título da norma não foi localizado com precisão no texto extraído. "
-                f"Exibindo o conteúdo completo das páginas {start_page}–{end_page}.\n\n"
-                + content
-            )
-        else:
-            content = sliced
 
-        # Deduplicar título da norma que pode aparecer repetido (cabeçalho + corpo)
-        tipo_esc = r'\s+'.join(re.escape(w) for w in selected_norm['tipo'].split())
-        num_esc = re.escape(selected_norm['numero'])
-        if selected_norm["numero"]:
-            dup_title_re = re.compile(
-                r'('
-                + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc
-                + r'[^\n]*\n)'
-                + r'\s*'
-                + tipo_esc + r'\s+(?:Nº|N[°ºo]\.?)\s*' + num_esc,
-                re.IGNORECASE
-            )
-            content = dup_title_re.sub(r'\1', content)
-
-        # Gerar cabeçalho premium com banner para a norma extraída
-        norm_title = selected_norm.get("title") or f"{selected_norm['tipo']} Nº {selected_norm['numero']}"
-        norm_ementa = selected_norm.get('ementa', '')
-        premium_banner = f"# {norm_title}\n\n"
-        if norm_ementa:
-            premium_banner += f"> **Ementa:** {norm_ementa}\n\n"
-        premium_banner += "---\n\n"
-
-        # Verificar se o conteúdo já começa com o título da norma para evitar duplicação com o banner
-        first_line = content.lstrip().split('\n', 1)[0] if content.strip() else ''
-        title_already_present = re.search(current_pattern, first_line, re.IGNORECASE)
-        if title_already_present:
-            # Remover a primeira linha (título cru) pois o banner já o inclui formatado
-            lines = content.lstrip().split('\n', 1)
-            content = lines[1].lstrip() if len(lines) > 1 else ''
-
-        content = premium_banner + content
-
-        # Aplicar as opções de formatação solicitadas
-        if option == "compact":
-            content = compact_markdown(content)
-        elif option == "abnt":
-            content = polish_legal_markdown_model2(content)
-            
-        original_length = len(content)
-        truncated = False
-        if original_length > 10_000_000:
-            content = content[:10_000_000] + "\n\n... [conteúdo truncado]"
-            truncated = True
-            
-        # Nome do arquivo de saída
-        filename = f"{selected_norm['tipo']}_{selected_norm['numero'].replace('/', '_')}.md"
-        
-        return jsonify({
-            "success": True,
-            "content": content,
-            "filename": filename,
-            "norm_title": norm_title,
-            "mode": option,
-            "characters": len(content),
-            "originalCharacters": original_length,
-            "truncated": truncated
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Erro ao extrair/converter a norma: {str(e)}"
-        }), 500
-        
-    finally:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @app.route("/api/health", methods=["GET"])
@@ -2207,124 +1514,312 @@ def health():
     })
 
 
+# Cache em memória para definições (TTL de 24 horas)
+_dictionary_cache = {}
+
+def _cache_get(key):
+    entry = _dictionary_cache.get(key)
+    if entry:
+        ts, data = entry
+        if time.time() - ts < 86400:  # 24 horas
+            return data
+        del _dictionary_cache[key]
+    return None
+
+def _cache_set(key, data):
+    _dictionary_cache[key] = (time.time(), data)
+    # Limita o cache a 200 entradas
+    if len(_dictionary_cache) > 200:
+        oldest = sorted(_dictionary_cache.items(), key=lambda x: x[1][0])[:50]
+        for k in oldest:
+            if k[0] in _dictionary_cache:
+                del _dictionary_cache[k[0]]
+
+
+def _fetch_michaelis(word):
+    """Busca definição no Dicionário Michaelis (UOL) — fonte primária institucional."""
+    import requests
+    from bs4 import BeautifulSoup
+
+    url = f"https://michaelis.uol.com.br/moderno-portugues/busca/portugues-brasileiro/{word.lower()}/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=12, allow_redirects=True)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    # Decodifica os bytes brutos como UTF-8
+    html = resp.content.decode("utf-8", errors="replace")
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Verifica se a palavra foi encontrada (página "não encontrada" tem mensagem específica)
+    not_found = soup.select_one(".error404, .not-found, .search-no-results")
+    if not_found:
+        return None
+
+    # Coleta todas as definições e classes gramaticais
+    results = []
+    current_class = ""
+    current_defs = []
+    current_etym = ""
+    seen_defs = set()
+
+    # Busca as definições — o Michaelis usa elementos com IDs e classes específicos
+    # Estrutura típica: <div id="verbeteConteudo"> com spans .verbeteDesc, .verbeteAcep, .verbeteClasse
+    verbete_container = soup.select_one("#verbeteConteudo, .verbete-conteudo")
+    if not verbete_container:
+        # Tenta seletores alternativos da página do Michaelis
+        verbete_container = soup
+
+    # Extrai classe gramatical
+    classe_el = verbete_container.select_one("span.verbeteClasse, .classe-gramatical, .word-class")
+    if classe_el:
+        current_class = classe_el.get_text(strip=True).lower().rstrip(".")
+
+    # Extrai etimologia
+    etym_el = verbete_container.select_one("span.verbeteEtim, .etimologia, .word-etymology")
+    if etym_el:
+        etym_text = etym_el.get_text(strip=True)
+        # Remove o prefixo "Etimologia:" se presente
+        etym_text = re.sub(r"^(?:Etimologia|ETIM|ETIMOLOGIA)\s*:?\s*", "", etym_text, flags=re.I)
+        if etym_text and len(etym_text) > 3:
+            current_etym = etym_text[:300]
+
+    # Extrai acepções (definições numeradas)
+    acepcoes = verbete_container.select("span.verbeteAcep, .verbete-acepcao, .acepcao, .word-meaning")
+    if acepcoes:
+        for acep in acepcoes:
+            text = acep.get_text(strip=True)
+            # Remove numeração inicial (ex: "1." ou "1)")
+            text = re.sub(r"^\d+[.)]\s*", "", text)
+            if text and len(text) > 5 and text not in seen_defs:
+                seen_defs.add(text)
+                current_defs.append(text)
+
+    # Fallback: se não encontrou acepções estruturadas, tenta extrair de parágrafos
+    if not current_defs:
+        desc_els = verbete_container.select("span.verbeteDesc, .verbete-descricao, .word-definition, p.definicao")
+        for el in desc_els:
+            text = el.get_text(strip=True)
+            # Divide por ponto e vírgula ou ponto final mantendo acepções
+            parts = re.split(r"(?<=[;.])\s+", text)
+            for part in parts:
+                part = part.strip()
+                if part and len(part) > 5 and part not in seen_defs:
+                    seen_defs.add(part)
+                    current_defs.append(part)
+
+    # Se ainda não encontrou nada, tenta parsing genérico do texto
+    if not current_defs:
+        text_content = verbete_container.get_text("\n", strip=True)
+        if text_content and len(text_content) > 30:
+            # Remove cabeçalhos e informação estrutural
+            text_content = re.sub(r"^(?:ver·be·te|Definição|Significado)\s*", "", text_content)
+            # Remove linhas que são claramente metadados do site (navegação, menu, etc.)
+            text_content = re.sub(
+                r'(?:Michaelis On-line|Menu\s+Português|Sobre o dicionário|Como consultar|'
+                r'Como utilizar|Organização do verbete|Transcrição fonética|Abreviaturas|'
+                r'Abonações|Referências bibliográficas|Noções gramaticais|'
+                r'Sobre o Acordo Ortográfico|Alfabeto|Acentuação gráfica|Hífen|'
+                r'Dicionário Brasileiro da Língua Portuguesa)[^\n]*',
+                '', text_content, flags=re.I
+            )
+            # Tenta separar em sentenças
+            sentences = re.split(r"(?<=[.;])\s+", text_content)
+            for sent in sentences[:10]:
+                sent = sent.strip()
+                if sent and len(sent) > 15 and sent not in seen_defs:
+                    seen_defs.add(sent)
+                    current_defs.append(sent)
+
+    # Filtra definições espúrias (metadados do site, menus, etc.)
+    _SPURIOUS_PATTERNS = [
+        r'Michaelis On-line',
+        r'Menu\s+Português',
+        r'Sobre\s+o\s+dicionário',
+        r'Como\s+consultar',
+        r'Como\s+utilizar',
+        r'Organização\s+do\s+verbete',
+        r'Transcrição\s+fonética',
+        r'Abreviaturas',
+        r'Abonações',
+        r'Referências\s+bibliográficas',
+        r'Noções\s+gramaticais',
+        r'Sobre\s+o\s+Acordo\s+Ortográfico',
+        r'Alfabeto',
+        r'Acentuação\s+gráfica',
+        r'Hífen',
+        r'Dicionário\s+Brasileiro\s+da\s+Língua\s+Portuguesa',
+        r'Inglês\s+Espanhol\s+Alemão',
+        r'Português\s+Inglês\s+Espanhol',
+    ]
+    current_defs = [
+        d for d in current_defs
+        if not any(re.search(pattern, d, re.I) for pattern in _SPURIOUS_PATTERNS)
+    ]
+
+    # Tenta extrair etimologia do texto completo se não encontrou antes
+    if not current_etym:
+        full_text = verbete_container.get_text(" ", strip=True)
+        etym_match = re.search(
+            r"(?:Etimologia|ETIM|ETIMOLOGIA)\s*:?\s*(.+?)(?:\s*(?:1\.|Definição|Classe|Acepção)|$)",
+            full_text, re.I
+        )
+        if etym_match:
+            current_etym = etym_match.group(1).strip()[:300]
+
+    if current_defs:
+        results.append({
+            "class": current_class or "palavra",
+            "meanings": current_defs,
+            "etymology": current_etym,
+        })
+
+    if results:
+        return {
+            "success": True,
+            "word": word,
+            "results": results,
+            "source": "michaelis",
+        }
+
+    return None
+
+
+def _fetch_dicionario_aberto(word):
+    """Busca definição no Dicionário Aberto (fallback)."""
+    import requests
+    from bs4 import BeautifulSoup
+
+    url = f"https://api.dicionario-aberto.net/word/{word.lower()}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    resp = requests.get(url, headers=headers, timeout=10)
+
+    if resp.status_code == 404:
+        return None
+
+    resp.raise_for_status()
+    resp.encoding = "utf-8"
+    try:
+        entries_data = resp.json()
+    except Exception:
+        try:
+            raw_text = resp.content.decode("utf-8")
+            entries_data = json.loads(raw_text, strict=False)
+        except Exception:
+            return None
+
+    if not entries_data or not isinstance(entries_data, list):
+        return None
+
+    parsed_entries = []
+    for entry in entries_data:
+        if not entry.get("xml"):
+            continue
+        try:
+            soup = BeautifulSoup(entry["xml"], "xml")
+
+            gram_el = soup.find("gramGrp")
+            gram = gram_el.text.strip() if gram_el else ""
+
+            gram_friendly = gram
+            gram_lower = gram.lower().strip(" .")
+            if gram_lower == "m":
+                gram_friendly = "substantivo masculino"
+            elif gram_lower == "f":
+                gram_friendly = "substantivo feminino"
+            elif gram_lower == "adj":
+                gram_friendly = "adjetivo"
+            elif gram_lower == "v":
+                gram_friendly = "verbo"
+            elif gram_lower == "adv":
+                gram_friendly = "advérbio"
+
+            etym_el = soup.find("etym")
+            etym = etym_el.text.strip() if etym_el else ""
+            etym = re.sub(r"_(.+?)_", r"*\1*", etym)
+
+            def_el = soup.find("def")
+            defs = []
+            if def_el:
+                lines = def_el.text.strip().split("\n")
+                for line in lines:
+                    cleaned_line = line.strip(" .;-\t\n\r")
+                    if cleaned_line:
+                        defs.append(cleaned_line)
+
+            parsed_entries.append({
+                "class": gram_friendly,
+                "meanings": defs,
+                "etymology": etym,
+            })
+        except Exception as parse_err:
+            print(f"Error parsing dictionary XML: {parse_err}")
+            continue
+
+    if parsed_entries:
+        return {
+            "success": True,
+            "word": word,
+            "results": parsed_entries,
+            "source": "dicionario-aberto",
+        }
+
+    return None
+
+
 @app.route("/api/dictionary", methods=["GET"])
 @login_required
 def get_dictionary_definition():
-    """Proxy route to fetch word definition from api.dicionario-aberto.net using Latin-1 decoding to prevent glitches."""
+    """Busca definição da palavra — Michaelis (UOL) como fonte primária, Dicionário Aberto como fallback."""
     word = request.args.get("word", "").strip()
     if not word:
         return jsonify({"success": False, "error": "Nenhuma palavra fornecida."}), 400
-        
-    # Basic cleaning of the word: keep only letters, remove punctuation
+
+    # Limpeza básica: mantém letras, números, hífen
     word_clean = re.sub(r"[^\w\s-]", "", word).strip()
     if not word_clean or " " in word_clean:
         return jsonify({"success": False, "error": "Forneça apenas uma única palavra para busca."}), 400
-        
+
+    word_lower = word_clean.lower()
+
+    # Verifica cache
+    cached = _cache_get(word_lower)
+    if cached is not None:
+        return jsonify(cached)
+
     try:
-        import requests
-        from bs4 import BeautifulSoup
-        
-        url = f"https://api.dicionario-aberto.net/word/{word_clean.lower()}"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        
-        response = requests.get(url, headers=headers, timeout=10)
-        
-        # Word not found
-        if response.status_code == 404:
-            return jsonify({
-                "success": True, 
-                "word": word_clean, 
-                "definitions": [], 
-                "message": f"A palavra '{word_clean}' não foi encontrada no dicionário."
-            })
-            
-        response.raise_for_status()
-        
-        # Decode as latin-1 to perfectly preserve Portuguese accents
-        try:
-            raw_text = response.content.decode("latin-1")
-            entries_data = json.loads(raw_text)
-        except Exception:
-            # Fallback to standard response decoding if latin-1 fails
-            entries_data = response.json()
-            
-        if not entries_data or not isinstance(entries_data, list):
-            return jsonify({
-                "success": True, 
-                "word": word_clean, 
-                "definitions": [], 
-                "message": f"A palavra '{word_clean}' não possui definições registradas."
-            })
-            
-        parsed_entries = []
-        for entry in entries_data:
-            if not entry.get("xml"):
-                continue
-                
-            try:
-                soup = BeautifulSoup(entry["xml"], "xml")
-                
-                # Extract Orthography
-                orth_el = soup.find("orth")
-                orth = orth_el.text.strip() if orth_el else entry.get("word", word_clean)
-                
-                # Extract Grammatical Class
-                gram_el = soup.find("gramGrp")
-                gram = gram_el.text.strip() if gram_el else ""
-                
-                # Map standard abbreviations to friendly Portuguese names
-                gram_friendly = gram
-                gram_lower = gram.lower().strip(" .")
-                if gram_lower == "m":
-                    gram_friendly = "substantivo masculino"
-                elif gram_lower == "f":
-                    gram_friendly = "substantivo feminino"
-                elif gram_lower == "adj":
-                    gram_friendly = "adjetivo"
-                elif gram_lower == "v":
-                    gram_friendly = "verbo"
-                elif gram_lower == "adv":
-                    gram_friendly = "advérbio"
-                
-                # Extract Etymology
-                etym_el = soup.find("etym")
-                etym = etym_el.text.strip() if etym_el else ""
-                # Clean Markdown-like syntax from etymology (e.g. Lat. _tributum_)
-                etym = re.sub(r"_(.+?)_", r"*\1*", etym)
-                
-                # Extract Definitions
-                def_el = soup.find("def")
-                defs = []
-                if def_el:
-                    # Definitions are typically separated by newlines
-                    lines = def_el.text.strip().split("\n")
-                    for line in lines:
-                        cleaned_line = line.strip(" .;-\t\n\r")
-                        if cleaned_line:
-                            defs.append(cleaned_line)
-                            
-                parsed_entries.append({
-                    "orth": orth,
-                    "gram": gram_friendly,
-                    "class": gram_friendly,
-                    "definitions": defs,
-                    "meanings": defs,
-                    "etym": etym,
-                    "etymology": etym
-                })
-            except Exception as parse_err:
-                print(f"Error parsing dictionary XML: {parse_err}")
-                continue
-                
-        return jsonify({
-            "success": True,
-            "word": word_clean,
-            "definitions": parsed_entries,
-            "results": parsed_entries
-        })
-        
+        # 1. Tenta Michaelis (fonte primária institucional)
+        result = _fetch_michaelis(word_lower)
+
+        # 2. Fallback: Dicionário Aberto se Michaelis retornar nada
+        if not result or not result.get("results"):
+            fallback = _fetch_dicionario_aberto(word_lower)
+            if fallback:
+                fallback["source"] = "dicionario-aberto (fallback)"
+                result = fallback
+
+        # 3. Se nenhuma fonte retornou algo útil
+        if not result or not result.get("results"):
+            result = {
+                "success": True,
+                "word": word_clean,
+                "results": [],
+                "message": f"A palavra '{word_clean}' não foi encontrada em nenhum dicionário.",
+            }
+
+        _cache_set(word_lower, result)
+        return jsonify(result)
+
     except Exception as e:
         print(f"Error in dictionary proxy: {e}")
         return jsonify({

@@ -673,6 +673,13 @@
             font-weight: 800;
         }
 
+        .toc-item.toc-active {
+            background: rgba(255, 62, 0, 0.18);
+            border-left-color: var(--ink);
+            font-weight: 800;
+            box-shadow: inset 0 0 0 1px var(--accent);
+        }
+
         /* SELECTION POPOVER */
         .selection-popover {
             position: fixed;
@@ -2050,287 +2057,7 @@
 
 
 
-        /* Gazette Norm Index Styling */
-        .gazette-index-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            height: 100%;
-            padding: 24px;
-            overflow-y: auto;
-            background-color: var(--bg);
-        }
 
-        .gazette-header {
-            background: var(--surface);
-            border: var(--border);
-            box-shadow: var(--shadow);
-            padding: 20px 24px;
-            font-family: var(--font-sans);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .gazette-header-icon {
-            font-size: 32px;
-            line-height: 1;
-            flex-shrink: 0;
-        }
-
-        .gazette-header-text {
-            flex: 1;
-        }
-
-        .gazette-header-title {
-            font-size: 20px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
-            margin-bottom: 4px;
-        }
-
-        .gazette-header-subtitle {
-            font-size: 13px;
-            font-family: var(--font-mono);
-            color: var(--muted);
-        }
-
-        .gazette-norms-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .gazette-norm-card {
-            background: var(--surface);
-            border: var(--border);
-            box-shadow: var(--shadow);
-            padding: 16px;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: relative;
-        }
-
-        .gazette-norm-card:hover {
-            transform: translate(-3px, -3px);
-            box-shadow: var(--shadow-hover);
-            border-color: var(--accent);
-        }
-
-        .gazette-norm-card:hover .gazette-card-arrow {
-            opacity: 1;
-            transform: translateX(2px);
-        }
-
-        .gazette-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .gazette-badge {
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border: 1px solid var(--ink);
-            text-transform: uppercase;
-            font-family: var(--font-mono);
-            background: #e6e4df;
-            white-space: nowrap;
-        }
-
-        /* Cores dos badges de tipos de normas */
-        .badge-lei, .badge-lei-complementar, .badge-lei-ordinaria {
-            background-color: #2ecc71;
-            color: white;
-        }
-        .badge-decreto, .badge-decreto-legislativo {
-            background-color: #3498db;
-            color: white;
-        }
-        .badge-portaria, .badge-portaria-conjunta {
-            background-color: #e67e22;
-            color: white;
-        }
-        .badge-resolucao {
-            background-color: #9b59b6;
-            color: white;
-        }
-        .badge-instrucao-normativa {
-            background-color: #1abc9c;
-            color: white;
-        }
-        .badge-deliberacao {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .badge-edital {
-            background-color: #f1c40f;
-            color: var(--ink);
-        }
-        .badge-ato, .badge-ato-normativo {
-            background-color: #34495e;
-            color: white;
-        }
-
-        .gazette-card-number {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        .gazette-card-ementa {
-            font-size: 13px;
-            line-height: 1.55;
-            color: var(--ink);
-            flex-grow: 1;
-            /* Truncar ementa em 4 linhas */
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .gazette-card-footer {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--muted);
-            border-top: 1px dashed var(--ink);
-            padding-top: 8px;
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .gazette-card-arrow {
-            opacity: 0;
-            transition: opacity 0.15s, transform 0.15s;
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: 800;
-        }
-
-        /* Gazette Index Document Layout */
-        .gazette-index-document {
-            white-space: normal;
-            font-family: "Times New Roman", Times, serif;
-            max-width: 920px;
-            margin: 0 auto;
-            padding: 22px 52px 42px;
-            background: #fff;
-            color: #111;
-            text-align: left;
-        }
-
-        .gazette-index-document h1 {
-            font-family: "Times New Roman", Times, serif;
-            font-weight: 700;
-            font-size: 30px;
-            text-transform: none;
-            text-align: center;
-            margin: 0 0 30px;
-            letter-spacing: 0;
-            border-bottom: none !important;
-            padding-bottom: 0 !important;
-        }
-
-        .gazette-index-document .gazette-index-subtitle {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 24px;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        .gazette-index-list {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .gazette-index-row {
-            width: 100%;
-            display: flex;
-            align-items: baseline;
-            gap: 7px;
-            border: 0;
-            background: transparent;
-            padding: 0;
-            color: inherit;
-            font: inherit;
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.28;
-            text-align: left;
-        }
-
-        .gazette-index-row[data-level="0"] {
-            color: #003f86;
-            font-size: 20px;
-            margin-top: 5px;
-        }
-
-        .gazette-index-row[data-level="1"] {
-            color: #a00000;
-            padding-left: 20px;
-        }
-
-        .gazette-index-row[data-level="2"] {
-            color: #008000;
-            padding-left: 40px;
-            font-size: 17px;
-        }
-
-        .gazette-index-label {
-            flex: 0 1 auto;
-            min-width: 0;
-        }
-
-        .gazette-index-leader {
-            flex: 1 1 40px;
-            min-width: 24px;
-            border-bottom: 2px dotted currentColor;
-            transform: translateY(-0.22em);
-        }
-
-        .gazette-index-page {
-            flex: 0 0 auto;
-            min-width: 1.2em;
-            text-align: right;
-        }
-
-        button.gazette-index-row.extract-norm-link {
-            cursor: pointer;
-            border-radius: 2px;
-            transition: background-color 0.15s, outline-color 0.15s;
-        }
-
-        button.gazette-index-row.extract-norm-link:hover {
-            background: rgba(0, 128, 0, 0.08);
-        }
-
-        button.gazette-index-row.extract-norm-link:focus-visible {
-            outline: 2px solid currentColor;
-            outline-offset: 3px;
-        }
-
-        @media (max-width: 700px) {
-            .gazette-index-document { padding: 20px 18px 32px; }
-            .gazette-index-document h1 { font-size: 26px; margin-bottom: 22px; }
-            .gazette-index-row { font-size: 15px; }
-            .gazette-index-row[data-level="0"] { font-size: 17px; }
-            .gazette-index-row[data-level="1"] { padding-left: 12px; }
-            .gazette-index-row[data-level="2"] { padding-left: 24px; font-size: 14px; }
-        }
 
         @media (max-width: 900px) {
             .workspace { grid-template-columns: 1fr; }
@@ -2372,7 +2099,6 @@
                     <div class="segmented" id="inputTypeSegmented" role="tablist" aria-label="Tipo de entrada">
                         <button class="segment active" type="button" data-type="file" style="flex: 1;">Arquivo</button>
                         <button class="segment" type="button" data-type="url" style="flex: 1;">URL</button>
-                        <button class="segment" type="button" data-type="gazette" style="flex: 1;">Diário Oficial</button>
                     </div>
                 </div>
 
@@ -2465,7 +2191,6 @@
                             <button class="tool-btn" id="shareBtn" type="button" disabled>Compartilhar</button>
                             <button class="tool-btn" id="saveDocBtn" type="button" disabled title="Salvar estado atual">Salvar</button>
                             <button class="tool-btn" id="loadDocsBtn" type="button" title="Carregar documentos salvos">Carregar Salvos</button>
-                            <button class="tool-btn" id="backToGazetteIndexBtn" type="button" style="display: none; background: var(--accent); color: white; border-color: var(--ink);">← Voltar ao Índice</button>
                         </div>
 
                         <button class="panel-action-btn" id="maximizePanelBtn" type="button" title="Maximizar tela de resultado">
@@ -2883,7 +2608,6 @@
         const urlZoneContainer = document.getElementById("urlZoneContainer");
         const urlInput = document.getElementById("urlInput");
         const inputTypeButtons = document.querySelectorAll("#inputTypeSegmented .segment");
-        const backToGazetteIndexBtn = document.getElementById("backToGazetteIndexBtn");
 
         // Elementos de Carimbo
         const stampCreateModal = document.getElementById("stampCreateModal");
@@ -2950,17 +2674,10 @@
         let convertedContent = "";
         let currentZoom = 1.0;
         let maxUploadBytes = 500 * 1024 * 1024;
-        
-        let gazetteCacheId = null;
-        let gazetteNorms = [];
-        let gazetteIndexHtml = null;
-        let currentGazetteFilename = null;
 
         function getActiveFilename() {
             if (activeInputType === "file") {
                 return selectedFile ? selectedFile.name : "sem arquivo";
-            } else if (activeInputType === "gazette") {
-                return currentGazetteFilename || "sem arquivo";
             } else {
                 const urlVal = urlInput.value.trim();
                 if (urlVal) {
@@ -3429,9 +3146,6 @@
                 
                 const urlLabel = urlZoneContainer.querySelector(".settings-label");
                 const urlSub = urlZoneContainer.querySelector(".upload-sub");
-                
-                // Resetar botão voltar
-                backToGazetteIndexBtn.style.display = "none";
 
                 if (activeInputType === "file") {
                     if (htmlFormatBtn) htmlFormatBtn.style.display = "";
@@ -3476,40 +3190,13 @@
                     } else {
                         setStatus("Insira uma URL para iniciar.");
                     }
-                } else if (activeInputType === "gazette") {
-                    // Forçar Markdown e ocultar formato HTML/JSON
-                    if (mdFormatBtn) mdFormatBtn.click();
-                    if (abntModeBtn) abntModeBtn.click();
-                    
-                    if (htmlFormatBtn) htmlFormatBtn.style.display = "none";
-                    if (jsonFormatBtn) jsonFormatBtn.style.display = "none";
-                    
-                    fileInputContainer.style.display = "none";
-                    urlZoneContainer.style.display = "flex";
-                    
-                    // Ocultar formatos já que é sempre Markdown
-                    if (formatSegmented) formatSegmented.parentElement.style.display = "none";
-                    
-                    urlLabel.textContent = "URL do Diário Oficial (PDF)";
-                    urlInput.placeholder = "https://diariooficial.imperatriz.ma.gov.br/...";
-                    urlSub.textContent = "Insira a URL de publicação em PDF do Diário Oficial para extrair o índice.";
-                    convertBtn.textContent = "Carregar Índice";
-                    
-                    const urlVal = urlInput.value.trim();
-                    convertBtn.disabled = !urlVal;
-                    clearBtn.disabled = !urlVal;
-                    if (urlVal) {
-                        setStatus("URL do Diário Oficial pronta para carregar.", "success");
-                    } else {
-                        setStatus("Insira a URL do PDF do Diário Oficial.");
-                    }
                 }
                 resetOutput();
             });
         });
 
         urlInput.addEventListener("input", () => {
-            if (activeInputType === "url" || activeInputType === "gazette") {
+            if (activeInputType === "url") {
                 const urlVal = urlInput.value.trim();
                 convertBtn.disabled = !urlVal;
                 clearBtn.disabled = !urlVal;
@@ -3527,51 +3214,6 @@
 
         convertBtn.addEventListener("click", async () => {
             currentDocId = null;
-            
-            if (activeInputType === "gazette") {
-                let urlVal = urlInput.value.trim();
-                if (!urlVal) return;
-                
-                if (!urlVal.match(/^[a-zA-Z]+:\/\//)) {
-                    urlVal = "https://" + urlVal;
-                }
-                
-                convertBtn.disabled = true;
-                setActions(false);
-                setLoading("Carregando índice do Diário Oficial...");
-                backToGazetteIndexBtn.style.display = "none";
-                
-                outputArea.classList.remove("abnt-preview", "html-preview");
-                outputArea.classList.add("markdown-preview", "preview-empty");
-                outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Processando..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>CARREGANDO ÍNDICE</strong><span>Escanear o PDF pode levar alguns instantes...</span></span></span>';
-                
-                try {
-                    const response = await fetch("/api/gazette/index", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ url: urlVal })
-                    });
-                    
-                    if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
-                    
-                    const data = await response.json();
-                    if (!response.ok || !data.success) {
-                        throw new Error(data.error || "Não foi possível carregar o índice.");
-                    }
-                    
-                    gazetteCacheId = data.cache_id;
-                    gazetteNorms = data.norms;
-                    
-                    renderGazetteIndex(data.total_pages, data.norms, data.index_entries);
-                    setStatus("Índice carregado com sucesso.", "success");
-                } catch (error) {
-                    resetOutput();
-                    setStatus(error.message, "error");
-                } finally {
-                    convertBtn.disabled = !urlInput.value.trim();
-                }
-                return;
-            }
             
             const formData = new FormData();
             let displayName = "documento";
@@ -3659,178 +3301,10 @@
             } else if (activeInputType === "url") {
                 urlInput.value = "";
                 setStatus("Insira uma URL para iniciar.");
-            } else if (activeInputType === "gazette") {
-                urlInput.value = "";
-                gazetteCacheId = null;
-                gazetteNorms = [];
-                gazetteIndexHtml = null;
-                currentGazetteFilename = null;
-                backToGazetteIndexBtn.style.display = "none";
-                setStatus("Insira a URL do PDF do Diário Oficial.");
             }
             convertBtn.disabled = true;
             clearBtn.disabled = true;
             resetOutput();
-        });
-
-        function bindGazetteIndexActions() {
-            outputArea.querySelectorAll(".extract-norm-link").forEach((row) => {
-                row.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    extractGazetteNorm(row.dataset.id);
-                });
-            });
-        }
-
-        function renderGazetteIndex(totalPages, norms, indexEntries) {
-            outputArea.classList.remove("abnt-preview", "html-preview", "preview-empty");
-            outputArea.classList.add("markdown-preview");
-
-            const availableNorms = Array.isArray(norms) ? norms : [];
-            const sourceEntries = Array.isArray(indexEntries) ? indexEntries : [];
-            const entries = sourceEntries.length ? sourceEntries : availableNorms.map((norm) => ({
-                text: `${norm.tipo} Nº ${norm.numero}`,
-                page: norm.start_page,
-                level: 2,
-                role: "document",
-                norm_id: norm.id,
-            }));
-
-            if (!entries.length) {
-                outputArea.innerHTML = `
-                    <div class="gazette-index-document">
-                        <h1>Índice</h1>
-                        <p class="gazette-index-subtitle">${totalPages} páginas • Nenhuma norma encontrada com os padrões especificados.</p>
-                    </div>
-                `;
-                gazetteIndexHtml = outputArea.innerHTML;
-                convertedContent = "";
-                buildToc();
-                return;
-            }
-
-            const rowsHtml = entries.map((entry) => {
-                const level = Math.max(0, Math.min(2, Number(entry.level) || 0));
-                const normId = entry.norm_id;
-                const hasLinkedNorm = normId !== null && normId !== undefined
-                    && availableNorms.some((norm) => String(norm.id) === String(normId));
-                const tag = hasLinkedNorm ? "button" : "div";
-                const actionAttributes = hasLinkedNorm
-                    ? ` type="button" class="gazette-index-row extract-norm-link" data-id="${escapeHtml(String(normId))}" title="Extrair e visualizar esta norma"`
-                    : ` class="gazette-index-row"`;
-                return `
-                    <${tag}${actionAttributes} data-level="${level}" data-role="${escapeHtml(entry.role || "document")}">
-                        <span class="gazette-index-label">${escapeHtml(entry.text || "")}</span>
-                        <span class="gazette-index-leader" aria-hidden="true"></span>
-                        <span class="gazette-index-page">${escapeHtml(String(entry.page ?? ""))}</span>
-                    </${tag}>
-                `;
-            }).join("");
-
-            outputArea.innerHTML = `
-                <div class="gazette-index-document">
-                    <h1>Índice</h1>
-                    <div class="gazette-index-list">
-                        ${rowsHtml}
-                    </div>
-                </div>
-            `;
-
-            gazetteIndexHtml = outputArea.innerHTML;
-            bindGazetteIndexActions();
-
-            // Definir convertedContent especial para que buildToc funcione e gere a lista na barra lateral
-            convertedContent = "GAZETTE_INDEX";
-            setActions(true);
-            buildToc();
-            closeToc();
-        }
-
-        async function extractGazetteNorm(normId) {
-            const norm = gazetteNorms.find((item) => String(item.id) === String(normId));
-            if (!norm) return;
-            
-            setActions(false);
-            setLoading(`Extraindo e convertendo: ${norm.tipo} Nº ${norm.numero}...`);
-            outputArea.classList.add("preview-empty");
-            outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Processando..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>EXTRAINDO NORMA</strong><span>Convertendo apenas o trecho selecionado...</span></span></span>';
-            
-            try {
-                const response = await fetch("/api/gazette/extract", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        cache_id: gazetteCacheId,
-                        norm_id: normId,
-                        option: selectedOption
-                    })
-                });
-                
-                if (response.status === 401) { showLoginScreen(); throw new Error("Sessão expirada. Faça login novamente."); }
-                
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || "Não foi possível extrair a norma.");
-                }
-                
-                convertedContent = data.content || "";
-                currentGazetteFilename = data.filename || `${norm.tipo}_${norm.numero}.md`;
-                applyFormat(convertedContent, data.mode);
-                updateMetrics(convertedContent, currentGazetteFilename);
-
-                backToGazetteIndexBtn.style.display = "block";
-                setActions(Boolean(convertedContent));
-                if (saveDocBtn) saveDocBtn.disabled = !Boolean(convertedContent);
-                
-                const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
-                setStatus(`Norma extraída com sucesso em modo ${modeLabel}.`, "success");
-            } catch (error) {
-                if (gazetteIndexHtml) {
-                    outputArea.classList.remove("preview-empty");
-                    outputArea.innerHTML = gazetteIndexHtml;
-                    
-                    bindGazetteIndexActions();
-                    
-                    convertedContent = "GAZETTE_INDEX";
-                    setActions(true);
-                    buildToc();
-                } else {
-                    resetOutput();
-                }
-                setStatus(error.message, "error");
-            }
-        }
-
-        backToGazetteIndexBtn.addEventListener("click", () => {
-            if (gazetteIndexHtml) {
-                currentGazetteFilename = null;
-                outputArea.classList.remove("abnt-preview", "html-preview", "preview-empty");
-                outputArea.classList.add("markdown-preview");
-                outputArea.innerHTML = gazetteIndexHtml;
-                
-                bindGazetteIndexActions();
-                
-                convertedContent = "GAZETTE_INDEX";
-                updateMetrics("", "sem arquivo");
-                
-                currentZoom = 1.0;
-                outputArea.style.removeProperty("--preview-zoom");
-                if (zoomVal) zoomVal.textContent = "100%";
-                
-                setActions(true);
-                searchBar.classList.remove("visible");
-                searchInput.value = "";
-                searchCount.textContent = "";
-                searchPrevBtn.disabled = true;
-                searchNextBtn.disabled = true;
-                
-                buildToc();
-                closeToc();
-                closeDictPanel();
-                
-                backToGazetteIndexBtn.style.display = "none";
-                setStatus("Índice de normas restaurado.", "success");
-            }
         });
 
         copyBtn.addEventListener("click", async () => {
@@ -3992,6 +3466,26 @@
                 }
             });
             searchMarks = [];
+
+            // Limpa os destaques do sumário
+            clearTocSearchHighlights();
+        }
+
+        function clearTocSearchHighlights() {
+            const tocItems = tocList.querySelectorAll(".toc-item");
+            tocItems.forEach(li => {
+                li.classList.remove("toc-item-highlight");
+                li.classList.remove("toc-active");
+                // Restaura o texto original do item (sem tags <mark>)
+                const marks = li.querySelectorAll("mark.toc-search-highlight");
+                marks.forEach(mark => {
+                    const parent = mark.parentNode;
+                    if (parent) {
+                        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                        parent.normalize();
+                    }
+                });
+            });
         }
 
         function getTextNodesIn(node) {
@@ -4050,10 +3544,13 @@
                 searchPrevBtn.disabled = false;
                 searchNextBtn.disabled = false;
                 searchCurrentIndex = 0;
-                searchMarks[0].classList.add("active");
-                searchMarks[0].scrollIntoView({ behavior: "smooth", block: "center" });
+                const firstMark = searchMarks[0];
+                firstMark.classList.add("active");
+                firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
                 searchCount.textContent = `1 / ${total}`;
                 highlightTocSearch(query);
+                // Sincroniza o destaque do sumário com o primeiro resultado da busca
+                syncTocHighlightToActiveMark(firstMark);
             } else {
                 searchPrevBtn.disabled = true;
                 searchNextBtn.disabled = true;
@@ -4066,9 +3563,63 @@
             if (searchMarks.length === 0) return;
             searchMarks[searchCurrentIndex].classList.remove("active");
             searchCurrentIndex = (searchCurrentIndex + direction + searchMarks.length) % searchMarks.length;
-            searchMarks[searchCurrentIndex].classList.add("active");
-            searchMarks[searchCurrentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+            const activeMark = searchMarks[searchCurrentIndex];
+            activeMark.classList.add("active");
+            activeMark.scrollIntoView({ behavior: "smooth", block: "center" });
             searchCount.textContent = `${searchCurrentIndex + 1} / ${searchMarks.length}`;
+
+            // Sincroniza o destaque do sumário com o resultado ativo da busca
+            syncTocHighlightToActiveMark(activeMark);
+        }
+
+        function syncTocHighlightToActiveMark(activeMark) {
+            const tocItems = tocList.querySelectorAll(".toc-item");
+            if (!tocItems.length) return;
+
+            // Remove o destaque "ativo" anterior de todos os itens do sumário
+            tocItems.forEach(item => item.classList.remove("toc-active"));
+
+            // Encontra o heading do TOC mais próximo (anterior ou contendo) ao mark ativo
+            const markRect = activeMark.getBoundingClientRect();
+            const markTop = markRect.top + markRect.height / 2;
+
+            let closestTocIndex = -1;
+            let closestDistance = Infinity;
+
+            // Percorre os headings do TOC e encontra o que está mais próximo acima do mark ativo
+            for (let i = tocHeadings.length - 1; i >= 0; i--) {
+                const headingEl = document.getElementById(`toc-heading-${i}`);
+                if (!headingEl) continue;
+
+                const headingRect = headingEl.getBoundingClientRect();
+                const headingTop = headingRect.top;
+
+                // O heading deve estar acima ou no mesmo nível do mark ativo
+                if (headingTop <= markTop) {
+                    const distance = markTop - headingTop;
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestTocIndex = i;
+                    }
+                }
+            }
+
+            // Se não encontrou nenhum heading acima, pega o primeiro heading
+            if (closestTocIndex === -1 && tocHeadings.length > 0) {
+                closestTocIndex = 0;
+            }
+
+            // Destaca o item do sumário correspondente e rola para ele (se o TOC estiver visível)
+            if (closestTocIndex >= 0) {
+                const activeTocItem = tocList.querySelector(`.toc-item[data-index="${closestTocIndex}"]`);
+                if (activeTocItem) {
+                    activeTocItem.classList.add("toc-active");
+                    // Rola o sumário para mostrar o item ativo, se o painel estiver aberto
+                    if (tocPanel.classList.contains("visible")) {
+                        activeTocItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+                }
+            }
         }
 
         function highlightTocSearch(query) {
@@ -4242,6 +3793,19 @@
                 if (convertedContent) {
                     e.preventDefault();
                     openSearch();
+                }
+            }
+            // Atalho Ctrl+D para abrir o dicionário
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && !loginOverlay.classList.contains("visible")) {
+                if (convertedContent) {
+                    e.preventDefault();
+                    const word = getCleanSelectedWord();
+                    if (word) {
+                        searchWord(word);
+                    } else {
+                        openDictPanel();
+                        if (dictSearchInput) dictSearchInput.focus();
+                    }
                 }
             }
             if (e.key === "Escape") {
@@ -6150,15 +5714,53 @@
             adjustToolbarPosition();
         }
 
+        // Cache de definições em sessionStorage (evita requisições repetidas)
+        let dictDefinitionCache = {};
+        try {
+            dictDefinitionCache = JSON.parse(sessionStorage.getItem("dictDefinitionCache") || "{}");
+        } catch(e) {
+            dictDefinitionCache = {};
+        }
+
+        function saveDictCache() {
+            // Limita o cache a no máximo 50 entradas
+            const keys = Object.keys(dictDefinitionCache);
+            if (keys.length > 50) {
+                // Remove as 20 mais antigas
+                keys.slice(0, 20).forEach(k => delete dictDefinitionCache[k]);
+            }
+            try {
+                sessionStorage.setItem("dictDefinitionCache", JSON.stringify(dictDefinitionCache));
+            } catch(e) {
+                // Se o sessionStorage estiver cheio, limpa o cache
+                dictDefinitionCache = {};
+            }
+        }
+
         // Função principal para buscar a palavra no Dicionário
         async function searchWord(word) {
             if (!word) return;
             word = word.trim().toLowerCase();
             
+            // Atualiza o campo de busca manual
+            if (dictSearchInput) dictSearchInput.value = word;
+
             // Exibe loader e limpa área de resultados
             dictLoader.style.display = "flex";
             dictResultArea.innerHTML = "";
             openDictPanel();
+
+            // Verifica cache primeiro
+            if (dictDefinitionCache[word]) {
+                dictLoader.style.display = "none";
+                const cached = dictDefinitionCache[word];
+                if (cached.results && cached.results.length > 0) {
+                    renderDictionaryResults(word, cached.results);
+                } else {
+                    renderNoWordFound(word, cached.suggestions || []);
+                }
+                return;
+            }
 
             try {
                 const response = await fetch(`/api/dictionary?word=${encodeURIComponent(word)}`);
@@ -6166,6 +5768,13 @@
                 
                 dictLoader.style.display = "none";
                 
+                // Salva no cache (resultados ou não encontrados)
+                dictDefinitionCache[word] = {
+                    results: data.results || [],
+                    suggestions: data.suggestions || []
+                };
+                saveDictCache();
+
                 if (data.success && data.results && data.results.length > 0) {
                     // Adiciona ao histórico se não existir
                     if (!dictHistoryList.includes(word)) {
@@ -6294,6 +5903,35 @@
 
         // --- Event Listeners para acionamento do Dicionário ---
         
+        // Duplo clique em palavra no documento para buscar no dicionário
+        outputArea.addEventListener("dblclick", (e) => {
+            // Não aciona se estiver em modo de caneta, carimbo ou borracha
+            if (penMode || stampMode || (eraseMode && !penMode)) return;
+            
+            // Obtém a palavra sob o clique
+            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            if (!range) return;
+            
+            // Expande o range para selecionar a palavra inteira
+            const textNode = range.startContainer;
+            if (textNode.nodeType !== Node.TEXT_NODE) return;
+            
+            const text = textNode.textContent;
+            const offset = range.startOffset;
+            
+            // Encontra os limites da palavra
+            const wordStart = text.lastIndexOf(" ", offset - 1) + 1;
+            const wordEnd = text.indexOf(" ", offset);
+            const wordEndIdx = wordEnd === -1 ? text.length : wordEnd;
+            
+            if (wordStart < wordEndIdx) {
+                const word = text.substring(wordStart, wordEndIdx).replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'""]+|[.,\/#!$%\^&\*;:{}=\-_`~()?"'""]+$/g, "").toLowerCase().trim();
+                if (word && word.length > 1) {
+                    searchWord(word);
+                }
+            }
+        });
+
         // Botão no menu flutuante (popover)
         if (popoverDictBtn) {
             popoverDictBtn.addEventListener("click", () => {
