@@ -2337,13 +2337,13 @@ def get_singular_candidates(word):
     candidates = []
     
     # 1. Ends in "ões" -> "ão" (e.g., funções -> função)
-    if word.endswith("ões"):
-        candidates.append(word[:-3] + "ão")
+    if word.endswith("\u00f5es"):
+        candidates.append(word[:-3] + "\u00e3o")
     
     # 2. Ends in "ães" -> "ão" or "ã" (e.g., cães -> cão)
-    elif word.endswith("ães"):
-        candidates.append(word[:-3] + "ão")
-        candidates.append(word[:-3] + "ã")
+    elif word.endswith("\u00e3es"):
+        candidates.append(word[:-3] + "\u00e3o")
+        candidates.append(word[:-3] + "\u00e3")
         
     # 3. Ends in "ns" -> "m" (e.g., homens -> homem)
     elif word.endswith("ns"):
@@ -2352,9 +2352,9 @@ def get_singular_candidates(word):
     # 4. Ends in "is" -> "l" (e.g., animais -> animal, papéis -> papel)
     elif word.endswith("ais"):
         candidates.append(word[:-3] + "al")
-    elif word.endswith("éis") or word.endswith("eis"):
+    elif word.endswith("\u00e9is") or word.endswith("eis"):
         candidates.append(word[:-3] + "el")
-    elif word.endswith("óis") or word.endswith("ois"):
+    elif word.endswith("\u00f3is") or word.endswith("ois"):
         candidates.append(word[:-3] + "ol")
     elif word.endswith("uis"):
         candidates.append(word[:-3] + "ul")
