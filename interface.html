@@ -3487,22 +3487,22 @@
         function buildDeviceRegex(deviceQuery) {
             if (deviceQuery.type === "art") {
                 const num = deviceQuery.num.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                return new RegExp(`(?:\\*\\*)?Art\\.\\s*${num}(?:º|°|o|\\.)?`, "gi");
+                return new RegExp(`(?:\\*\\*)?Art(?:\\.)?\\s*${num}(?:º|°|o|\\.)?`, "g");
             }
             if (deviceQuery.type === "par") {
                 const num = deviceQuery.num.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                return new RegExp(`(?:\\*\\*)?§\\s*${num}(?:º|°|o)?`, "gi");
+                return new RegExp(`(?:\\*\\*)?§\\s*${num}(?:º|°|o)?`, "g");
             }
             if (deviceQuery.type === "unico") {
-                return /(?:\*\*)?Par[aá]grafo\s+[uú]nico\.?/gi;
+                return /(?:\*\*)?Par[aá]grafo\s+[uú]nico\.?/g;
             }
             if (deviceQuery.type === "inciso") {
                 const roman = deviceQuery.roman.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                return new RegExp(`(?:\\*\\*)?${roman}(?:\\*\\*)?\\s*[-–—]`, "gi");
+                return new RegExp(`(?:\\*\\*)?${roman}(?:\\*\\*)?\\s*[-–—]`, "g");
             }
             if (deviceQuery.type === "alinea") {
                 const letter = deviceQuery.letter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                return new RegExp(`(?:\\*\\*)?${letter}\\)\\s+`, "gi");
+                return new RegExp(`(?:\\*\\*)?${letter}\\)\\s+`, "g");
             }
             return null;
         }
@@ -3561,6 +3561,14 @@
             let matchCount = 0;
 
             while ((match = regex.exec(text)) !== null) {
+                // Ensure this match is the definition of the device (at the start of a block/line)
+                const prefix = text.substring(0, match.index).trim();
+                const isValidStart = (prefix === "" || prefix === "**" || prefix === "*");
+
+                if (!isValidStart) {
+                    continue;
+                }
+
                 if (match.index > lastIdx) {
                     fragment.appendChild(document.createTextNode(text.substring(lastIdx, match.index)));
                 }
