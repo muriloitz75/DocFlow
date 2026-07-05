@@ -2546,9 +2546,14 @@
             <div id="stampCreateModal" class="login-overlay" style="z-index: 10010;">
                 <div class="login-card" style="max-width: 450px;">
                     <div class="login-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; padding-bottom: 12px; border-bottom: var(--border);">
-                        <h2 class="panel-title" style="font-size: 18px;">Criar Carimbo Personalizado</h2>
+                        <h2 class="panel-title" style="font-size: 18px;">Criar Carimbo</h2>
                         <button id="closeStampModalBtn" type="button" style="background:transparent; border:none; font-weight:bold; cursor:pointer; font-size: 16px; color: var(--ink);">✕</button>
                     </div>
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label class="input-label">Templates</label>
+                        <div id="stampTemplatesContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div style="width:100%; height:1px; background:var(--muted); margin: 12px 0;"></div>
                     <div class="input-group">
                         <label for="stampTextInput" class="input-label">Texto Principal</label>
                         <input type="text" id="stampTextInput" class="login-input" placeholder="Ex: APROVADO, CONFERIDO" value="APROVADO">
@@ -2619,7 +2624,7 @@
             </div>
 
             <!-- Popover para carimbo selecionado -->
-            <div class="selection-popover" id="stampPopover" style="padding: 10px; gap: 8px; flex-direction: column; align-items: center; z-index: 10005; min-width: 240px;">
+            <div class="selection-popover" id="stampPopover" style="padding: 10px; gap: 8px; flex-direction: column; align-items: center; z-index: 10005; min-width: 260px;">
                 <!-- Cores -->
                 <div style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;">
                     <button type="button" class="color-dot stamp-popover-color stamp-blue" data-color="stamp-blue" style="width:16px; height:16px; background-color:#2563eb; border: 2px solid transparent;" title="Azul"></button>
@@ -2630,6 +2635,16 @@
                     <button type="button" class="color-dot stamp-popover-color stamp-black" data-color="stamp-black" style="width:16px; height:16px; background-color:#111111; border: 2px solid transparent;" title="Preto"></button>
                 </div>
                 
+                <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
+                
+                <!-- Rotacao e opacidade -->
+                <div style="display: flex; align-items: center; gap: 6px; width: 100%; font-size:10px; color:#ccc; font-family:var(--font-mono);">
+                    <span>Rot:</span>
+                    <input type="range" id="stampPopoverRotate" min="-15" max="15" value="-2" style="width:60px; accent-color: var(--accent);" title="Rotação">
+                    <span style="margin-left:6px;">Op:</span>
+                    <input type="range" id="stampPopoverOpacity" min="20" max="100" value="85" style="width:60px; accent-color: var(--accent);" title="Opacidade">
+                </div>
+
                 <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
                 
                 <!-- Ícones -->
@@ -2660,14 +2675,18 @@
                 
                 <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
                 
-                <!-- Ações -->
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
-                    <button class="popover-btn" id="stampPopoverEditBtn" type="button" title="Editar texto do carimbo" style="flex:1; justify-content:center; padding: 4px 8px;">
-                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; margin-right:4px; vertical-align:middle;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                <!-- Acoes -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; flex-wrap: wrap;">
+                    <button class="popover-btn" id="stampPopoverEditBtn" type="button" title="Editar texto do carimbo" style="flex:1; justify-content:center; padding: 4px 6px;">
+                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; margin-right:3px; vertical-align:middle;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         Editar
                     </button>
-                    <button class="popover-btn" id="stampPopoverDeleteBtn" type="button" title="Excluir carimbo" style="flex:1; justify-content:center; padding: 4px 8px; color: var(--accent);">
-                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; margin-right:4px; vertical-align:middle;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    <button class="popover-btn" id="stampPopoverDupBtn" type="button" title="Duplicar carimbo" style="flex:1; justify-content:center; padding: 4px 6px;">
+                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; margin-right:3px; vertical-align:middle;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        Duplicar
+                    </button>
+                    <button class="popover-btn" id="stampPopoverDeleteBtn" type="button" title="Excluir carimbo" style="flex:1; justify-content:center; padding: 4px 6px; color: var(--accent);">
+                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; margin-right:3px; vertical-align:middle;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         Excluir
                     </button>
                 </div>
@@ -2791,6 +2810,44 @@
             hourglass: '<svg class="stamp-icon" data-icon="hourglass" viewBox="0 0 24 24"><path d="M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6v6h12v-6h-.01L18 16l-4-4 4-4-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zM12 11.5l-4-4V4h8v3.5l-4 4z"/></svg>',
             info: '<svg class="stamp-icon" data-icon="info" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
         };
+
+        const DATE_PLACEHOLDER = "[DATA]";
+        const TIME_PLACEHOLDER = "[HORA]";
+        function renderDynamicDate() {
+            const now = new Date();
+            return now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
+        }
+
+        let originalMarkdownContent = "";
+
+        const STAMP_TEMPLATES = [
+            { text: "APROVADO", color: "stamp-green", icon: "check" },
+            { text: "REPROVADO", color: "stamp-red", icon: "cross" },
+            { text: "CANCELADO", color: "stamp-red", icon: "cross" },
+            { text: "DEFERIDO", color: "stamp-green", icon: "check" },
+            { text: "INDEFERIDO", color: "stamp-red", icon: "cross" },
+            { text: "CONFIDENCIAL", color: "stamp-purple", icon: "lock" },
+            { text: "URGENTE", color: "stamp-orange", icon: "warning" },
+            { text: "PRIORITARIO", color: "stamp-orange", icon: "star" },
+            { text: "REVISADO", color: "stamp-blue", icon: "check" },
+            { text: "EM ANALISE", color: "stamp-blue", icon: "hourglass" },
+            { text: "ARQUIVADO", color: "stamp-black", icon: "lock" },
+            { text: "SIGILOSO", color: "stamp-black", icon: "lock" },
+            { text: "VISTO", color: "stamp-blue", icon: "check" },
+            { text: "PUBLICADO", color: "stamp-green", icon: "star" },
+        ];
+
+        function applyStampTemplate(template) {
+            selectedStampColor = template.color;
+            selectedStampIcon = template.icon;
+            stampTextInput.value = template.text;
+            stampMetaInput.value = "";
+            stampIncludeDateCheckbox.checked = false;
+            updateStampPreview();
+            activateStampMode(template.text, "", template.color, template.icon);
+            closeStampCreateModal();
+            showPopoverToast("Carimbo '" + template.text + "' selecionado. Clique no documento para posicionar.");
+        }
 
         function getOrCreateStampHeader(stampEl) {
             let headerEl = stampEl.querySelector(".stamp-header");
@@ -3421,6 +3478,7 @@
                 if (!response.ok || !data.success) { throw new Error(data.error || "Não foi possível converter o conteúdo."); }
                 
                 convertedContent = data.content || "";
+                originalMarkdownContent = convertedContent;
                 applyFormat(convertedContent, data.mode);
                 updateMetrics(convertedContent, data.filename || displayName);
                 setActions(Boolean(convertedContent));
@@ -4508,18 +4566,17 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const rect = outputArea.getBoundingClientRect();
+                 const rect = outputArea.getBoundingClientRect();
                 const x = e.clientX - rect.left + outputArea.scrollLeft;
                 const y = e.clientY - rect.top + outputArea.scrollTop;
 
                 const stampEl = document.createElement("span");
                 stampEl.className = `doc-stamp ${selectedStamp.colorClass || 'stamp-blue'}`;
                 stampEl.setAttribute("contenteditable", "false");
-
-                const stampWidth = 150;
-                const stampHeight = selectedStamp.metaText ? 55 : 40;
-                stampEl.style.left = (x - stampWidth / 2) + "px";
-                stampEl.style.top = (y - stampHeight / 2) + "px";
+                stampEl.style.visibility = "hidden";
+                stampEl.style.position = "absolute";
+                stampEl.style.left = x + "px";
+                stampEl.style.top = y + "px";
 
                 const headerEl = document.createElement("span");
                 headerEl.className = "stamp-header";
@@ -4534,17 +4591,30 @@
                 headerEl.appendChild(titleEl);
                 stampEl.appendChild(headerEl);
 
-                if (selectedStamp.metaText) {
+                const hasDate = selectedStamp.hasDate === true;
+                if (selectedStamp.metaText || hasDate) {
                     const metaEl = document.createElement("span");
                     metaEl.className = "stamp-meta";
-                    metaEl.textContent = selectedStamp.metaText;
+                    let metaStr = selectedStamp.metaText || "";
+                    if (hasDate) {
+                        if (metaStr) metaStr = metaStr.replace("[DATA]", DATE_PLACEHOLDER).replace("[HORA]", TIME_PLACEHOLDER);
+                        else metaStr = renderDynamicDate();
+                    }
+                    metaEl.textContent = metaStr;
                     stampEl.appendChild(metaEl);
+                    if (hasDate) stampEl.setAttribute("data-has-date", "true");
                 }
 
                 makeStampInteractive(stampEl);
                 outputArea.appendChild(stampEl);
 
-                // Salva as alterações
+                const realRect = stampEl.getBoundingClientRect();
+                const stampW = realRect.width || 150;
+                const stampH = realRect.height || 40;
+                stampEl.style.left = (x - stampW / 2) + "px";
+                stampEl.style.top = (y - stampH / 2) + "px";
+                stampEl.style.visibility = "visible";
+
                 convertedContent = outputArea.innerHTML;
 
                 showPopoverToast("Carimbo aplicado!");
@@ -5143,8 +5213,19 @@
                 const deltaX = e.clientX - startX;
                 const deltaY = e.clientY - startY;
 
-                stampEl.style.left = (startLeft + deltaX) + "px";
-                stampEl.style.top = (startTop + deltaY) + "px";
+                let newLeft = startLeft + deltaX;
+                let newTop = startTop + deltaY;
+
+                const containerRect = outputArea.getBoundingClientRect();
+                const stampRect = stampEl.getBoundingClientRect();
+                const stampW = stampRect.width || 150;
+                const stampH = stampRect.height || 40;
+
+                newLeft = Math.max(0, Math.min(newLeft, outputArea.scrollWidth - stampW));
+                newTop = Math.max(0, Math.min(newTop, outputArea.scrollHeight - stampH));
+
+                stampEl.style.left = newLeft + "px";
+                stampEl.style.top = newTop + "px";
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -5204,6 +5285,19 @@
                 stampEl.style.width = newWidth + "px";
                 stampEl.style.height = newHeight + "px";
 
+                const scale = Math.max(0.55, Math.min(newWidth / 150, 2.0));
+                const titleEl = stampEl.querySelector(".stamp-title");
+                const metaEl = stampEl.querySelector(".stamp-meta");
+                const iconEl = stampEl.querySelector(".stamp-icon");
+
+                if (titleEl) titleEl.style.fontSize = Math.round(14 * scale) + "px";
+                if (metaEl) metaEl.style.fontSize = Math.round(8 * scale) + "px";
+                if (iconEl) {
+                    const iconSize = Math.round(16 * scale) + "px";
+                    iconEl.style.width = iconSize;
+                    iconEl.style.height = iconSize;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
             });
@@ -5259,6 +5353,18 @@
             
             stampPopover.classList.add("visible");
             positionStampPopover(stampEl);
+
+            const rSlider = document.getElementById("stampPopoverRotate");
+            const oSlider = document.getElementById("stampPopoverOpacity");
+            if (rSlider) {
+                const tx = stampEl.style.transform || "";
+                const m = tx.match(/rotate\(([-\d]+)deg\)/);
+                rSlider.value = m ? m[1] : "-2";
+            }
+            if (oSlider) {
+                const op = parseFloat(stampEl.style.opacity);
+                oSlider.value = isNaN(op) ? 85 : Math.round(op * 100);
+            }
         }
 
         function hideStampPopover() {
@@ -5335,7 +5441,7 @@
             });
         }
 
-        // Editar texto do carimbo existente
+        // Editar texto do carimbo existente - abre modal pre-preenchido
         stampPopoverEditBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -5343,39 +5449,125 @@
             
             const titleEl = activeStampEl.querySelector(".stamp-title");
             const metaEl = activeStampEl.querySelector(".stamp-meta");
+            const title = titleEl ? titleEl.textContent : "APROVADO";
+            const meta = metaEl ? metaEl.textContent : "";
+            const hasDate = activeStampEl.getAttribute("data-has-date") === "true";
             
-            const newText = prompt("Novo texto principal do carimbo:", titleEl ? titleEl.textContent : "");
-            if (newText === null) return; // cancelado
-            
-            if (titleEl) {
-                titleEl.textContent = newText.trim() || "APROVADO";
+            const colors = ["stamp-blue", "stamp-red", "stamp-green", "stamp-purple", "stamp-orange", "stamp-black"];
+            let currentColor = "stamp-blue";
+            for (const c of colors) {
+                if (activeStampEl.classList.contains(c)) { currentColor = c; break; }
             }
             
-            const currentMeta = metaEl ? metaEl.textContent : "";
-            const newMeta = prompt("Novo subtexto do carimbo (deixe em branco para remover):", currentMeta);
+            const existingIcon = activeStampEl.querySelector(".stamp-icon");
+            const currentIcon = existingIcon ? (existingIcon.getAttribute("data-icon") || "none") : "none";
             
-            if (newMeta !== null) {
-                if (newMeta.trim()) {
-                    if (metaEl) {
-                        metaEl.textContent = newMeta.trim();
-                        metaEl.style.display = "block";
-                    } else {
-                        const newMetaEl = document.createElement("span");
-                        newMetaEl.className = "stamp-meta";
-                        newMetaEl.textContent = newMeta.trim();
-                        const handle = activeStampEl.querySelector(".stamp-resize-handle");
-                        if (handle) activeStampEl.insertBefore(newMetaEl, handle);
-                        else activeStampEl.appendChild(newMetaEl);
+            const stampToEdit = activeStampEl;
+            hideStampPopover();
+            
+            stampTextInput.value = title;
+            stampMetaInput.value = hasDate ? meta.replace(renderDynamicDate(), "").replace(" | ", "").trim() : meta;
+            stampIncludeDateCheckbox.checked = hasDate;
+            selectedStampColor = currentColor;
+            selectedStampIcon = currentIcon;
+            
+            stampColorSelectBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.color === currentColor));
+            if (stampIconSelector) {
+                stampIconSelector.querySelectorAll(".icon-select-btn").forEach(btn => {
+                    btn.classList.toggle("active", (btn.dataset.icon || "none") === currentIcon);
+                });
+            }
+            
+            updateStampPreview();
+            stampCreateModal.classList.add("visible");
+            
+            const oldConfirm = confirmStampBtn.onclick;
+            confirmStampBtn.onclick = () => {
+                stampToEdit.querySelector(".stamp-title").textContent = stampTextInput.value.trim() || "APROVADO";
+                
+                const colorsAll = ["stamp-blue", "stamp-red", "stamp-green", "stamp-purple", "stamp-orange", "stamp-black"];
+                colorsAll.forEach(c => stampToEdit.classList.remove(c));
+                stampToEdit.classList.add(selectedStampColor);
+                
+                const header = getOrCreateStampHeader(stampToEdit);
+                const oldIcon = header.querySelector(".stamp-icon");
+                if (oldIcon) oldIcon.remove();
+                if (selectedStampIcon !== "none" && STAMP_ICONS[selectedStampIcon]) {
+                    header.insertAdjacentHTML("afterbegin", STAMP_ICONS[selectedStampIcon]);
+                }
+                
+                let metaEl2 = stampToEdit.querySelector(".stamp-meta");
+                let newMeta = stampMetaInput.value.trim();
+                if (stampIncludeDateCheckbox.checked) {
+                    stampToEdit.setAttribute("data-has-date", "true");
+                    newMeta = newMeta ? newMeta + " | " + renderDynamicDate() : renderDynamicDate();
+                } else {
+                    stampToEdit.removeAttribute("data-has-date");
+                }
+                if (newMeta) {
+                    if (metaEl2) { metaEl2.textContent = newMeta; }
+                    else {
+                        metaEl2 = document.createElement("span");
+                        metaEl2.className = "stamp-meta";
+                        metaEl2.textContent = newMeta;
+                        const handle = stampToEdit.querySelector(".stamp-resize-handle");
+                        if (handle) stampToEdit.insertBefore(metaEl2, handle);
+                        else stampToEdit.appendChild(metaEl2);
                     }
                 } else {
-                    if (metaEl) metaEl.remove();
+                    if (metaEl2) metaEl2.remove();
                 }
-            }
+                
+                convertedContent = outputArea.innerHTML;
+                closeStampCreateModal();
+                confirmStampBtn.onclick = oldConfirm;
+                showPopoverToast("Carimbo atualizado!");
+            };
             
-            convertedContent = outputArea.innerHTML;
-            hideStampPopover();
-            showPopoverToast("Carimbo atualizado!");
+            setTimeout(() => stampTextInput.focus(), 50);
         });
+
+        // Duplicar carimbo
+        const stampPopoverDupBtn = document.getElementById("stampPopoverDupBtn");
+        if (stampPopoverDupBtn) {
+            stampPopoverDupBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!activeStampEl) return;
+                
+                const clone = activeStampEl.cloneNode(true);
+                const oldLeft = parseInt(activeStampEl.style.left, 10) || 0;
+                const oldTop = parseInt(activeStampEl.style.top, 10) || 0;
+                clone.style.left = (oldLeft + 20) + "px";
+                clone.style.top = (oldTop + 20) + "px";
+                
+                outputArea.appendChild(clone);
+                makeStampInteractive(clone);
+                convertedContent = outputArea.innerHTML;
+                hideStampPopover();
+                showPopoverToast("Carimbo duplicado!");
+            });
+        }
+
+        // Rotacao via popover
+        const stampPopoverRotate = document.getElementById("stampPopoverRotate");
+        const stampPopoverOpacity = document.getElementById("stampPopoverOpacity");
+        if (stampPopoverRotate) {
+            stampPopoverRotate.addEventListener("input", () => {
+                if (!activeStampEl) return;
+                const deg = stampPopoverRotate.value;
+                activeStampEl.style.transform = "rotate(" + deg + "deg)";
+                convertedContent = outputArea.innerHTML;
+            });
+        }
+        if (stampPopoverOpacity) {
+            stampPopoverOpacity.addEventListener("input", () => {
+                if (!activeStampEl) return;
+                const val = parseInt(stampPopoverOpacity.value, 10) / 100;
+                activeStampEl.style.opacity = val;
+                convertedContent = outputArea.innerHTML;
+            });
+        }
 
         // Excluir carimbo
         stampPopoverDeleteBtn.addEventListener("click", (e) => {
@@ -5408,6 +5600,20 @@
                     btn.classList.toggle("active", btn.dataset.icon === "none");
                 });
             }
+
+            const templatesContainer = document.getElementById("stampTemplatesContainer");
+            if (templatesContainer) {
+                templatesContainer.innerHTML = STAMP_TEMPLATES.map(t => {
+                    const colorHex = t.color === "stamp-blue" ? "#2563eb" : t.color === "stamp-red" ? "#dc2626" : t.color === "stamp-green" ? "#16a34a" : t.color === "stamp-purple" ? "#7c3aed" : t.color === "stamp-orange" ? "#ea580c" : "#111";
+                    return `<button type="button" class="stamp-template-btn" data-text="${t.text}" data-color="${t.color}" data-icon="${t.icon}" style="padding:4px 10px; font-family:var(--font-mono); font-size:11px; font-weight:700; border:2px solid ${colorHex}; background:transparent; color:${colorHex}; cursor:pointer; border-radius:3px; transition:all 0.15s;" onmouseover="this.style.background='${colorHex}';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='${colorHex}';">${t.text}</button>`;
+                }).join("");
+                templatesContainer.querySelectorAll(".stamp-template-btn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const t = { text: btn.dataset.text, color: btn.dataset.color, icon: btn.dataset.icon };
+                        applyStampTemplate(t);
+                    });
+                });
+            }
             
             updateStampPreview();
             stampCreateModal.classList.add("visible");
@@ -5423,9 +5629,8 @@
             
             let metaText = stampMetaInput.value.trim();
             if (stampIncludeDateCheckbox.checked) {
-                const now = new Date();
-                const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
-                metaText = metaText ? `${metaText} | ${dateStr}` : dateStr;
+                const datePreview = renderDynamicDate();
+                metaText = metaText ? `${metaText} | ${datePreview}` : datePreview;
             }
             
             if (metaText) {
@@ -5482,19 +5687,23 @@
         confirmStampBtn.addEventListener("click", () => {
             const mainText = stampTextInput.value.trim() || "APROVADO";
             let metaText = stampMetaInput.value.trim();
-            if (stampIncludeDateCheckbox.checked) {
-                const now = new Date();
-                const dateStr = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", {hour: '2-digit', minute:'2-digit'});
-                metaText = metaText ? `${metaText} | ${dateStr}` : dateStr;
-            }
+            const hasDate = stampIncludeDateCheckbox.checked;
             
-            activateStampMode(mainText, metaText, selectedStampColor, selectedStampIcon);
+            activateStampMode(mainText, metaText, selectedStampColor, selectedStampIcon, hasDate);
             closeStampCreateModal();
             showPopoverToast(`Carimbo '${mainText}' selecionado. Clique no documento para posicionar.`);
         });
 
         function initializeExistingStamps() {
-            outputArea.querySelectorAll(".doc-stamp").forEach(makeStampInteractive);
+            outputArea.querySelectorAll(".doc-stamp").forEach(el => {
+                makeStampInteractive(el);
+                if (el.getAttribute("data-has-date") === "true") {
+                    const metaEl = el.querySelector(".stamp-meta");
+                    if (metaEl) {
+                        metaEl.textContent = metaEl.textContent.replace(DATE_PLACEHOLDER, renderDynamicDate()).replace(TIME_PLACEHOLDER, renderDynamicDate());
+                    }
+                }
+            });
         }
 
         function deactivateStampMode() {
@@ -5504,14 +5713,14 @@
             outputArea.style.cursor = "";
         }
 
-        function activateStampMode(text, metaText, colorClass, iconName = "none") {
+        function activateStampMode(text, metaText, colorClass, iconName = "none", hasDate = false) {
             if (penMode) deactivatePen();
             if (eraseMode) {
                 eraseMode = false;
                 if (annotEraseBtn) annotEraseBtn.classList.remove("active");
                 updateOutputAreaCursor();
             }
-            selectedStamp = { text: text, metaText: metaText, colorClass: colorClass, iconName: iconName };
+            selectedStamp = { text: text, metaText: metaText, colorClass: colorClass, iconName: iconName, hasDate: hasDate };
             stampMode = true;
             if (annotStampBtn) annotStampBtn.classList.add("active");
             outputArea.style.cursor = "copy";
@@ -5829,7 +6038,7 @@
                         filename: getActiveFilename(),
                         mode: selectedOption,
                         format: selectedFormat,
-                        markdown: convertedContent,
+                        markdown: originalMarkdownContent || convertedContent,
                         html: outputArea.innerHTML
                     })
                 });
