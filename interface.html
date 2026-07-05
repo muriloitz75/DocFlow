@@ -2002,6 +2002,44 @@
             border: 1px solid var(--ink);
         }
 
+        .dict-source-badge {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 1px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid var(--ink);
+            border-radius: 3px;
+            box-shadow: 1px 1px 0px var(--ink);
+        }
+
+        .dict-source-api {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .dict-source-cache {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .dict-source-offline {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .dict-source-dicio {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .dict-source-wikt {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
         .dict-definitions-list {
             list-style: none;
             padding: 0;
@@ -2032,6 +2070,35 @@
             color: var(--muted);
             font-size: 12px;
         }
+
+        .dict-synonyms, .dict-antonyms {
+            margin-top: 12px;
+            padding: 8px 10px;
+            font-size: 12px;
+            border: var(--border);
+            background: var(--bg);
+            box-shadow: 1px 1px 0px var(--ink);
+        }
+
+        .dict-synonyms, .dict-antonyms strong {
+            color: var(--ink);
+            font-weight: 800;
+            margin-right: 6px;
+        }
+
+        .dict-syn-tag {
+            color: #1565c0;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .dict-syn-tag:hover { text-decoration: underline; }
+
+        .dict-ant-tag {
+            color: #c62828;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .dict-ant-tag:hover { text-decoration: underline; }
 
         .dict-history {
             display: flex;
@@ -2076,6 +2143,26 @@
             .shell { padding: 12px; }
             .brand-title { font-size: 32px; }
             .preview { max-height: 60vh; }
+        }
+
+        @media (max-width: 768px) {
+            .dict-panel {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 85vw;
+                max-width: 380px;
+                z-index: 100;
+            }
+
+            .output-wrapper.dict-open {
+                padding-right: 0;
+            }
+
+            .dict-resize-handle {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -2145,9 +2232,9 @@
                     <div>
                         <label class="settings-label">Modo de saída</label>
                         <div class="segmented" id="modeSegmented" role="tablist" aria-label="Modo de saída">
-                            <button class="segment active" type="button" data-option="standard">Padrão</button>
+                            <button class="segment" type="button" data-option="standard">Padrão</button>
                             <button class="segment" type="button" data-option="compact">Compacto</button>
-                            <button class="segment" type="button" data-option="abnt">ABNT</button>
+                            <button class="segment active" type="button" data-option="abnt">ABNT</button>
                         </div>
                     </div>
                     <div>
@@ -2681,7 +2768,7 @@
 
         let selectedFile = null;
         let activeInputType = "file"; // 'file', 'url', ou 'gazette'
-        let selectedOption = "standard";
+        let selectedOption = "abnt";
         let selectedFormat = "markdown";
         let convertedContent = "";
         let currentZoom = 1.0;
@@ -5875,12 +5962,11 @@
             let text = selection.toString().trim();
             if (!text) return "";
             
-            // Remove pontuação e caracteres especiais ao redor
-            text = text.replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'“«»’‘“”]+|[.,\/#!$%\^&\*;:{}=\-_`~()?"'“«»’‘“”]+$/g, "");
-            
-            // Pega apenas a primeira palavra se houver mais de uma
-            const firstWord = text.split(/\s+/)[0];
-            return firstWord.toLowerCase();
+            text = text.replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'""»'""]+|[.,\/#!$%\^&\*;:{}=\-_`~()?"'""»'""]+$/g, "");
+            if (text.split(/\s+/).length > 3) {
+                text = text.split(/\s+/).slice(0, 3).join(" ");
+            }
+            return text.toLowerCase();
         }
 
         // Ajusta a posição da barra de anotação flutuante para não cobrir o dicionário (barra agora é fixa no rodapé)
@@ -5932,21 +6018,18 @@
         async function searchWord(word) {
             if (!word) return;
             word = word.trim().toLowerCase();
-            
-            // Atualiza o campo de busca manual
+
             if (dictSearchInput) dictSearchInput.value = word;
 
-            // Exibe loader e limpa área de resultados
             dictLoader.style.display = "flex";
             dictResultArea.innerHTML = "";
             openDictPanel();
 
-            // Verifica cache primeiro
             if (dictDefinitionCache[word]) {
                 dictLoader.style.display = "none";
                 const cached = dictDefinitionCache[word];
                 if (cached.results && cached.results.length > 0) {
-                    renderDictionaryResults(word, cached.results, cached.singular);
+                    renderDictionaryResults(word, cached.results, cached.singular, cached.source || 'cache');
                 } else {
                     renderNoWordFound(word, cached.suggestions || []);
                 }
@@ -5956,26 +6039,25 @@
             try {
                 const response = await fetch(`/api/dictionary?word=${encodeURIComponent(word)}`);
                 const data = await response.json();
-                
+
                 dictLoader.style.display = "none";
-                
-                // Salva no cache (resultados ou não encontrados)
+
                 dictDefinitionCache[word] = {
                     results: data.results || [],
                     suggestions: data.suggestions || [],
-                    singular: data.singular || null
+                    singular: data.singular || null,
+                    source: data.source || 'api'
                 };
                 saveDictCache();
 
                 if (data.success && data.results && data.results.length > 0) {
-                    // Adiciona ao histórico se não existir
                     if (!dictHistoryList.includes(word)) {
                         dictHistoryList.unshift(word);
                         if (dictHistoryList.length > 8) dictHistoryList.pop();
                         sessionStorage.setItem("dictHistoryList", JSON.stringify(dictHistoryList));
                     }
-                    
-                    renderDictionaryResults(word, data.results, data.singular);
+
+                    renderDictionaryResults(word, data.results, data.singular, data.source || 'api');
                 } else {
                     renderNoWordFound(word, data.suggestions || []);
                 }
@@ -5986,23 +6068,33 @@
                     <div style="padding: 20px; text-align: center; color: var(--accent);">
                         <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: currentColor; margin-bottom: 12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                         <p style="font-weight: bold; margin-bottom: 8px;">Erro na consulta</p>
-                        <p style="font-size: 12px; color: var(--ink);">Não foi possível conectar ao servidor de dicionário. Tente novamente mais tarde.</p>
+                        <p style="font-size: 12px; color: var(--ink);">Nao foi possivel conectar ao servidor de dicionario. Tente novamente mais tarde.</p>
                     </div>
                 `;
             }
         }
 
         // Renderiza os resultados com estilização Neobrutalista
-        function renderDictionaryResults(word, results, singular) {
+        function renderDictionaryResults(word, results, singular, source) {
+            const sourceLabels = {
+                'api': 'Dicionario pt-BR',
+                'cache': 'Resultado Instantaneo',
+                'dicio': 'Dicio pt-BR',
+                'offline': 'Juridico pt-BR',
+                'wiktionary': 'Wiktionary (misto)'
+            };
+            const sourceLabel = sourceLabels[source] || 'Dicionario pt-BR';
+            const sourceClass = source === 'offline' ? 'dict-source-offline' : (source === 'cache' ? 'dict-source-cache' : (source === 'dicio' ? 'dict-source-dicio' : (source === 'wiktionary' ? 'dict-source-wikt' : 'dict-source-api')));
+            
             let html = `
                 <div class="dict-word-header">
                     <h2 class="dict-word-title">${word}</h2>
+                    <span class="dict-source-badge ${sourceClass}">${sourceLabel}</span>
             `;
             if (singular) {
-                html += `<div style="font-size: 12px; color: var(--accent); font-weight: bold; margin-top: -6px; margin-bottom: 8px; font-family: monospace;">Definição de: ${singular}</div>`;
+                html += `<div style="font-size: 12px; color: var(--accent); font-weight: bold; margin-top: -6px; margin-bottom: 8px; font-family: monospace;">Definicao de: ${singular}</div>`;
             }
             
-            // Agrupa classes gramaticais distintas
             const classes = results
                 .map(r => r.class)
                 .filter((v, i, a) => v && a.indexOf(v) === i);
@@ -6013,9 +6105,8 @@
                 });
             }
             
-            html += `</div>`; // fim header
+            html += `</div>`;
             
-            // Definições agrupadas
             html += `<ul class="dict-definitions-list">`;
             
             results.forEach((res, index) => {
@@ -6031,7 +6122,30 @@
             
             html += `</ul>`;
             
-            // Etimologia se houver
+            const synonyms = results
+                .flatMap(r => r.synonyms || [])
+                .filter((v, i, a) => v && a.indexOf(v) === i);
+            if (synonyms.length > 0) {
+                html += `<div class="dict-synonyms">`;
+                html += `<strong>Sinonimos:</strong> `;
+                synonyms.forEach((syn, i) => {
+                    html += `<span class="dict-syn-tag" onclick="searchWord('${syn.replace(/'/g, "\\\\'")}')">${syn}</span>${i < synonyms.length - 1 ? ', ' : ''}`;
+                });
+                html += `</div>`;
+            }
+
+            const antonyms = results
+                .flatMap(r => r.antonyms || [])
+                .filter((v, i, a) => v && a.indexOf(v) === i);
+            if (antonyms.length > 0) {
+                html += `<div class="dict-antonyms">`;
+                html += `<strong>Antonimos:</strong> `;
+                antonyms.forEach((ant, i) => {
+                    html += `<span class="dict-ant-tag" onclick="searchWord('${ant.replace(/'/g, "\\\\'")}')">${ant}</span>${i < antonyms.length - 1 ? ', ' : ''}`;
+                });
+                html += `</div>`;
+            }
+
             const etymologies = results
                 .map(r => r.etymology)
                 .filter((v, i, a) => v && a.indexOf(v) === i);
@@ -6044,7 +6158,6 @@
                 `;
             }
             
-            // Histórico recente
             if (dictHistoryList.length > 0) {
                 html += `
                     <div class="dict-history">

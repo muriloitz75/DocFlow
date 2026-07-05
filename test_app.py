@@ -1021,6 +1021,218 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(response.json["definitions"][0]["orth"], "Qualificação")
         self.assertIn("Ato ou efeito de qualificar", response.json["definitions"][0]["definitions"])
 
+    def test_dictionary_backend_cache(self):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = '[{"word":"cache","xml":"<entry><form><orth>Cache</orth></form><sense><gramGrp>m.</gramGrp><def>Teste de cache.</def></sense></entry>"}]'.encode("utf-8")
+
+        with unittest.mock.patch("requests.get", return_value=mock_response) as mock_get:
+            with self.client.session_transaction() as sess:
+                sess["logged_in"] = True
+            response1 = self.client.get("/api/dictionary?word=cache")
+            self.assertEqual(response1.status_code, 200)
+            self.assertEqual(response1.json["source"], "api")
+            self.assertEqual(mock_get.call_count, 1)
+
+            response2 = self.client.get("/api/dictionary?word=cache")
+            self.assertEqual(response2.status_code, 200)
+            self.assertEqual(response2.json["source"], "cache")
+            self.assertEqual(mock_get.call_count, 1)
+
+    def test_dictionary_offline_fallback(self):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 500
+
+        with unittest.mock.patch("requests.get", return_value=mock_response):
+            with self.client.session_transaction() as sess:
+                sess["logged_in"] = True
+            response = self.client.get("/api/dictionary?word=imposto")
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json["success"])
+            self.assertEqual(response.json["source"], "offline")
+            self.assertTrue(len(response.json["definitions"]) > 0)
+            self.assertEqual(response.json["definitions"][0]["orth"], "imposto")
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_api_timeout_fallback(self, mock_get):
+        self._clear_dict_cache()
+        import requests as req_lib
+        mock_get.side_effect = req_lib.exceptions.Timeout()
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=imposto")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["source"], "offline")
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_server_error_fallback(self, mock_get):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 503
+        mock_get.return_value = mock_response
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=tributo")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["source"], "offline")
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_multiword_query(self, mock_get):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = '[{"word":"pessoa","xml":"<entry><form><orth>Pessoa</orth></form><sense><gramGrp>f.</gramGrp><def>Ser humano.</def></sense></entry>"}]'.encode("utf-8")
+        mock_get.return_value = mock_response
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=pessoa juridica")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["word"], "pessoa juridica")
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_irregular_plural_exceptions(self, mock_get):
+        self._clear_dict_cache()
+        mock_404 = unittest.mock.Mock()
+        mock_404.status_code = 404
+        mock_200 = unittest.mock.Mock()
+        mock_200.status_code = 200
+        mock_200.content = '[{"word":"mao","xml":"<entry><form><orth>Mao</orth></form><sense><gramGrp>f.</gramGrp><def>Definicao de mao.</def></sense></entry>"}]'.encode("utf-8")
+
+        mock_get.side_effect = [mock_404, mock_200]
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=m%C3%A3os")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertIn(response.json["singular"], [None, "m\u00e3o"])
+        self.assertEqual(response.json["definitions"][0]["orth"], "Mao")
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_invariant_word_not_mangled(self, mock_get):
+        self._clear_dict_cache()
+        mock_404 = unittest.mock.Mock()
+        mock_404.status_code = 404
+        mock_200 = unittest.mock.Mock()
+        mock_200.status_code = 200
+        mock_200.content = '[{"word":"lapis","xml":"<entry><form><orth>Lapis</orth></form><sense><gramGrp>m.</gramGrp><def>Instrumento para escrever.</def></sense></entry>"}]'.encode("utf-8")
+
+        mock_get.side_effect = [mock_404, mock_200]
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=lápis")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_malformed_xml_handled_gracefully(self, mock_get):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = '[{"word":"teste","xml":"<entry><form><orth>Teste</orth></form><malformed>"}]'.encode("utf-8")
+        mock_get.return_value = mock_response
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=teste")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_empty_api_response(self, mock_get):
+        self._clear_dict_cache()
+        mock_response = unittest.mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b'[]'
+        mock_get.return_value = mock_response
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=xyzabc123")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(len(response.json["definitions"]), 0)
+
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_retry_on_server_error(self, mock_get):
+        self._clear_dict_cache()
+        mock_error = unittest.mock.Mock()
+        mock_error.status_code = 500
+        mock_success = unittest.mock.Mock()
+        mock_success.status_code = 200
+        mock_success.content = '[{"word":"retry","xml":"<entry><form><orth>Retry</orth></form><sense><gramGrp>m.</gramGrp><def>Teste de retry.</def></sense></entry>"}]'.encode("utf-8")
+
+        mock_get.side_effect = [mock_error, mock_success]
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=retry")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["source"], "api")
+        self.assertEqual(mock_get.call_count, 2)
+
+    @unittest.mock.patch("app._dicio_fetch_and_parse")
+    @unittest.mock.patch("app._wikt_fetch_and_parse")
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_wiktionary_fallback(self, mock_get, mock_wikt, mock_dicio):
+        self._clear_dict_cache()
+        mock_api = unittest.mock.Mock()
+        mock_api.status_code = 404
+        mock_get.return_value = mock_api
+        mock_wikt.return_value = [{
+            "gram": "substantivo", "class": "substantivo",
+            "definitions": ["def wikt 1", "def wikt 2"],
+            "meanings": ["def wikt 1", "def wikt 2"],
+            "etym": "", "etymology": "", "orth": "wiktword"
+        }]
+        mock_dicio.return_value = None
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=wiktword")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["source"], "wiktionary")
+        mock_wikt.assert_called_once_with("wiktword")
+
+    @unittest.mock.patch("app._dicio_fetch_and_parse")
+    @unittest.mock.patch("app._wikt_fetch_and_parse")
+    @unittest.mock.patch("requests.get")
+    def test_dictionary_dicio_fallback(self, mock_get, mock_wikt, mock_dicio):
+        self._clear_dict_cache()
+        mock_api = unittest.mock.Mock()
+        mock_api.status_code = 404
+        mock_get.return_value = mock_api
+        mock_wikt.return_value = None
+        mock_dicio.return_value = [{
+            "gram": "substantivo feminino", "class": "substantivo feminino",
+            "definitions": ["def dicio 1"],
+            "meanings": ["def dicio 1"],
+            "etym": "Do latim.", "etymology": "Do latim.", "orth": "dicioword"
+        }]
+
+        with self.client.session_transaction() as sess:
+            sess["logged_in"] = True
+        response = self.client.get("/api/dictionary?word=dicioword")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["success"])
+        self.assertEqual(response.json["source"], "dicio")
+        self.assertEqual(response.json["definitions"][0]["etymology"], "Do latim.")
+
+    def _clear_dict_cache(self):
+        import app as webapp
+        with webapp._dict_cache_lock:
+            webapp._dict_cache.clear()
 
 
     @unittest.mock.patch("pdfplumber.open")

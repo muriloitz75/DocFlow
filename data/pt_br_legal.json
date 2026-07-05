@@ -1,0 +1,1642 @@
+{
+  "adiantamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato ou efeito de adiantar; antecipacao de pagamento ou entrega de valor antes do vencimento."]
+  },
+  "aditivo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento que formaliza alteracoes, acrescimos ou supressoes em contrato originalmente pactuado."]
+  },
+  "adjudicacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual o Estado ou a administracao publica atribui a propriedade de um bem a determinada pessoa.", "Ato pelo qual o credor recebe o bem penhorado como forma de pagamento da divida em execucao."]
+  },
+  "agravo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Recurso cabivel contra decisoes interlocutorias proferidas no curso do processo judicial.", "Especie recursal utilizada para impugnar decisoes que nao encerram o processo na primeira instancia."]
+  },
+  "alvara": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento oficial que contem autorizacao, licenca ou ordem emanada de autoridade publica competente."]
+  },
+  "antecipacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de antecipar; tornar algo mais cedo ou antes do prazo previsto em contrato ou legislacao."]
+  },
+  "apelacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Recurso interposto contra sentenca proferida por juiz de primeira instancia, visando a reforma ou anulacao da decisao.", "Meio de impugnacao voluntario que devolve ao tribunal o reexame de materia decidida na sentenca."]
+  },
+  "autarquia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Entidade da administracao publica indireta, com personalidade juridica propria, autonomia administrativa e financeira, criada por lei especifica."]
+  },
+  "averbacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de registrar ou anotar, a margem de um registro publico, alguma alteracao da situacao juridica de pessoa ou bem."]
+  },
+  "absolvicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Decisao judicial que declara o reu inocente da imputacao que lhe foi feita na acao penal."]
+  },
+  "acao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito subjetivo publico de exigir do Estado a prestacao jurisdicional para resolucao de um litigio.", "Instrumento processual pelo qual se invoca a tutela jurisdicional para protecao de um direito."]
+  },
+  "acordao": {
+    "gram": "substantivo masculino",
+    "definitions": ["Decisao proferida por orgao colegiado de tribunal, como camaras, turmas ou plenario."]
+  },
+  "adimplemento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Cumprimento integral e pontual de uma obrigacao contratual ou legal.", "Pagamento ou execucao exata da prestacao devida pelo devedor."]
+  },
+  "admissibilidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Juizo preliminar que verifica se estao presentes os requisitos formais para que um recurso ou acao seja conhecido pelo tribunal."]
+  },
+  "advogado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Profissional do Direito habilitado pela OAB para representar e defender interesses de outrem em juizo ou fora dele."]
+  },
+  "alimentos": {
+    "gram": "substantivo masculino",
+    "definitions": ["Prestacao devida a pessoa que nao pode prover seu proprio sustento, fixada judicialmente com base no binomio necessidade-possibilidade."]
+  },
+  "alvara": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento oficial que contem autorizacao, licenca ou ordem emanada de autoridade publica competente."]
+  },
+  "alienacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de transferir a propriedade de um bem de uma pessoa para outra, a titulo oneroso ou gratuito.", "No direito penal, refere-se a alienacao parental como crime de subtracao de incapaz."]
+  },
+  "anistia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato legislativo que extingue as consequencias penais de determinados crimes, concedendo perdao coletivo e irrestrito."]
+  },
+  "antijuridicidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Contrariedade de um fato a ordem juridica, constituindo um dos elementos do conceito analitico de crime.", "Sinonimo de ilicitude."]
+  },
+  "apelante": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Parte que interpoe recurso de apelacao contra sentenca que lhe foi desfavoravel."]
+  },
+  "apelado": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Parte contraria a que interpos recurso de apelacao, em favor da qual foi proferida a sentenca recorrida."]
+  },
+  "arguicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de alegar ou suscitar questao juridica perante o tribunal.", "Arguição de descumprimento de preceito fundamental: ADPF, ação de controle concentrado de constitucionalidade."]
+  },
+  "arrematacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual o bem penhorado e alienado em leilao ou hasta publica, sendo transferido ao arrematante de maior lance."]
+  },
+  "arresto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Medida cautelar que apreende bens indeterminados do devedor para garantir futura execucao.", "Constricao judicial de bens antes do ajuizamento da acao principal."]
+  },
+  "assistente": {
+    "gram": "substantivo",
+    "definitions": ["Terceiro que ingressa em processo alheio para auxiliar uma das partes, por possuir interesse juridico no resultado da causa."]
+  },
+  "astrentes": {
+    "gram": "substantivo feminino",
+    "definitions": ["Multa cominatoria fixada pelo juiz para compelir o devedor ao cumprimento de obrigacao de fazer ou nao fazer, geralmente por dia de atraso."]
+  },
+  "atenuante": {
+    "gram": "substantivo feminino",
+    "definitions": ["Circunstancia que reduz a pena aplicavel ao condenado, prevista no art. 65 do Codigo Penal.", "Fator de diminuicao da sancao penal na fase de dosimetria da pena."]
+  },
+  "ato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Manifestacao de vontade que produz efeitos juridicos, podendo ser licito (ato juridico) ou ilicito (dano).", "Documento que registra formalmente um acontecimento ou deliberacao."]
+  },
+  "autor": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que propoe a acao judicial, exercendo o direito de acao perante o Poder Judiciario.", "Sujeito ativo do crime no direito penal."]
+  },
+  "autos": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto ordenado de pecas processuais que documentam os atos praticados em um processo judicial."]
+  },
+  "bem": {
+    "gram": "substantivo masculino",
+    "definitions": ["Tudo aquilo que pode ser objeto de direitos, suscetivel de valoracao economica e apropriacao juridica.", "Podem ser moveis, imoveis, corporeos, incorporeos, publicos ou privados."]
+  },
+  "beneficio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Vantagem conferida por lei a determinada pessoa ou categoria, como beneficios previdenciarios, fiscais ou processuais."]
+  },
+  "boa-fe": {
+    "gram": "substantivo feminino",
+    "definitions": ["Principio geral do direito que pressupoe conduta honesta, leal e sincera das partes em uma relacao juridica.", "Conviccao de estar agindo conforme o direito, mesmo que em erro."]
+  },
+  "caducidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda de um direito pelo decurso do prazo fixado em lei ou contrato, sem que tenha havido inercia do titular.", "Extincao de ato administrativo por superveniencia de norma que o torna ilegal."]
+  },
+  "capacidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Aptidao da pessoa para adquirir direitos e contrair obrigacoes na orbita civil.", "Pode ser de direito (todos tem) ou de fato (exige discernimento)."]
+  },
+  "cassacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Anulacao ou revogacao de ato administrativo, licenca, autorizacao ou mandato eletivo por descumprimento de requisitos legais."]
+  },
+  "caucao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Garantia oferecida para assegurar o cumprimento de uma obrigacao, geralmente em dinheiro, titulos ou bens."]
+  },
+  "certidao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Documento expedido por escrivao ou serventuario publico que certifica ou atesta um fato ou situacao juridica constante de registro publico."]
+  },
+  "cessao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de transferir direitos ou obrigacoes de uma pessoa a outra, como cessao de credito ou cessao de posicao contratual."]
+  },
+  "citacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato processual pelo qual o reu e comunicado da existencia de uma acao judicial contra si, sendo convocado para apresentar defesa."]
+  },
+  "clausula": {
+    "gram": "substantivo feminino",
+    "definitions": ["Disposicao ou condicao que compoe um contrato, acordo ou instrumento juridico.", "Clausula penal: disposicao que fixa multa ou penalidade para a parte que descumprir o contrato."]
+  },
+  "coacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Constrangimento fisico ou moral exercido sobre alguem para obriga-lo a praticar ou deixar de praticar determinado ato.", "Vicio do consentimento que torna anulavel o negocio juridico."]
+  },
+  "codigo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto sistematico de normas juridicas que regulam determinada materia de forma organica e abrangente."]
+  },
+  "coisa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Objeto material suscetivel de apropriacao e que possui valor economico.", "Coisa julgada: qualidade da decisao judicial da qual nao cabe mais recurso, tornando-se imutavel e indiscutivel."]
+  },
+  "comarca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Circunscricao territorial sob a jurisdicao de um ou mais juizes de primeira instancia.", "Unidade administrativa judiciaria que compreende um ou mais municipios."]
+  },
+  "cominacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Imposicao legal de uma sancao ou penalidade para o caso de descumprimento de obrigacao.", "Previsao abstrata de pena em lei penal."]
+  },
+  "competencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Medida da jurisdicao que define qual orgao do Poder Judiciario deve processar e julgar determinada causa.", "Delimitacao legal do poder de julgar conferido a cada magistrado ou tribunal."]
+  },
+  "conciliacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Metodo de solucao de conflitos em que um terceiro imparcial auxilia as partes a chegarem a um acordo, podendo sugerir solucoes.", "Fase processual ou pre-processual voltada a autocomposicao do litigio."]
+  },
+  "condenacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Decisao judicial que reconhece a responsabilidade do reu e lhe impoe sancao penal ou civil.", "Conteudo da sentenca que julga procedente o pedido do autor."]
+  },
+  "conducao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de levar coercitivamente alguem a presenca da autoridade.", "No processo penal, conducao coercitiva de testemunha ou investigado."]
+  },
+  "confessao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Admissao da verdade de um fato por uma das partes no processo, desfavoravel a quem confessa.", "Meio de prova no qual o acusado reconhece a autoria do crime."]
+  },
+  "confisco": {
+    "gram": "substantivo masculino",
+    "definitions": ["Apreensao de bens pelo Estado em carater definitivo, sem justa indenizacao, vedada pela Constituicao como regra geral."]
+  },
+  "consignacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Deposito judicial do valor devido pelo devedor quando o credor se recusa a receber ou nao pode ser encontrado.", "Meio de extincao de obrigacao mediante deposito da coisa devida."]
+  },
+  "constituicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Lei fundamental e suprema do Estado, que estabelece a organizacao do poder, direitos e garantias fundamentais.", "Constituicao Federal de 1988: norma suprema do ordenamento juridico brasileiro."]
+  },
+  "consumidor": {
+    "gram": "substantivo masculino",
+    "definitions": ["Toda pessoa fisica ou juridica que adquire ou utiliza produto ou servico como destinatario final.", "Sujeito tutelado pelo Codigo de Defesa do Consumidor, reconhecido como parte vulneravel na relacao de consumo."]
+  },
+  "contagem": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de computar prazos processuais conforme regras estabelecidas no Codigo de Processo Civil ou Penal."]
+  },
+  "contestacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Peca de defesa do reu no processo civil, na qual apresenta suas razoes contra o pedido do autor.", "Principal instrumento de defesa no procedimento comum."]
+  },
+  "contraprestacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pagamento ou obrigacao que uma parte assume em troca da prestacao recebida da outra parte em contrato bilateral."]
+  },
+  "convencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Acordo de vontades entre duas ou mais pessoas visando constituir, regular ou extinguir relacoes juridicas.", "Convencao coletiva de trabalho: acordo entre sindicatos de categorias economica e profissional."]
+  },
+  "convenio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acordo firmado entre entidades publicas ou entre estas e entidades privadas para realizacao de objetivos comuns."]
+  },
+  "correicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Procedimento administrativo de inspecao, fiscalizacao e disciplina dos servicos judiciarios e extrajudiciais realizado pela Corregedoria."]
+  },
+  "correu": {
+    "gram": "substantivo masculino",
+    "definitions": ["Parte que figura em processo judicial ao lado do autor ou do reu, compartilhando da mesma situacao juridica."]
+  },
+  "criminalistica": {
+    "gram": "substantivo feminino",
+    "definitions": ["Disciplina tecnico-cientifica que estuda os vestigios materiais do crime para fins de prova pericial."]
+  },
+  "culpa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Inobservancia do dever objetivo de cuidado, manifestada por imprudencia, negligencia ou impericia.", "Elemento normativo do tipo penal culposo, em que nao ha intencao de produzir o resultado."]
+  },
+  "curador": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa nomeada judicialmente para administrar bens e defender interesses de incapazes ou ausentes.", "Curador especial: advogado nomeado pelo juiz para defender interesses do reu revel ou incapaz."]
+  },
+  "custas": {
+    "gram": "substantivo feminino",
+    "definitions": ["Despesas processuais devidas pela parte ao Estado em razao da prestacao jurisdicional, calculadas conforme tabela legal."]
+  },
+  "dano": {
+    "gram": "substantivo masculino",
+    "definitions": ["Lesao a um bem juridicamente tutelado, podendo ser material (patrimonial) ou moral (extrapatrimonial).", "Pressuposto da responsabilidade civil, consistente na violacao de interesse juridicamente protegido."]
+  },
+  "debate": {
+    "gram": "substantivo masculino",
+    "definitions": ["Fase oral do julgamento perante o Tribunal do Juri, onde acusacao e defesa expoem suas teses perante os jurados."]
+  },
+  "decadencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda do proprio direito potestativo pelo decurso do prazo fixado em lei, extinguindo o direito em si e nao apenas a pretensao."]
+  },
+  "decisao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Manifestacao judicial que resolve questao processual ou de merito, podendo ser interlocutoria, sentenca ou acordao."]
+  },
+  "declaracao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Manifestacao formal de vontade ou de ciencia sobre determinado fato juridico.", "Acao declaratoria: acao que visa obter certeza juridica sobre a existencia ou inexistencia de relacao juridica."]
+  },
+  "decreto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato normativo emanado do Poder Executivo, de competencia privativa do chefe do executivo, destinado a regulamentar leis."]
+  },
+  "defensoria": {
+    "gram": "substantivo feminino",
+    "definitions": ["Instituicao publica que presta assistencia juridica integral e gratuita aos hipossuficientes, prevista na Constituicao Federal.", "Defensoria Publica: orgao essencial a funcao jurisdicional do Estado."]
+  },
+  "delegado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Autoridade policial responsavel pela presidencia do inquerito policial e pela conducao da investigacao criminal na fase pre-processual."]
+  },
+  "denuncia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Peca inicial da acao penal publica, oferecida pelo Ministerio Publico, descrevendo o fato criminoso e suas circunstancias.", "No direito civil, comunicacao de vicio ou defeito ao alienante."]
+  },
+  "denunciante": {
+    "gram": "substantivo",
+    "definitions": ["Pessoa que comunica a autoridade a ocorrencia de um crime, podendo ser o ofendido ou qualquer pessoa do povo."]
+  },
+  "depoimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Declaracao oral prestada por testemunha, parte ou informante perante autoridade judicial ou policial sobre fatos relevantes ao processo."]
+  },
+  "deprecata": {
+    "gram": "substantivo feminino",
+    "definitions": ["Carta precatoria: instrumento pelo qual o juiz de uma comarca solicita a outro juiz de comarca diversa a realizacao de ato processual."]
+  },
+  "desapropriacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Procedimento pelo qual o poder publico transfere a propriedade de um bem particular para o dominio publico, mediante justa e previa indenizacao."]
+  },
+  "despacho": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pronunciamento judicial que da andamento ao processo sem decidir questoes relevantes.", "Ato administrativo decisorio praticado por autoridade publica."]
+  },
+  "detencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pena privativa de liberdade de menor gravidade, cumprida em regime semiaberto ou aberto, sem rigor penitenciario maximo.", "Situacao juridica de quem exerce posse sobre coisa alheia em nome de outrem."]
+  },
+  "detentor": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que exerce posse em nome de outrem, em razao de relacao de dependencia ou subordinacao, sem animus domini."]
+  },
+  "devido": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Aquilo que e obrigatorio, conforme a lei ou contrato.", "Devido processo legal: garantia constitucional que assegura processo justo, com contraditorio e ampla defesa."]
+  },
+  "diligencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato processual realizado por oficial de justica ou autoridade para cumprir determinacao judicial fora da sede do juizo."]
+  },
+  "direito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto de normas juridicas que regulam a conduta humana em sociedade, dotadas de coercibilidade estatal.", "Faculdade ou prerrogativa conferida a pessoa de exigir determinada conduta de outrem."]
+  },
+  "dispensa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual a administracao publica contrata diretamente, sem licitacao, nas hipoteses previstas em lei."]
+  },
+  "dissolucao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Extincao de uma sociedade, pessoa juridica ou vinculo conjugal, com liquidacao do patrimonio social ou partilha de bens."]
+  },
+  "distrato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acordo entre as partes para extinguir um contrato anteriormente firmado, desfazendo os efeitos juridicos produzidos."]
+  },
+  "docacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Valor consignado no orcamento publico para atender a determinada despesa.", "Ato de destinar recursos orcamentarios para fins especificos."]
+  },
+  "dolo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Vontade livre e consciente de praticar o crime ou de assumir o risco de produzi-lo.", "Elemento subjetivo do tipo penal doloso, contraposto a culpa.", "No direito civil, artificio ou manobra enganosa que vicia a vontade do declarante."]
+  },
+  "domicilio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Lugar onde a pessoa estabelece residencia com animo definitivo, sendo o centro de suas relacoes juridicas e obrigacoes."]
+  },
+  "donatario": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que recebe um bem por meio de doacao, sendo o beneficiario da liberalidade do doador."]
+  },
+  "edital": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento que estabelece as regras e condicoes de um certame, concurso ou licitacao publica.", "Meio de comunicacao processual por publicacao em orgao oficial."]
+  },
+  "efeito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Consequencia juridica produzida por um ato ou fato.", "Efeito suspensivo: qualidade do recurso que impede a execucao imediata da decisao recorrida.", "Efeito devolutivo: atributo de todo recurso que devolve a materia ao tribunal para reexame."]
+  },
+  "eficacia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Aptidao da norma juridica para produzir efeitos concretos no mundo dos fatos.", "Capacidade do ato juridico de gerar os efeitos para os quais se destina."]
+  },
+  "emancipacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual o menor adquire capacidade civil antes da maioridade legal, por concessao dos pais, casamento, emprego publico ou estabelecimento comercial."]
+  },
+  "embargos": {
+    "gram": "substantivo masculino",
+    "definitions": ["Recurso judicial ou defesa apresentada pelo executado em processo de execucao.", "Embargos de declaracao: recurso contra decisao judicial que apresenta obscuridade, contradicao, omissao ou erro material.", "Embargos de terceiro: defesa de quem nao e parte no processo mas sofre constricao em seus bens."]
+  },
+  "emenda": {
+    "gram": "substantivo feminino",
+    "definitions": ["Proposta de alteracao do texto de um projeto de lei ou de uma lei em vigor.", "Emenda constitucional: modificacao do texto da Constituicao Federal por procedimento legislativo especial."]
+  },
+  "emolumentos": {
+    "gram": "substantivo masculino",
+    "definitions": ["Taxas ou custas cobradas pelos servicos prestados por notarios e registradores publicos, de natureza tributaria."]
+  },
+  "entidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pessoa juridica de direito publico ou privado, dotada de personalidade juridica propria.", "Entidade familiar: uniao estavel ou familia monoparental reconhecida constitucionalmente."]
+  },
+  "erario": {
+    "gram": "substantivo masculino",
+    "definitions": ["Tesouro publico; conjunto de bens, recursos e valores pertencentes ao Estado.", "Erario publico: patrimonio da administracao publica."]
+  },
+  "erro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Falsa percepcao da realidade que vicia a vontade do agente.", "Erro de tipo: desconhecimento de circunstancia elementar do crime que exclui o dolo.", "Erro de proibicao: desconhecimento da ilicitude do fato."]
+  },
+  "escritura": {
+    "gram": "substantivo feminino",
+    "definitions": ["Documento publico lavrado em cartorio que formaliza um ato ou negocio juridico, como compra e venda de imoveis."]
+  },
+  "estado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa juridica de direito publico que exerce soberania sobre territorio e povo.", "Estado de necessidade: excludente de ilicitude em que o agente sacrifica bem juridico para salvar direito proprio ou alheio de perigo atual."]
+  },
+  "estelionato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Crime contra o patrimonio que consiste em obter vantagem ilicita mediante fraude ou artificio, induzindo a vitima em erro.", "Tipo penal previsto no art. 171 do Codigo Penal."]
+  },
+  "excecao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Defesa processual indireta pela qual o reu alega fatos impeditivos, modificativos ou extintivos do direito do autor.", "Excecao de incompetencia: arguição pela qual se contesta a competencia do juizo."]
+  },
+  "execucao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Fase processual em que se realizam atos materiais para satisfazer o direito reconhecido no titulo judicial ou extrajudicial.", "Execucao penal: cumprimento da pena imposta na sentenca condenatoria."]
+  },
+  "executado": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Aquele contra quem se move a execucao de um titulo judicial ou extrajudicial.", "Devedor na fase de cumprimento de sentenca ou processo de execucao."]
+  },
+  "exequente": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Aquele que promove ou move a execucao de um titulo judicial ou extrajudicial.", "Credor que busca a satisfacao do seu direito na fase executiva do processo."]
+  },
+  "extincao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Cessacao de um direito, obrigacao, processo ou punibilidade.", "Extincao de punibilidade: causas que impedem o Estado de aplicar a sancao penal, como morte do agente, prescricao ou anistia."]
+  },
+  "fato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acontecimento natural ou humano que produz efeitos juridicos independentemente da vontade.", "Fato gerador: situacao definida em lei que faz nascer a obrigacao tributaria.", "Fato tipico: conduta humana que se enquadra na descricao abstrata da lei penal."]
+  },
+  "fazenda": {
+    "gram": "substantivo feminino",
+    "definitions": ["Conjunto de bens e interesses de natureza economica do Estado.", "Fazenda Publica: pessoa juridica de direito publico que representa o Estado em juizo nas questoes fiscais e patrimoniais."]
+  },
+  "fiador": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que se obriga a pagar divida alheia caso o devedor principal nao o faca, em contrato de fianca."]
+  },
+  "fianca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Garantia pessoal em que o fiador assegura o cumprimento de uma obrigacao.", "No processo penal, valor depositado para garantir a liberdade provisoria do acusado."]
+  },
+  "fiducia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Confianca depositada em alguem; no direito, contrato em que o credor recebe a propriedade de um bem como garantia de pagamento."]
+  },
+  "fiscalizacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Atividade administrativa de controle e verificacao do cumprimento de normas legais e regulamentares.", "Exercicio do poder de policia pelo Estado."]
+  },
+  "flagrante": {
+    "gram": "substantivo masculino",
+    "definitions": ["Situacao em que o agente e surpreendido no momento da pratica criminosa, logo apos, ou em circunstancias que indiquem autoria recente."]
+  },
+  "foro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Lugar onde o juiz exerce sua jurisdicao.", "Foro competente: juizo territorialmente adequado para processar e julgar determinada causa.", "Foro privilegiado: prerrogativa de certas autoridades de serem julgadas por tribunais superiores."]
+  },
+  "fraude": {
+    "gram": "substantivo feminino",
+    "definitions": ["Engano, artificio ou ardil empregado para prejudicar terceiro ou obter vantagem ilicita.", "Fraude a execucao: alienacao de bens pelo devedor quando ja havia acao capaz de reduzi-lo a insolvencia.", "Fraude contra credores: alienacao de bens que reduz o devedor a insolvencia antes mesmo de existir acao."]
+  },
+  "fundamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Base juridica ou razao de direito que sustenta um pedido, uma decisao ou uma tese juridica.", "Fundamentacao: exigencia constitucional de que todas as decisoes judiciais sejam motivadas."]
+  },
+  "garantia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Instituto juridico que assegura ao credor a satisfacao de seu credito mediante vinculacao de bens do devedor.", "Garantias fundamentais: direitos previstos na Constituicao que protegem o individuo contra o arbítrio estatal."]
+  },
+  "gratuidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Beneficio da justica gratuita: direito de litigar sem pagar custas processuais e honorarios, concedido a quem comprova insuficiencia de recursos."]
+  },
+  "grau": {
+    "gram": "substantivo masculino",
+    "definitions": ["Instancia ou nivel hierarquico da estrutura do Poder Judiciario.", "Primeiro grau: juiz singular que profere sentenca.", "Segundo grau: tribunais que julgam recursos contra decisoes de primeiro grau."]
+  },
+  "habeas": {
+    "gram": "substantivo masculino",
+    "definitions": ["Habeas corpus: remédio constitucional para proteger o direito de locomocao contra ilegalidade ou abuso de poder.", "Habeas data: acao constitucional para assegurar o conhecimento ou retificacao de informacoes do impetrante em bancos de dados."]
+  },
+  "habilitacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato ou efeito de tornar alguem apto para determinado fim.", "Habilitacao de credito: procedimento pelo qual o credor ingressa em falencia ou inventario para receber seu credito."]
+  },
+  "heranca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Conjunto de bens, direitos e obrigacoes deixados pelo falecido e transmitidos aos herdeiros no momento da morte."]
+  },
+  "herdeiro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que sucede o falecido na totalidade ou em parte de seus bens, direitos e obrigacoes.", "Pode ser legitimo (parente) ou testamentario (instituido por testamento)."]
+  },
+  "hipoteca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito real de garantia que vincula bem imovel ao pagamento de uma divida, sem transferir a posse ao credor."]
+  },
+  "hipossuficiente": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Pessoa em situacao de inferioridade economica, tecnica ou juridica que justifica tratamento protetivo especial, especialmente nas relacoes de consumo e trabalhistas."]
+  },
+  "homologacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato judicial ou administrativo que confirma, ratifica ou aprova ato anterior praticado pelas partes, conferindo-lhe eficacia."]
+  },
+  "honorarios": {
+    "gram": "substantivo masculino",
+    "definitions": ["Remuneracao devida ao advogado pelos servicos prestados, fixada contratualmente ou por arbitramento judicial.", "Honorarios de sucumbencia: verba paga pela parte vencida ao advogado da parte vencedora."]
+  },
+  "ilicito": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Conduta contraria ao ordenamento juridico, que viola norma legal ou contratual.", "Ilicito civil: ato que causa dano a outrem, gerando dever de indenizar.", "Ilicito penal: conduta tipica e antipuridica, punivel com sancao penal."]
+  },
+  "impenhorabilidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Qualidade de bem que nao pode ser objeto de penhora em processo de execucao, por protecao legal.", "Exemplos: bem de familia, salarios, proventos de aposentadoria, ferramentas de trabalho."]
+  },
+  "impetrante": {
+    "gram": "substantivo",
+    "definitions": ["Aquele que impetra mandado de seguranca, habeas corpus, habeas data ou outro remedio constitucional perante o Poder Judiciario."]
+  },
+  "impetrado": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Autoridade contra a qual se impetra mandado de seguranca ou outro remedio constitucional, apontada como responsavel pela ilegalidade ou abuso."]
+  },
+  "imposto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Tributo cuja obrigacao tem por fato gerador uma situacao independente de qualquer atividade estatal especifica, conforme art. 16 do CTN."]
+  },
+  "improbidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato ilicito praticado por agente publico contra a administracao publica, com enriquecimento ilicito, dano ao erario ou violacao de principios."]
+  },
+  "impugnacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato processual pelo qual a parte contesta ou contradiz um pedido, decisao ou ato processual.", "Manifestacao contraria ao cumprimento de sentenca ou a penhora realizada."]
+  },
+  "imputacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Atribuicao a alguem da pratica de um crime ou ato ilicito.", "Imputabilidade: capacidade do agente de compreender o carater ilicito do fato e determinar-se conforme esse entendimento."]
+  },
+  "imovel": {
+    "gram": "substantivo masculino",
+    "definitions": ["Bem que nao pode ser removido sem alteracao de sua substancia, como terrenos e edificacoes.", "Bem imovel: solo com sua superficie e tudo quanto a ele se incorporar natural ou artificialmente."]
+  },
+  "indenizacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Compensacao financeira devida a alguem por dano sofrido ou prejuizo causado por terceiro.", "Ressarcimento pecuniario que visa recompor o patrimonio da vitima ao estado anterior ao dano."]
+  },
+  "indiciado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa contra quem ha indicios suficientes de autoria de crime, conforme atribuido em inquerito policial pelo delegado de policia."]
+  },
+  "indulto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Perdao concedido pelo Presidente da Republica a condenados que preencham determinados requisitos, extinguindo a pena ou parte dela."]
+  },
+  "inexigibilidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Situacao em que a licitacao e considerada legalmente impossivel, permitindo contratacao direta pela administracao.", "Inexigibilidade de conduta diversa: excludente de culpabilidade no direito penal."]
+  },
+  "inquerito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Procedimento administrativo presidido pelo delegado de policia destinado a apurar a autoria e materialidade de crime para subsidiar a acao penal."]
+  },
+  "insolvencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Situacao em que o devedor possui mais dividas do que bens para paga-las.", "Insolvencia civil: estado patrimonial do devedor cujo passivo supera o ativo."]
+  },
+  "instancia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Grau hierarquico da organizacao judiciaria.", "Primeira instancia: juiz singular; segunda instancia: tribunais; instancia extraordinaria: STJ e STF."]
+  },
+  "interdito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acao possessoria que visa proteger a posse contra turbao ou esbulho.", "Interdito proibitorio: acao para impedir que turbao se consume em esbulho."]
+  },
+  "intimacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato processual pelo qual se comunica as partes ou terceiros sobre atos ou termos do processo para que facam ou deixem de fazer algo."]
+  },
+  "isenção": {
+    "gram": "substantivo feminino",
+    "definitions": ["Desoneracao legal de pagamento de tributo ou obrigacao, concedida por lei especifica que define as condicoes e requisitos."]
+  },
+  "juiz": {
+    "gram": "substantivo masculino",
+    "definitions": ["Magistrado investido de jurisdicao para aplicar o direito ao caso concreto, decidindo litigios com imparcialidade e independencia."]
+  },
+  "juizo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Orgao do Poder Judiciario onde o juiz exerce sua funcao jurisdicional.", "Juizo de admissibilidade: analise dos requisitos formais para conhecimento de recurso."]
+  },
+  "jurisdicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Poder-dever estatal de aplicar o direito ao caso concreto, resolvendo litigios de forma definitiva e com força de coisa julgada."]
+  },
+  "jurisprudencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Conjunto de decisoes reiteradas dos tribunais sobre determinada materia, formando orientacao uniforme e servindo de referencia para casos semelhantes."]
+  },
+  "jus": {
+    "gram": "substantivo masculino",
+    "definitions": ["Direito; o que e justo e conforme a lei.", "Jus sanguinis: direito de nacionalidade fundado no vinculo de sangue.", "Jus soli: direito de nacionalidade fundado no local de nascimento."]
+  },
+  "justica": {
+    "gram": "substantivo feminino",
+    "definitions": ["Instituicao encarregada de aplicar a lei e resolver conflitos de interesses.", "Valor supremo do ordenamento juridico que busca dar a cada um o que e seu."]
+  },
+  "lato": {
+    "gram": "adjetivo",
+    "definitions": ["Sentido amplo.", "Lato sensu: expressao latina que designa interpretacao ampla, abrangente e generica de um termo ou conceito juridico."]
+  },
+  "laudo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento tecnico elaborado por perito contendo a descricao detalhada do exame realizado e suas conclusoes.", "Principal peca da prova pericial no processo."]
+  },
+  "legislacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Conjunto de leis, decretos, regulamentos e normas juridicas emanadas do poder competente que disciplinam determinada materia."]
+  },
+  "legitimidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Qualidade de quem possui autorizacao legal para figurar como parte em determinado processo.", "Condicao da acao que vincula o sujeito a pretensao deduzida em juizo."]
+  },
+  "lei": {
+    "gram": "substantivo feminino",
+    "definitions": ["Norma juridica emanada do Poder Legislativo, de carater geral, abstrato e obrigatorio.", "Lei complementar: especie normativa que exige maioria absoluta para aprovacao e regula materias reservadas pela Constituicao."]
+  },
+  "levantamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato de retirar valor depositado em juizo.", "Levantamento de deposito judicial: ato autorizado pelo juiz para que a parte retire valores depositados nos autos."]
+  },
+  "licitacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Procedimento administrativo formal pelo qual a administracao publica seleciona a proposta mais vantajosa para contratos, obras, servicos e compras."]
+  },
+  "litisconsorte": {
+    "gram": "substantivo",
+    "definitions": ["Pessoa que figura ao lado do autor ou do reu em processo judicial, compartilhando interesses e atuando como parte no processo."]
+  },
+  "litigancia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Situacao de quem figura como parte em processo judicial.", "Ma-fe processual que pode gerar sancao por litigancia de ma-fe."]
+  },
+  "litigio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conflito de interesses qualificado por uma pretensao resistida e submetido ao Poder Judiciario para solucao."]
+  },
+  "locacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Contrato pelo qual alguem se obriga a ceder a outrem, por tempo determinado ou nao, o uso e gozo de coisa nao fungivel, mediante retribuicao."]
+  },
+  "lucro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ganho ou vantagem economica obtida de uma atividade, operacao ou investimento.", "Lucros cessantes: aquilo que a vitima razoavelmente deixou de ganhar em razao do dano sofrido."]
+  },
+  "mandado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ordem judicial emanada de autoridade competente para cumprimento de ato processual.", "Mandado de seguranca: remedio constitucional contra ato ilegal ou abusivo de autoridade.", "Mandado de seguranca: mandado de seguranca coletivo impetrado por partido politico, sindicato ou entidade de classe."]
+  },
+  "mandante": {
+    "gram": "substantivo",
+    "definitions": ["Aquele que ordena ou determina a outrem a pratica de crime, respondendo como autor intelectual do delito."]
+  },
+  "mandato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Contrato pelo qual alguem recebe poderes para agir em nome de outrem.", "Periodo de exercicio de cargo eletivo."]
+  },
+  "mediacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Metodo autocompositivo de solucao de conflitos em que um terceiro imparcial facilita o dialogo entre as partes para que elas mesmas construam a solucao."]
+  },
+  "medida": {
+    "gram": "substantivo feminino",
+    "definitions": ["Providencia judicial ou administrativa determinada pela autoridade competente.", "Medida cautelar: providencia urgente para resguardar direito antes ou durante o processo.", "Medida protetiva: determinacao judicial para proteger vitima de violencia domestica."]
+  },
+  "merito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Questao principal discutida no processo, relativa ao direito material reivindicado pelo autor.", "Julgamento de merito: decisao que resolve definitivamente o conflito de interesses."]
+  },
+  "ministerio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ministerio Publico: instituicao permanente e essencial a funcao jurisdicional, encarregada da defesa da ordem juridica, do regime democratico e dos interesses sociais."]
+  },
+  "nulidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Sancao que invalida o ato juridico praticado em desacordo com a lei.", "Nulidade absoluta: vicio grave que pode ser reconhecido de oficio pelo juiz a qualquer tempo.", "Nulidade relativa: vicio que depende de arguição da parte interessada."]
+  },
+  "obrigacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Vinculo juridico pelo qual o devedor se compromete a uma prestacao economicamente apreciavel em favor do credor.", "Obrigacao de fazer, nao fazer, dar coisa certa ou incerta."]
+  },
+  "ofendido": {
+    "gram": "substantivo masculino",
+    "definitions": ["Vitima do crime, que sofre a lesao ao bem juridico protegido pela norma penal."]
+  },
+  "oficial": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Relativo a autoridade publica ou governo.", "Oficial de justica: serventuário encarregado de cumprir mandados, citacoes, intimacoes e penhoras."]
+  },
+  "onus": {
+    "gram": "substantivo masculino",
+    "definitions": ["Peso, encargo ou obrigacao.", "Onus da prova: dever processual atribuido a cada parte de comprovar os fatos que alega."]
+  },
+  "ordenamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto hierarquico e sistematico de normas juridicas que formam a ordem juridica de um pais."]
+  },
+  "outorga": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de conceder, consentir ou autorizar algo, geralmente por parte de autoridade competente."]
+  },
+  "pacto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acordo de vontades entre duas ou mais pessoas visando a producao de efeitos juridicos.", "Pacto antenupcial: convencao entre os nubentes sobre o regime de bens do casamento."]
+  },
+  "parecer": {
+    "gram": "substantivo masculino",
+    "definitions": ["Opiniao tecnica ou juridica emitida por especialista, perito ou orgao consultivo sobre questao submetida a sua analise."]
+  },
+  "parte": {
+    "gram": "substantivo feminino",
+    "definitions": ["Sujeito que figura em um dos polos da relacao juridica processual, como autor ou reu.", "Parte legitima: pessoa que possui legitimidade para figurar em determinado processo."]
+  },
+  "patrimonio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto de bens, direitos e obrigacoes de uma pessoa, fisica ou juridica, suscetivel de valoracao economica."]
+  },
+  "pena": {
+    "gram": "substantivo feminino",
+    "definitions": ["Sancao imposta pelo Estado ao condenado por crime, apos o devido processo legal.", "Pena privativa de liberdade: reclusao ou detencao.", "Pena restritiva de direitos: prestacao de servicos, limitacao de fim de semana, etc."]
+  },
+  "penhora": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato judicial pelo qual se apreendem bens do devedor para garantir o pagamento da divida em execucao.", "Constricao judicial que vincula determinado bem ao processo executivo."]
+  },
+  "perdao": {
+    "gram": "substantivo masculino",
+    "definitions": ["Renuncia pelo ofendido ao direito de queixa ou representacao, extinguindo a punibilidade nos crimes de acao penal privada."]
+  },
+  "pericia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Exame tecnico realizado por especialista para esclarecer fatos ou questoes que demandam conhecimento tecnico-cientifico em processo judicial."]
+  },
+  "peticao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Documento pelo qual a parte formaliza requerimento ao juiz, expondo fatos e fundamentos juridicos em processo judicial."]
+  },
+  "poder": {
+    "gram": "substantivo masculino",
+    "definitions": ["Capacidade juridica de produzir efeitos na esfera de direitos de outrem.", "Poder Judiciario: um dos tres Poderes do Estado, encarregado de julgar e aplicar a lei.", "Poder de policia: atividade estatal de limitacao de direitos em favor do interesse publico."]
+  },
+  "porte": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conducao de arma de fogo ou substancia ilicita, tipificada como crime em determinadas circunstancias."]
+  },
+  "posse": {
+    "gram": "substantivo feminino",
+    "definitions": ["Exercicio de fato de poderes inerentes a propriedade.", "Relacao de fato entre pessoa e coisa que pode ou nao estar amparada por titulo juridico."]
+  },
+  "prazo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Lapso de tempo fixado em lei ou pelo juiz para a pratica de ato processual.", "Prazo processual: intervalo concedido as partes para manifestacao nos autos."]
+  },
+  "preambulo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Parte introdutoria da Constituicao ou de uma lei que enuncia principios e valores fundamentais do texto normativo."]
+  },
+  "precatorio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ordem judicial de pagamento expedida contra a Fazenda Publica em virtude de condenacao judicial transitada em julgado.", "Incluso no orcamento publico do ano seguinte."]
+  },
+  "preclusao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda da faculdade processual de praticar determinado ato em razao do decurso do prazo, ja ter sido praticado ou ser incompativel com outro.", "Fenomeno que impulsiona o processo para frente."]
+  },
+  "preposto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que representa o empregador perante seus empregados ou terceiros, agindo por conta e sob a direcao daquele."]
+  },
+  "prescricao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda da pretensao de exigir judicialmente o cumprimento de um direito pelo decurso do prazo fixado em lei.", "Prescricao penal: perda do direito de punir do Estado pelo decurso do tempo.", "Prescricao intercorrente: prescricao que ocorre durante o curso do proprio processo."]
+  },
+  "presuncao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Aceitacao de um fato como verdadeiro por forca de lei, ate prova em contrario.", "Presuncao de inocencia: garantia constitucional de que ninguem sera considerado culpado ate o transito em julgado da sentenca penal condenatoria."]
+  },
+  "principio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Valor fundamental que orienta o ordenamento juridico.", "Principio da legalidade: ninguem sera obrigado a fazer ou deixar de fazer algo senao em virtude de lei.", "Principio do contraditorio: garantia das partes de serem ouvidas e influenciarem a decisao."]
+  },
+  "pronunciamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato pelo qual o magistrado se manifesta nos autos do processo, proferindo decisao, despacho ou sentenca."]
+  },
+  "protesto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato formal que comprova a inadimplencia ou descumprimento de obrigacao constante em titulo de credito.", "Protesto judicial: medida cautelar para conservar ou ressalvar direitos."]
+  },
+  "prova": {
+    "gram": "substantivo feminino",
+    "definitions": ["Elemento de conviccao destinado a demonstrar a verdade dos fatos alegados em juizo.", "Meios de prova: documental, testemunhal, pericial, inspecao judicial, entre outros."]
+  },
+  "provimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato administrativo pelo qual autoridade superior preenche cargo publico, designando pessoa para seu exercicio.", "Provimento judicial: acolhimento de recurso ou pedido pelo juiz."]
+  },
+  "queixa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Peca inicial da acao penal privada, oferecida pelo ofendido ou seu representante legal.", "Queixa-crime: denuncia do particular nos crimes de acao penal privada."]
+  },
+  "querelante": {
+    "gram": "substantivo",
+    "definitions": ["Ofendido que propoe acao penal privada, oferecendo queixa-crime perante o Poder Judiciario."]
+  },
+  "querelado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa contra quem e oferecida queixa-crime, figurando como reu na acao penal privada."]
+  },
+  "ratificacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de confirmar, validar ou aprovar ato juridico anteriormente praticado, sanando eventuais vicios ou irregularidades."]
+  },
+  "reclamacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Manifestacao de inconformismo contra ato ou decisao.", "Reclamacao constitucional: acao destinada a preservar a competencia e garantir a autoridade das decisoes dos tribunais superiores.", "Reclamacao trabalhista: acao propria da Justica do Trabalho."]
+  },
+  "reconvencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Acao proposta pelo reu contra o autor nos mesmos autos da acao principal, ampliando o objeto do processo."]
+  },
+  "recurso": {
+    "gram": "substantivo masculino",
+    "definitions": ["Meio processual voluntario de impugnacao de decisoes judiciais, visando a reforma, invalidacao ou esclarecimento da decisao."]
+  },
+  "reincidencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Circunstancia agravante da pena em que o agente comete novo crime apos ter sido condenado definitivamente por crime anterior."]
+  },
+  "regime": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto de normas que disciplinam determinada situacao juridica.", "Regime de bens: conjunto de regras sobre o patrimonio dos conjuges no casamento.", "Regime prisional: forma de cumprimento da pena: fechado, semiaberto ou aberto."]
+  },
+  "registro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato de inscrever, matricular ou transcrever situacao juridica em orgao publico competente para dar publicidade e seguranca juridica."]
+  },
+  "reincidencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Circunstancia agravante da pena em que o agente comete novo crime apos transito em julgado de sentenca condenatoria por crime anterior."]
+  },
+  "reparacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Obrigacao de recompor o dano causado a vitima, restaurando o estado anterior ou compensando financeiramente o prejuizo."]
+  },
+  "representacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato juridico pelo qual alguem age em nome de outrem.", "No direito penal, manifestacao de vontade da vitima autorizando a persecucao penal nos crimes de acao penal publica condicionada."]
+  },
+  "requerimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pedido formal dirigido a autoridade administrativa ou judicial solicitando determinada providencia ou reconhecimento de direito."]
+  },
+  "rescindir": {
+    "gram": "verbo",
+    "definitions": ["Desfazer, anular ou extinguir unilateralmente contrato ou negocio juridico em virtude de inadimplemento da outra parte."]
+  },
+  "rescisao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Extincao de contrato por vontade das partes ou por inadimplemento de uma delas.", "Rescisao indireta: extincao do contrato de trabalho por justa causa do empregador."]
+  },
+  "residencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Lugar onde a pessoa mora habitualmente, sendo um dos criterios para fixacao de competencia territorial no processo."]
+  },
+  "responsabilidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Obrigacao juridica de responder por atos proprios ou de terceiros.", "Responsabilidade civil: dever de indenizar dano causado a outrem.", "Responsabilidade penal: sujeicao do agente as sancao penal pela pratica de crime.", "Responsabilidade objetiva: independe de culpa.", "Responsabilidade subjetiva: depende da comprovacao de culpa ou dolo."]
+  },
+  "ressarcimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Reparacao financeira por dano causado ao erario publico ou a terceiro, restituindo ao prejudicado o valor do prejuizo sofrido."]
+  },
+  "reu": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa contra quem e movida acao judicial, figurando no polo passivo da relacao processual.", "Reu primario: aquele que nunca foi condenado definitivamente por crime anterior."]
+  },
+  "revelia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Efeito processual decorrente da ausencia de contestacao do reu, que gera presuncao de veracidade dos fatos alegados pelo autor."]
+  },
+  "revogacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de tornar sem efeito uma lei, decreto, decisao judicial ou ato administrativo anterior, extinguindo sua vigencia ou eficacia."]
+  },
+  "rol": {
+    "gram": "substantivo masculino",
+    "definitions": ["Lista ou relacao enumerativa.", "Rol taxativo: lista fechada, que nao admite ampliacao.", "Rol exemplificativo: lista aberta, que admite inclusao de outras hipoteses analogas."]
+  },
+  "sancao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Consequencia juridica imposta pelo Estado a quem descumpre norma legal, podendo ser penal, civil ou administrativa."]
+  },
+  "sentenca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Decisao judicial que poe fim a fase cognitiva do processo, resolvendo ou nao o merito da causa.", "Sentenca condenatoria: decisao que acolhe o pedido do autor.", "Sentenca absolutoria: decisao que rejeita o pedido do autor ou absolve o reu."]
+  },
+  "sequestro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Medida cautelar de apreensao de bens litigiosos para garantir a futura execucao.", "No direito penal, crime de privacao de liberdade da vitima com fim de obter vantagem como condicao de libertacao."]
+  },
+  "servidao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito real sobre coisa alheia que impoe restricao a um imovel em proveito de outro, pertencente a dono diverso."]
+  },
+  "sigilo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Dever de guardar segredo sobre informacoes confidenciais obtidas em razao da profissao ou do cargo.", "Sigilo profissional: obrigacao etica e legal de advogados, medicos e outras profissoes regulamentadas."]
+  },
+  "sonegacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Crime de ordem tributaria que consiste em suprimir ou reduzir tributo mediante omissao de informacoes ou falsificacao de documentos."]
+  },
+  "substituicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual uma pessoa ou coisa toma o lugar de outra.", "Substituicao tributaria: regime em que o dever de pagar o tributo e atribuido a terceiro vinculado ao fato gerador."]
+  },
+  "sucumbencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Onus da parte vencida em processo judicial de arcar com custas processuais e honorarios advocaticios da parte vencedora."]
+  },
+  "sumula": {
+    "gram": "substantivo feminino",
+    "definitions": ["Enunciado que resume o entendimento consolidado de tribunal sobre materia reiteradamente decidida, orientando a jurisprudencia.", "Sumula vinculante: enunciado do STF que obriga toda a administracao publica e demais orgaos do Judiciario."]
+  },
+  "suspensao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Interrupcao temporaria de um ato, decisao, contrato ou processo.", "Suspensao condicional da pena: sursis, medida que suspende a execucao da pena privativa de liberdade mediante condicoes."]
+  },
+  "taxa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Tributo vinculado a uma contraprestacao estatal especifica, como prestacao de servico publico ou exercicio do poder de policia."]
+  },
+  "termo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento lavrado por autoridade publica para registrar ato ou fato juridico.", "Termo circunstanciado: registro simplificado de infracoes de menor potencial ofensivo."]
+  },
+  "testador": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que dispoe de seus bens por meio de testamento para depois de sua morte."]
+  },
+  "testamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato personalissimo e revogavel pelo qual alguem dispoe de seu patrimonio para depois da morte, conforme os limites da lei."]
+  },
+  "testemunha": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pessoa que depoe em juizo sobre fatos que presenciou ou de que tem conhecimento, prestando compromisso de dizer a verdade."]
+  },
+  "tipo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Descricao abstrata da conduta proibida na lei penal.", "Tipo penal: modelo legal do crime, contendo seus elementos objetivos e subjetivos."]
+  },
+  "titulo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento que representa um direito ou uma obrigacao.", "Titulo executivo: documento que autoriza o inicio da execucao judicial, podendo ser judicial (sentenca) ou extrajudicial (cheque, nota promissoria)."]
+  },
+  "transacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Contrato pelo qual as partes, mediante concessoes reciprocas, encerram ou previnem litigio.", "No direito penal, acordo entre Ministerio Publico e acusado para aplicacao de pena restritiva de direitos."]
+  },
+  "transito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Transito em julgado: qualidade da decisao judicial da qual nao cabe mais recurso, tornando-se imutavel e indiscutivel.", "Coisa julgada formal e material."]
+  },
+  "tribunal": {
+    "gram": "substantivo masculino",
+    "definitions": ["Orgao colegiado do Poder Judiciario encarregado de julgar recursos contra decisoes de primeira instancia.", "Tribunal do Juri: orgao competente para julgar crimes dolosos contra a vida."]
+  },
+  "tributo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Prestacao pecuniaria compulsoria, em moeda ou cujo valor nela se possa exprimir, instituida por lei e cobrada mediante atividade administrativa plenamente vinculada."]
+  },
+  "tutela": {
+    "gram": "substantivo feminino",
+    "definitions": ["Instituto de protecao de menores cujos pais faleceram ou foram destituidos do poder familiar.", "Tutela antecipada: decisao que concede ao autor o proprio direito pretendido antes da sentenca final.", "Tutela cautelar: decisao que resguarda a utilidade do processo."]
+  },
+  "uniao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Entidade federativa que representa a Republica Federativa do Brasil no plano internacional e interno.", "Uniao estavel: entidade familiar formada pela convivencia publica, continua e duradoura com objetivo de constituir familia."]
+  },
+  "usucapiao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Modo de aquisicao da propriedade pela posse prolongada e qualificada de um bem por determinado periodo legal, sem oposicao do proprietario."]
+  },
+  "usufruto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Direito real de usar e fruir temporariamente de um bem alheio, sem alterar sua substancia, cabendo ao nu-proprietario a nua-propriedade."]
+  },
+  "venia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Licenca, permissao ou pedido formal de desculpas, frequentemente usado por magistrados em votos divergentes."]
+  },
+  "vicio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Defeito que invalida ou torna anulavel um ato ou negocio juridico.", "Vicio do consentimento: erro, dolo, coacao, estado de perigo ou lesao.", "Vicio redibitorio: defeito oculto que torna a coisa impropria ao uso."]
+  },
+  "vigencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Periodo em que a lei ou norma juridica esta em vigor, produzindo efeitos e obrigando os destinatarios."]
+  },
+  "visto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Rubrica ou assinatura do juiz em atos processuais.", "Visto do MP: manifestacao do Ministerio Publico nos autos."]
+  },
+  "vitaliciedade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Garantia constitucional de magistrados que impede a perda do cargo senao por decisao judicial transitada em julgado."]
+  },
+  "vitima": {
+    "gram": "substantivo feminino",
+    "definitions": ["Sujeito passivo do crime, titular do bem juridico lesado ou ameacado pela conduta criminosa."]
+  },
+  "avenca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ajuste ou contrato verbal ou escrito de carater nao formal.", "No direito tributario, estimativa de valor de tributo a ser pago periodicamente."]
+  },
+  "antidumping": {
+    "gram": "substantivo masculino",
+    "definitions": ["Medida de defesa comercial que impoe sobretaxa a importacao de produtos vendidos a precos inferiores aos praticados no pais de origem."]
+  },
+  "anexo": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Documento que acompanha e integra outro documento principal, complementando seu conteudo ou servindo como prova."]
+  },
+  "apensamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato de juntar dois ou mais processos em um unico volume para tramitacao conjunta, por haver conexao ou dependencia entre eles."]
+  },
+  "arbitragem": {
+    "gram": "substantivo feminino",
+    "definitions": ["Metodo extrajudicial de solucao de conflitos em que as partes elegem um arbitro imparcial cuja decisao tem forca de sentenca judicial."]
+  },
+  "arguicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de alegar ou suscitar questao juridica perante juiz ou tribunal.", "Ação de controle concentrado de constitucionalidade perante o STF."]
+  },
+  "arquivamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato de guardar documentos publicos ou judiciais em arquivo.", "No processo penal, encerramento do inquerito ou acao penal por falta de provas ou extincao de punibilidade."]
+  },
+  "assento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Registro civil em livro proprio de cartorio.", "Assento de nascimento, casamento ou obito."]
+  },
+  "audiencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Sessao presidida pelo juiz com a presenca das partes, advogados e testemunhas para a pratica de atos processuais.", "Audiencia de custodia: apresentacao do preso em flagrante ao juiz em ate 24 horas."]
+  },
+  "autocomposicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Forma de solucao de conflitos em que as propias partes resolvem a controversia, por transacao, renuncia ou reconhecimento do pedido."]
+  },
+  "cartorio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Serventia extrajudicial que exerce funcoes publicas delegadas, como registro civil, registro de imoveis, notas e protestos."]
+  },
+  "certidao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Documento expedido por escrivao ou serventuario publico que certifica ou atesta um fato ou situacao juridica."]
+  },
+  "circulacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Transferencia da propriedade de titulo de credito por endosso.", "Circulacao de riquezas: fluxo economico tributavel pelo ICMS e outros impostos."]
+  },
+  "cobranca": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de exigir de alguem o pagamento de divida.", "Acao de cobranca: processo judicial movido pelo credor para receber seu credito."]
+  },
+  "codigo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto sistematico de normas que regulam exaustivamente determinada materia.", "Codigo Civil, Codigo Penal, Codigo Tributario, Codigo de Processo Civil, entre outros."]
+  },
+  "colendo": {
+    "gram": "adjetivo",
+    "definitions": ["Termo de tratamento respeitoso dirigido a tribunal, juiz ou orgao colegiado, significando 'digno de veneracao'."]
+  },
+  "comodato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Contrato de emprestimo gratuito de coisa infungivel que deve ser restituida ao final do prazo ajustado."]
+  },
+  "compensacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Modo de extincao de obrigacoes em que duas pessoas sao reciprocamente credoras e devedoras, extinguindo-se os creditos ate onde se compensarem."]
+  },
+  "conciliacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Metodo de solucao de conflitos em que um terceiro imparcial auxilia as partes a chegarem a um acordo, podendo sugerir solucoes."]
+  },
+  "confiscacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Apreensao de bens pelo Estado em carater definitivo e sem contraprestacao, vedada como regra pela Constituicao Federal."]
+  },
+  "constituicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Lei fundamental e suprema do Estado, que organiza o poder politico e estabelece direitos e garantias fundamentais."]
+  },
+  "contencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Litigio ou demanda judicial.", "Delimitacao da materia controvertida nos autos pela peticao inicial e contestacao."]
+  },
+  "contravencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Infração penal de menor potencial ofensivo, punida com prisao simples ou multa, sem o rigor dos crimes.", "Contravencao penal: infracao de menor gravidade definida no Decreto-Lei no 3.688/1941."]
+  },
+  "custodia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Guarda ou detencao de pessoa ou coisa por ordem judicial.", "Prisao cautelar preventiva ou temporaria decretada pelo juiz durante a investigacao ou processo."]
+  },
+  "decreto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato normativo privativo do chefe do Poder Executivo destinado a regulamentar lei ou disciplinar situacao administrativa."]
+  },
+  "deferimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato judicial ou administrativo que concede ou aprova o que foi pedido pela parte interessada."]
+  },
+  "denegacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato judicial ou administrativo que nega ou indefere o pedido formulado pela parte."]
+  },
+  "deposito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Contrato pelo qual o depositario recebe coisa alheia para guarda-la e restitui-la quando exigida.", "Deposito judicial: valor ou bem confiado ao juizo para garantia ou pagamento."]
+  },
+  "descumprimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Violacao ou inobservancia de obrigacao legal, contratual ou ordem judicial.", "Descumprimento de preceito fundamental: violacao de principio constitucional fundamental."]
+  },
+  "desmembramento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Separacao de parte de um processo para tramitar em apartado, preservando a celeridade e a eficiencia processual."]
+  },
+  "despejo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acao judicial proposta pelo locador para retomar a posse do imovel alugado, geralmente por falta de pagamento ou termino do contrato."]
+  },
+  "destituicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de remover alguem de cargo, funcao ou posicao juridica.", "Destituicao do poder familiar: perda do poder familiar por decisao judicial."]
+  },
+  "dilacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Prorrogacao ou adiamento de prazo processual.", "Dilacao probatoria: fase processual destinada a producao de provas."]
+  },
+  "edicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Publicacao e promulgacao de lei ou ato normativo.", "Acao de editar ou publicar ato oficial."]
+  },
+  "efetivacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Concretizacao ou execucao de direito, medida ou decisao.", "Efetivacao de tutela: cumprimento concreto da decisao judicial."]
+  },
+  "embargante": {
+    "gram": "substantivo",
+    "definitions": ["Parte que interpoe embargos de declaracao, embargos a execucao ou embargos de terceiro."]
+  },
+  "embargado": {
+    "gram": "substantivo",
+    "definitions": ["Parte contraria a que interpos embargos, que sofre os efeitos do recurso ou da defesa."]
+  },
+  "ementa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Resumo conciso do conteudo de uma decisao judicial, acordao ou lei, contendo as principais questoes juridicas decididas."]
+  },
+  "enfiteuse": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito real sobre coisa alheia em que o enfiteuta possui dominio util do imovel mediante pagamento de pensao ao senhorio direto."]
+  },
+  "enunciado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Proposicao aprovada em foruns oficiais de juizes ou tribunais sobre a interpretacao de normas juridicas."]
+  },
+  "esbulho": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato de privar alguem da posse de um bem de forma violenta, clandestina ou precaria."]
+  },
+  "estelionatario": {
+    "gram": "substantivo masculino",
+    "definitions": ["Agente que comete o crime de estelionato, obtendo vantagem ilicita mediante fraude."]
+  },
+  "exordial": {
+    "gram": "substantivo feminino",
+    "definitions": ["Peca inicial do processo, que expoe os fundamentos do pedido; sinonimo de peticao inicial."]
+  },
+  "expedicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de emitir ou fazer seguir mandado, oficio ou documento processual para cumprimento."]
+  },
+  "expropriacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de retirar do devedor a propriedade de seus bens para satisfacao do credito exequendo.", "Sinonimo de desapropriacao quando realizada pelo poder publico."]
+  },
+  "extradicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de entrega de pessoa por um Estado a outro Estado requerente para responder a processo penal ou cumprir pena."]
+  },
+  "fato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acontecimento que produz efeitos juridicos.", "Fato juridico: acontecimento natural ou humano que cria, modifica ou extingue direitos.", "Fato tipico: conduta que se enquadra na descricao abstrata de crime."]
+  },
+  "fundacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pessoa juridica de direito privado constituida pela destinacao de patrimonio a fins de interesse social.", "Fundacao publica: entidade da administracao indireta."]
+  },
+  "gracioso": {
+    "gram": "adjetivo",
+    "definitions": ["Relativo a graca, favor ou concessao.", "Recurso gracioso: pedido de reconsideracao dirigido a propria autoridade que proferiu a decisao."]
+  },
+  "habeas": {
+    "gram": "substantivo masculino",
+    "definitions": ["Habeas corpus: remedio constitucional para proteger o direito de locomocao contra ilegalidade ou abuso de poder.", "Habeas data: acao constitucional para acesso ou retificacao de dados pessoais em registros publicos."]
+  },
+  "homologacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato judicial que confirma acordo celebrado entre as partes, conferindo-lhe eficacia de titulo executivo judicial."]
+  },
+  "ilicito": {
+    "gram": "adjetivo e substantivo",
+    "definitions": ["Contrario ao Direito; proibido pela ordem juridica.", "Ato ilicito: conduta que viola norma legal e gera dever de indenizar."]
+  },
+  "imissao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual alguem e investido na posse de um bem por forca de titulo judicial ou legal."]
+  },
+  "imposto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Tributo nao vinculado a qualquer atividade estatal especifica, cuja obrigacao tem por fato gerador situacao independente."]
+  },
+  "imputabilidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Capacidade do agente de compreender o carater ilicito do fato e determinar-se conforme esse entendimento, sendo requisito da culpabilidade penal."]
+  },
+  "incidencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Aplicacao da norma juridica ao fato concreto.", "Incidencia tributaria: subsuncao do fato gerador a hipotese de incidencia tributaria."]
+  },
+  "inconstitucional": {
+    "gram": "adjetivo",
+    "definitions": ["Contrario a Constituicao.", "Lei ou ato normativo que viola preceito ou principio constitucional."]
+  },
+  "indiciamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato do delegado de policia que atribui a alguem a suspeita formal da pratica de crime, com base em indicios de autoria."]
+  },
+  "injuncao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ordem ou mandamento judicial.", "Mandado de injuncao: remedio constitucional contra omissao legislativa que inviabiliza exercicio de direito fundamental."]
+  },
+  "instrucao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Fase processual destinada a producao de provas que fundamentarao a decisao judicial."]
+  },
+  "interdicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Privacao judicial da capacidade de fato de pessoa que nao pode reger sua pessoa ou bens."]
+  },
+  "interesse": {
+    "gram": "substantivo masculino",
+    "definitions": ["Necessidade ou utilidade juridica que justifica a propositura de acao.", "Interesse processual: condicao da acao que se traduz na necessidade e utilidade da tutela jurisdicional."]
+  },
+  "intervencao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ingresso de terceiro em processo alheio.", "Intervencao de terceiros: assistencia, denunciacao da lide, chamamento ao processo, amicus curiae."]
+  },
+  "investigacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Procedimento de apuracao de fatos para esclarecimento de verdade.", "Investigacao criminal: fase pre-processual de colheita de elementos de autoria e materialidade."]
+  },
+  "julgador": {
+    "gram": "substantivo masculino",
+    "definitions": ["Magistrado encarregado de proferir decisoes judiciais, aplicando o direito ao caso concreto."]
+  },
+  "junta": {
+    "gram": "substantivo feminino",
+    "definitions": ["Orgao colegiado administrativo ou judicial.", "Junta comercial: orgao de registro de empresas.", "Junta de conciliacao: orgao da justica trabalhista."]
+  },
+  "lacuna": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ausencia de norma juridica para regular determinada situacao, a ser suprida por analogia, costumes ou principios gerais do direito."]
+  },
+  "latrocinio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Crime de roubo qualificado pelo resultado morte, punido com reclusao de vinte a trinta anos."]
+  },
+  "lavagem": {
+    "gram": "substantivo feminino",
+    "definitions": ["Lavagem de dinheiro: crime de ocultar ou dissimular a origem ilicita de bens ou valores provenientes de crime."]
+  },
+  "legatario": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa beneficiada por legado em testamento, recebendo bem especifico do testador."]
+  },
+  "liberdade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito fundamental de ir e vir e de autonomia pessoal.", "Liberdade provisoria: beneficio concedido ao acusado de responder processo em liberdade mediante condicoes."]
+  },
+  "liquidacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Fase processual que apura o valor da condenacao iliquida.", "Liquidacao de sentenca: procedimento que quantifica o valor devido apos sentenca condenatoria generica."]
+  },
+  "litispendencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Existencia de duas acoes identicas em andamento simultaneo, o que gera extincao da mais recente sem julgamento de merito."]
+  },
+  "lotacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Designacao do servidor publico para exercer suas funcoes em determinada unidade administrativa."]
+  },
+  "magistrado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Juiz ou desembargador investido de jurisdicao para julgar causas e conflitos de interesses."]
+  },
+  "mandamus": {
+    "gram": "substantivo masculino",
+    "definitions": ["Mandado de seguranca; ordem judicial dirigida a autoridade para corrigir ilegalidade ou abuso de poder."]
+  },
+  "matricula": {
+    "gram": "substantivo feminino",
+    "definitions": ["Registro do imovel no Cartorio de Registro de Imoveis que atribui titularidade ao proprietario."]
+  },
+  "moradia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito fundamental social previsto na Constituicao Federal que garante a todos o direito a habitacao digna."]
+  },
+  "notificacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato formal de comunicacao a alguem sobre um fato juridico de seu interesse ou para constituicao em mora."]
+  },
+  "nubente": {
+    "gram": "substantivo",
+    "definitions": ["Pessoa que esta prestes a se casar ou que acaba de contrair matrimonio."]
+  },
+  "ociencia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ciencia informal que o advogado toma de ato processual ao comparecer em cartorio, independentemente de intimacao formal."]
+  },
+  "ombudsman": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ouvidor ou defensor do povo, encarregado de receber reclamacoes contra a administracao publica."]
+  },
+  "oposicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Modalidade de intervencao de terceiro em que o opoente reivindica para si o objeto do litigio disputado por autor e reu."]
+  },
+  "pacto": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acordo de vontades entre duas ou mais pessoas visando produzir efeitos juridicos.", "Pacto antenupcial: convencao sobre o regime de bens no casamento."]
+  },
+  "patrono": {
+    "gram": "substantivo masculino",
+    "definitions": ["Advogado que representa e defende os interesses da parte em processo judicial."]
+  },
+  "peculato": {
+    "gram": "substantivo masculino",
+    "definitions": ["Crime praticado por funcionario publico de apropriar-se de dinheiro, valor ou bem de que tem a posse em razao do cargo."]
+  },
+  "peculio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Montante acumulado de bens ou valores pertencentes a uma pessoa, especialmente para fins previdenciarios ou trabalhistas."]
+  },
+  "penalidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Punicao ou sancao imposta a quem descumpre norma legal, contratual ou ordem judicial."]
+  },
+  "perempcao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda do direito de acao por dar causa a tres extincoes de processo por abandono da causa pelo autor."]
+  },
+  "perito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Especialista nomeado pelo juiz para realizar exame tecnico ou cientifico destinado a esclarecer fatos no processo."]
+  },
+  "permuta": {
+    "gram": "substantivo feminino",
+    "definitions": ["Contrato de troca de bens entre duas pessoas, sem envolver dinheiro, a nao ser para compensacao de valores."]
+  },
+  "persecucao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Persecucao criminal: atividade estatal de apurar crimes e aplicar a lei penal ao infrator, do inquerito a execucao da pena."]
+  },
+  "pletora": {
+    "gram": "substantivo feminino",
+    "definitions": ["Excesso ou superabundancia.", "Pletora de provas: excesso de elementos probatorios nos autos."]
+  },
+  "portaria": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato administrativo de autoridade publica que contem determinacoes, instrucoes ou designacoes.", "Portaria de instauracao de inquerito: ato que da inicio a investigacao criminal."]
+  },
+  "postulacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Atividade de requerer ou pedir em juizo, privativa de advogado habilitado.", "Capacidade de postulacao: aptidao para praticar atos processuais perante o Poder Judiciario."]
+  },
+  "preambulo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Parte introdutoria da Constituicao que enuncia os valores e principios fundamentais do Estado Democratico de Direito."]
+  },
+  "preclusao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Perda da faculdade de praticar ato processual pelo decurso do prazo, pratica anterior ou incompatibilidade logica."]
+  },
+  "pregão": {
+    "gram": "substantivo masculino",
+    "definitions": ["Modalidade de licitacao publica para aquisicao de bens e servicos comuns, realizada por leiloeiro oficial ou pregoeiro."]
+  },
+  "prelibacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Juizo preliminar superficial sobre a admissibilidade da acao, do recurso ou da denuncia."]
+  },
+  "presta": {
+    "gram": "substantivo feminino",
+    "definitions": ["Prestacao: entrega de algo ou realizacao de servico em cumprimento de obrigacao.", "Objeto da obrigacao que o devedor deve cumprir em favor do credor."]
+  },
+  "pretensao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Exigencia de subordinacao de um interesse alheio a um interesse proprio, que pode ser exercida judicialmente."]
+  },
+  "primariedade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Qualidade do agente que nunca foi condenado criminalmente com transito em julgado."]
+  },
+  "provocacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de instigar, incitar ou desafiar alguem.", "No direito penal, circunstancia atenuante ou causa de diminuicao de pena."]
+  },
+  "quorum": {
+    "gram": "substantivo masculino",
+    "definitions": ["Numero minimo de membros presentes necessario para que um orgao colegiado possa deliberar validamente."]
+  },
+  "reabilitacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Reabilitacao criminal: instituto que restaura o status do condenado, retirando anotacoes criminais apos o cumprimento da pena e prazo legal."]
+  },
+  "receptacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Crime de adquirir, receber ou ocultar coisa que se sabe ser produto de crime."]
+  },
+  "relaxamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Relaxamento de prisao: libertacao do preso em flagrante quando a prisao e ilegal."]
+  },
+  "remicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Direito do condenado de reduzir o tempo de prisao pelo trabalho ou estudo durante o cumprimento da pena."]
+  },
+  "remocao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Transferencia de servidor publico de uma lotacao para outra.", "Remocao de bens: deslocamento de coisas de um processo para outro ou para outro local."]
+  },
+  "reparacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Indenizacao ou compensacao por dano causado.", "Obrigacao de reparar o dano decorrente de ato ilicito."]
+  },
+  "requisicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual a autoridade publica solicita formalmente algo a outro ente publico.", "Requisicao de inquerito: determinacao do MP a autoridade policial para instaurar investigacao."]
+  },
+  "retratacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato de desdizer-se, voltar atras em declaracao anterior.", "No direito penal, causa extintiva de punibilidade em crimes contra a honra."]
+  },
+  "revogacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Extincao de ato normativo, administrativo ou negocial por manifestacao de vontade da autoridade ou parte."]
+  },
+  "rogatoria": {
+    "gram": "substantivo feminino",
+    "definitions": ["Carta rogatoria: pedido de cooperacao juridica internacional entre autoridades judiciarias de paises diferentes."]
+  },
+  "sequestro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Medida cautelar de apreensao judicial de bens.", "Crime de privacao de liberdade com fim de obter vantagem como condicao de soltura."]
+  },
+  "serventia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Unidade de servico do Poder Judiciario onde se realizam atos processuais.", "Cartorio ou oficio extrajudicial."]
+  },
+  "sobretaxa": {
+    "gram": "substantivo feminino",
+    "definitions": ["Tributo ou encargo adicional sobre o valor de determinado imposto, taxa ou produto."]
+  },
+  "substabelecimento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato pelo qual o advogado transfere a outro procurador os poderes recebidos do cliente.", "Pode ser com ou sem reserva de poderes."]
+  },
+  "substituicao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ato pelo qual uma pessoa ou coisa ocupa o lugar de outra.", "Substituicao processual: hipotese em que a parte atua em nome proprio na defesa de interesse alheio."]
+  },
+  "sujeito": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que participa de uma relacao juridica como titular de direitos ou obrigacoes.", "Sujeito ativo: autor do crime.", "Sujeito passivo: vitima do crime."]
+  },
+  "terceiro": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que nao faz parte da relacao juridica ou processual original.", "Terceiro de boa-fe: aquele que adquire direito ignorando vicio ou irregularidade anterior."]
+  },
+  "termo": {
+    "gram": "substantivo masculino",
+    "definitions": ["Documento que registra ato ou fato juridico.", "Termo circunstanciado: boletim de ocorrencia detalhado para infracoes de menor potencial ofensivo.", "Termo de ajustamento de conduta: compromisso firmado com o MP para adequar conduta a lei."]
+  },
+  "testemunha": {
+    "gram": "substantivo feminino",
+    "definitions": ["Pessoa chamada a juizo para depor sobre fatos que presenciou ou de que tem conhecimento.", "Testemunha de defesa e testemunha de acusacao."]
+  },
+  "titularidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Qualidade de ser titular de um direito ou obrigacao.", "Titularidade do direito de acao: legitimidade para propor acao judicial."]
+  },
+  "tombamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Ato administrativo que protege o patrimonio historico, cultural ou artistico, restringindo o direito de propriedade."]
+  },
+  "transigir": {
+    "gram": "verbo",
+    "definitions": ["Celebrar transacao, fazendo concessoes reciprocas para resolver ou prevenir litigio."]
+  },
+  "tratado": {
+    "gram": "substantivo masculino",
+    "definitions": ["Acordo internacional celebrado entre Estados soberanos, incorporado ao ordenamento interno por decreto legislativo."]
+  },
+  "turbao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Ofensa a posse que nao chega a privar o possuidor do bem, consistindo em molestia ou embaraço ao exercicio da posse."]
+  },
+  "unanimidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Concordancia de todos os membros de um orgao colegiado sobre determinada decisao."]
+  },
+  "unilateral": {
+    "gram": "adjetivo",
+    "definitions": ["Que envolve ou emana de apenas uma das partes.", "Ato juridico unilateral: testamento, renuncia, promessa de recompensa."]
+  },
+  "urbanidade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Dever processual de tratamento respeitoso e cortes entre todos os sujeitos do processo."]
+  },
+  "usuario": {
+    "gram": "substantivo masculino",
+    "definitions": ["Pessoa que utiliza servico publico ou privado, equiparada a consumidor pelo CDC.", "Usuario de servico publico: titular do direito a prestacao adequada de servicos publicos."]
+  },
+  "vaga": {
+    "gram": "substantivo feminino",
+    "definitions": ["Cargo ou funcao publica disponivel para provimento.", "Posto de trabalho a ser preenchido por concurso publico ou nomeacao."]
+  },
+  "vicio": {
+    "gram": "substantivo masculino",
+    "definitions": ["Defeito, imperfeicao ou irregularidade.", "Vicio de consentimento: erro, dolo, coacao, estado de perigo, lesao.", "Vicio redibitorio: defeito oculto que torna a coisa impropria ao uso."]
+  },
+  "vitaliciedade": {
+    "gram": "substantivo feminino",
+    "definitions": ["Garantia constitucional de magistrados de que so perdera o cargo por decisao judicial transitada em julgado."]
+  },
+  "concusao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Crime de exigir vantagem indevida por parte de funcionario publico em razao da funcao."]
+  },
+  "corrupcao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Corrupcao passiva: crime de solicitar ou receber vantagem indevida por agente publico.", "Corrupcao ativa: crime de oferecer ou prometer vantagem indevida a agente publico."]
+  },
+  "prevaricacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Crime de retardar ou deixar de praticar ato de oficio por interesse ou sentimento pessoal do funcionario publico."]
+  },
+  "advocacia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Atividade profissional exercida por advogado, consistente na defesa de interesses alheios em juizo ou extrajudicialmente."]
+  },
+  "geral": {
+    "gram": "adjetivo",
+    "definitions": ["Advocacia-Geral da Uniao: orgao que representa judicial e extrajudicialmente a Uniao.", "Procuradoria-Geral: orgao que representa o Estado ou Municipio em juizo."]
+  },
+  "procuradoria": {
+    "gram": "substantivo feminino",
+    "definitions": ["Orgao publico encarregado da representacao judicial e consultoria juridica de ente federativo ou entidade publica."]
+  },
+  "quebra": {
+    "gram": "substantivo feminino",
+    "definitions": ["Violacao de sigilo ou garantia.", "Quebra de sigilo bancario, fiscal ou telefonico autorizada judicialmente para fins de investigacao."]
+  },
+  "juridico": {
+    "gram": "adjetivo",
+    "definitions": ["Relativo ao Direito.", "Que esta conforme a lei ou o ordenamento juridico."]
+  },
+  "norma": {
+    "gram": "substantivo feminino",
+    "definitions": ["Regra de conduta imposta pelo Estado aos individuos, dotada de generalidade, abstracao e coercibilidade.", "Norma juridica: comando legal obrigatorio."]
+  },
+  "ordenamento": {
+    "gram": "substantivo masculino",
+    "definitions": ["Conjunto sistematico e hierarquico de normas juridicas que formam a ordem juridica de um pais."]
+  },
+  "vigente": {
+    "gram": "adjetivo",
+    "definitions": ["Que esta em vigor, produzindo efeitos.", "Lei vigente: norma que ja passou pela vacatio legis e esta em plena eficacia."]
+  },
+  "derrogacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Revogacao parcial de uma lei, em que apenas alguns dispositivos perdem a vigencia."]
+  },
+  "abrogacao": {
+    "gram": "substantivo feminino",
+    "definitions": ["Revogacao total de uma lei, em que toda a norma perde a vigencia."]
+  },
+  "vacancia": {
+    "gram": "substantivo feminino",
+    "definitions": ["Periodo entre a publicacao da lei e sua entrada em vigor.", "Vacatio legis: lapso temporal para que a lei se torne obrigatoria."]
+  }
+}

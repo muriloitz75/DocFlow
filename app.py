@@ -10,7 +10,11 @@ import shutil
 import tempfile
 import sys
 import json
+import time
+import threading
 import unicodedata
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 from uuid import uuid4
 from functools import wraps
@@ -61,7 +65,72 @@ app.config["JSON_SORT_KEYS"] = False
 # Inicializar MarkItDown
 md_converter = MarkItDown(enable_plugins=False)
 
-# Cache de diários oficiais — armazenado em disco para compatibilidade com multi-worker
+# Dicionario cache configuracoes e infraestrutura
+DICT_CACHE_TTL = int(os.environ.get("DICT_CACHE_TTL", 86400))
+DICT_CACHE_MAX = int(os.environ.get("DICT_CACHE_MAX", 500))
+DICT_API_TIMEOUT = int(os.environ.get("DICT_API_TIMEOUT", 10))
+DICT_API_MAX_RETRIES = int(os.environ.get("DICT_API_MAX_RETRIES", 1))
+DICT_API_BASE_URL = os.environ.get("DICT_API_BASE_URL", "https://api.dicionario-aberto.net/word")
+
+_dict_cache = {}
+_dict_cache_lock = threading.Lock()
+
+DATA_DIR = os.path.join(BASE_DIR, "data")
+_plural_exceptions = None
+_offline_dict = None
+
+
+def _load_plural_exceptions():
+    global _plural_exceptions
+    if _plural_exceptions is not None:
+        return _plural_exceptions
+    try:
+        path = os.path.join(DATA_DIR, "plural_exceptions.json")
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                _plural_exceptions = json.load(f)
+        else:
+            _plural_exceptions = {}
+    except Exception:
+        _plural_exceptions = {}
+    return _plural_exceptions
+
+
+def _load_offline_dict():
+    global _offline_dict
+    if _offline_dict is not None:
+        return _offline_dict
+    try:
+        path = os.path.join(DATA_DIR, "pt_br_legal.json")
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                _offline_dict = json.load(f)
+        else:
+            _offline_dict = {}
+    except Exception:
+        _offline_dict = {}
+    return _offline_dict
+
+
+def dict_cache_get(key):
+    with _dict_cache_lock:
+        entry = _dict_cache.get(key)
+        if entry and (time.time() - entry["ts"]) < DICT_CACHE_TTL:
+            return entry["data"]
+        elif entry:
+            del _dict_cache[key]
+        return None
+
+
+def dict_cache_set(key, data):
+    with _dict_cache_lock:
+        if len(_dict_cache) >= DICT_CACHE_MAX:
+            oldest = sorted(_dict_cache.items(), key=lambda x: x[1]["ts"])[0][0]
+            del _dict_cache[oldest]
+        _dict_cache[key] = {"data": data, "ts": time.time()}
+
+
+# Cache de diarios oficiais — armazenado em disco para compatibilidade com multi-worker
 GAZETTE_CACHE_DIR = os.path.join(tempfile.gettempdir(), "markitdown-web", "gazette_cache")
 
 
@@ -2333,23 +2402,25 @@ def get_singular_candidates(word):
     word = word.lower().strip()
     if not word or len(word) <= 2:
         return []
-    
+
     candidates = []
-    
-    # 1. Ends in "ões" -> "ão" (e.g., funções -> função)
+
+    exceptions = _load_plural_exceptions()
+    clean_word = word.rstrip("s")
+    if word in exceptions:
+        candidates.append(exceptions[word].lower())
+    if clean_word in exceptions:
+        exc = exceptions[clean_word].lower()
+        if exc not in candidates:
+            candidates.append(exc)
+
     if word.endswith("\u00f5es"):
         candidates.append(word[:-3] + "\u00e3o")
-    
-    # 2. Ends in "ães" -> "ão" or "ã" (e.g., cães -> cão)
     elif word.endswith("\u00e3es"):
         candidates.append(word[:-3] + "\u00e3o")
         candidates.append(word[:-3] + "\u00e3")
-        
-    # 3. Ends in "ns" -> "m" (e.g., homens -> homem)
     elif word.endswith("ns"):
         candidates.append(word[:-2] + "m")
-        
-    # 4. Ends in "is" -> "l" (e.g., animais -> animal, papéis -> papel)
     elif word.endswith("ais"):
         candidates.append(word[:-3] + "al")
     elif word.endswith("\u00e9is") or word.endswith("eis"):
@@ -2360,127 +2431,331 @@ def get_singular_candidates(word):
         candidates.append(word[:-3] + "ul")
     elif word.endswith("is"):
         candidates.append(word[:-2] + "il")
-            
-    # 5. Ends in "res" -> "r", "zes" -> "z", "ses" -> "s", "nes" -> "n"
     elif word.endswith("res") or word.endswith("zes") or word.endswith("ses") or word.endswith("nes"):
         candidates.append(word[:-2])
-        
-    # 6. Default: Ends in "s" -> drop "s" (e.g., serviços -> serviço)
+
     if word.endswith("s") and not word.endswith("ss"):
         candidate = word[:-1]
         if candidate not in candidates:
             candidates.append(candidate)
-            
+
     return candidates
+
+
+WIKTIONARY_API = "https://pt.wiktionary.org/w/api.php"
+DICIO_BASE_URL = "https://www.dicio.com.br"
+
+_WIKT_GRAMMAR_VALID = {
+    "substantivo", "adjetivo", "verbo", "adverbio",
+    "pronome", "preposicao", "conjuncao", "interjeicao",
+    "artigo", "numeral", "sigla", "locucao", "expressao", "abreviatura",
+}
+_WIKT_SKIP = {
+    "pronuncia", "traducao", "traducoes",
+    "verbetes derivados", "etimologia",
+    "paronimos", "homofonos", "referencias",
+    "ligacoes externas", "expressoes", "expressoes com",
+    "no wikcionario", "categoria", "abreviacoes", "forma",
+    "combinacao", "hiperonimos", "hiponimos", "meronimos",
+    "acronimos", "gentilicos", "gentilico", "locucao substantiva",
+    "substantivo derivado", "verbo auxiliar", "ver tambem",
+}
+
+
+def _wikt_parse_grammar(heading):
+    h = heading.lower().strip("=").strip()
+    for key in _WIKT_GRAMMAR_VALID:
+        if key in h:
+            return key
+    return None
+
+
+def _wikt_fetch_and_parse(w):
+    wikt_headers = {
+        "User-Agent": "DocFlow/1.0 (https://github.com; docflow@example.com) Python-requests"
+    }
+    titles_to_try = [w, w.lower(), w.capitalize()]
+
+    for title in titles_to_try:
+        try:
+            params = {
+                "action": "query", "prop": "revisions",
+                "rvprop": "content", "rvslots": "main",
+                "format": "json", "titles": title,
+            }
+            resp = requests.get(WIKTIONARY_API, params=params, headers=wikt_headers, timeout=8)
+            if resp.status_code != 200:
+                continue
+
+            pages = resp.json().get("query", {}).get("pages", {})
+            for page_id, page_data in pages.items():
+                if page_id == "-1":
+                    continue
+                revisions = page_data.get("revisions", [])
+                if not revisions:
+                    continue
+                wikitext = revisions[0].get("slots", {}).get("main", {}).get("*", "")
+                if not wikitext:
+                    continue
+
+                pt_section = re.split(r"\{\{-pt-\}\}", wikitext, maxsplit=1)
+                if len(pt_section) < 2:
+                    continue
+                pt_text = pt_section[1]
+                next_lang = re.search(r"\{\{-\w{2,4}-\}\}", pt_text)
+                if next_lang:
+                    pt_text = pt_text[:next_lang.start()]
+
+                headings = re.findall(r"^(={1,2})(.+?)\1\s*$", pt_text, re.MULTILINE)
+                sections = re.split(r"^(?:={1,2})(?:.+?)(?:={1,2})\s*$", pt_text, flags=re.MULTILINE)
+
+                def _should_skip_heading(hdr_text):
+                    normalized = unicodedata.normalize("NFKD", hdr_text.lower()).encode("ASCII", "ignore").decode("ASCII").strip().strip("=")
+                    for s in _WIKT_SKIP:
+                        if s in normalized:
+                            return True
+                    return False
+
+                def _is_syn_ant(hdr_text):
+                    norm = unicodedata.normalize("NFKD", hdr_text.lower()).encode("ASCII", "ignore").decode("ASCII").strip().strip("=")
+                    if "sinonimo" in norm:
+                        return "syn"
+                    if "antonimo" in norm:
+                        return "ant"
+                    return None
+
+                found_entries = []
+                all_synonyms = []
+                all_antonyms = []
+                for i, section in enumerate(sections):
+                    if i == 0:
+                        gram = None
+                        scope_match = re.search(r"^\s*\{\{([^|}]+)\|pt\}\}", section)
+                        if scope_match:
+                            gram = _wikt_parse_grammar(scope_match.group(1))
+                        syn_ant = None
+                    else:
+                        hdr_info = headings[i - 1] if i - 1 < len(headings) else ("==", "")
+                        hdr_text = hdr_info[1].strip()
+                        gram = _wikt_parse_grammar(hdr_text)
+                        syn_ant = _is_syn_ant(hdr_text)
+                        if gram is None and syn_ant is None:
+                            if _should_skip_heading(hdr_text):
+                                continue
+
+                    def_lines = re.findall(r"^[#*]+(.+?)$", section, re.MULTILINE)
+                    if not def_lines:
+                        continue
+
+                    if syn_ant:
+                        words = []
+                        for line in def_lines:
+                            cleaned = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", line)
+                            cleaned = re.sub(r"\{\{[^}]+\}\}", "", cleaned)
+                            cleaned = cleaned.strip(" .;-\t\n\r,:\"=")
+                            if cleaned and len(cleaned) > 1:
+                                words.append(cleaned)
+                        if syn_ant == "syn":
+                            all_synonyms.extend(words)
+                        else:
+                            all_antonyms.extend(words)
+                        continue
+
+                    defs = []
+                    for line in def_lines:
+                        cleaned = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", line)
+                        cleaned = re.sub(r"\{\{[^}]+\}\}", "", cleaned)
+                        cleaned = re.sub(r"'''(.+?)'''", r"\1", cleaned)
+                        cleaned = cleaned.strip(" .;-\t\n\r,:\"")
+                        if cleaned and len(cleaned) > 2 and not cleaned.startswith("="):
+                            defs.append(cleaned)
+
+                    if defs:
+                        if gram is None:
+                            short_word_count = sum(1 for d in defs if " " not in d and len(d) < 30)
+                            if short_word_count > max(1, len(defs) * 0.5) and len(defs) < 5:
+                                continue
+                        found_entries.append({
+                            "gram": gram or "",
+                            "class": gram or "",
+                            "definitions": defs,
+                            "meanings": defs,
+                            "etym": "",
+                            "etymology": "",
+                            "orth": title,
+                            "synonyms": [],
+                            "antonyms": []
+                        })
+
+                if found_entries:
+                    if all_synonyms:
+                        for fe in found_entries:
+                            fe["synonyms"] = all_synonyms
+                    if all_antonyms:
+                        for fe in found_entries:
+                            fe["antonyms"] = all_antonyms
+                    etym_text = ""
+                    etym_match = re.search(r"\{\{etimologia\|pt\}\}\s*\n+:(.+?)(?:\n\n|\n\{\{|\Z)", pt_text, re.DOTALL)
+                    if not etym_match:
+                        etym_match = re.search(r"==\s*[Ee]timologia\s*==\s*\n+(.+?)(?:\n\n|\n==|\Z)", pt_text, re.DOTALL)
+                    if etym_match:
+                        etym_text = etym_match.group(1).strip()
+                        etym_text = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", r"\1", etym_text)
+                        etym_text = re.sub(r"\{\{[^}]+\}\}", "", etym_text)
+                        for fe in found_entries:
+                            fe["etym"] = etym_text
+                            fe["etymology"] = etym_text
+
+                    return found_entries
+
+            break
+        except Exception as exc:
+            print(f"Wiktionary fetch error for '{title}': {exc}")
+            continue
+
+    return None
+
+
+def _dicio_fetch_and_parse(w):
+    try:
+        url = f"{DICIO_BASE_URL}/{w.lower()}"
+        resp = requests.get(url, timeout=8, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml"
+        })
+        if resp.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        sig_p = soup.find("p", class_=lambda c: c and "significado" in c)
+        if not sig_p:
+            return None
+
+        sig_spans = sig_p.find_all("span")
+        if not sig_spans:
+            sig_text = sig_p.get_text(" ", strip=True)
+            if not sig_text:
+                return None
+            sig_spans = [BeautifulSoup(f"<span>{sig_text}</span>", "html.parser").span]
+
+        gram = ""
+        first_text = sig_spans[0].get_text(strip=True) if sig_spans else ""
+        if re.search(r"substantivo|adjetivo|verbo|adv[eé]rbio|pronome|conjun[cç][aã]o|interjei[cç][aã]o|artigo|numeral", first_text, re.IGNORECASE):
+            gram = first_text
+            def_spans = sig_spans[1:]
+        else:
+            def_spans = sig_spans
+
+        gram_el = soup.find("p", class_=lambda c: c and "adicional" in c)
+        if not gram and gram_el:
+            gram_b = gram_el.find("b")
+            if gram_b:
+                gram = gram_b.get_text(strip=True)
+            else:
+                match = re.search(r"Classe gramatical:\s*(.+)", gram_el.get_text(" ", strip=True), re.IGNORECASE)
+                if match:
+                    gram = match.group(1).strip()
+
+        defs = []
+        for span in def_spans:
+            txt = span.get_text(" ", strip=True)
+            if txt and len(txt) > 5:
+                txt = re.sub(r"^\s*\[[^\]]+\]\s*", "", txt)
+                if txt and not re.search(r"^(substantivo|adjetivo|verbo|adv[eé]rbio|pronome|conjun[cç][aã]o|interjei[cç][aã]o|numeral|artigo|locu[cç][aã]o|express[aã]o)", txt, re.IGNORECASE):
+                    if not re.search(r"^(Etimologia|origem da palavra)", txt, re.IGNORECASE):
+                        defs.append(txt)
+
+        etym = ""
+        etym_full = soup.find(string=re.compile(r"Etimologia", re.IGNORECASE))
+        if etym_full:
+            parent = etym_full.parent
+            if parent:
+                raw = parent.get_text(" ", strip=True)
+                etym = re.sub(r"^.*?Etimologia\s*(?:\(origem da palavra[^)]*\))?[.\s]*", "", raw, flags=re.IGNORECASE).strip()
+
+        found_entry = {
+            "gram": gram,
+            "class": gram,
+            "definitions": defs,
+            "meanings": defs,
+            "etym": etym,
+            "etymology": etym,
+            "orth": w,
+            "synonyms": [],
+            "antonyms": []
+        }
+
+        syn_p = soup.find("p", class_="adicional sinonimos")
+        if syn_p:
+            syn_links = syn_p.find_all("a")
+            found_entry["synonyms"] = [a.get_text(strip=True) for a in syn_links if a.get_text(strip=True)]
+
+        if defs:
+            return [found_entry]
+        return None
+    except Exception as exc:
+        print(f"Dicio fetch error for '{w}': {exc}")
+        return None
 
 
 @app.route("/api/dictionary", methods=["GET"])
 @login_required
 def get_dictionary_definition():
-    """Proxy route to fetch word definition from api.dicionario-aberto.net using Latin-1 decoding to prevent glitches."""
     word = request.args.get("word", "").strip()
     if not word:
         return jsonify({"success": False, "error": "Nenhuma palavra fornecida."}), 400
-        
-    # Basic cleaning of the word: keep only letters, remove punctuation
-    word_clean = re.sub(r"[^\w\s-]", "", word).strip()
-    if not word_clean or " " in word_clean:
-        return jsonify({"success": False, "error": "Forneça apenas uma única palavra para busca."}), 400
-        
-    try:
-        import requests
-        from bs4 import BeautifulSoup
-        
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        
-        def fetch_word_from_api(w):
-            w_url = f"https://api.dicionario-aberto.net/word/{w.lower()}"
-            try:
-                res = requests.get(w_url, headers=headers, timeout=10)
-                if res.status_code == 200:
-                    try:
-                        raw_text = res.content.decode("utf-8")
-                        data = json.loads(raw_text)
-                        if data and isinstance(data, list):
-                            return data, w
-                    except Exception:
-                        try:
-                            data = res.json()
-                            if data and isinstance(data, list):
-                                return data, w
-                        except Exception:
-                            pass
-            except Exception:
-                pass
-            return None, w
 
-        entries_data, matched_word = fetch_word_from_api(word_clean)
-        
-        # If the word failed or returned empty, try singular candidates
-        if not entries_data:
-            candidates = get_singular_candidates(word_clean)
-            for cand in candidates:
-                entries_data, matched_word = fetch_word_from_api(cand)
-                if entries_data:
-                    break
-        
-        if not entries_data or not isinstance(entries_data, list):
-            return jsonify({
-                "success": True, 
-                "word": word_clean, 
-                "definitions": [], 
-                "message": f"A palavra '{word_clean}' não foi encontrada no dicionário."
-            })
-            
+    word_clean = re.sub(r"[^\w\s-]", "", word).strip()
+    if not word_clean:
+        return jsonify({"success": False, "error": "Nenhuma palavra válida fornecida."}), 400
+
+    is_compound = " " in word_clean
+    words_to_try = word_clean.split() if is_compound else [word_clean]
+
+    GRAM_MAP = {
+        "m": "substantivo masculino", "m.": "substantivo masculino",
+        "f": "substantivo feminino", "f.": "substantivo feminino",
+        "s.m.": "substantivo masculino", "s.f.": "substantivo feminino",
+        "adj": "adjetivo", "adj.": "adjetivo",
+        "v": "verbo", "v.": "verbo",
+        "adv": "adverbio", "adv.": "adverbio",
+        "num": "numeral", "num.": "numeral",
+        "prep": "preposicao", "prep.": "preposicao",
+        "conj": "conjuncao", "conj.": "conjuncao",
+        "pron": "pronome", "pron.": "pronome",
+        "interj": "interjeicao", "interj.": "interjeicao",
+        "art": "artigo", "art.": "artigo",
+        "s2g": "substantivo de dois generos",
+    }
+
+    def _gram_friendly(gram):
+        key = gram.lower().strip(" .")
+        return GRAM_MAP.get(key, gram)
+
+    def _parse_xml_entries(entries_data, matched_word, source="api"):
         parsed_entries = []
         for entry in entries_data:
             if not entry.get("xml"):
                 continue
-                
             try:
                 soup = BeautifulSoup(entry["xml"], "xml")
-                
-                # Extract Orthography
                 orth_el = soup.find("orth")
-                orth = orth_el.text.strip() if orth_el else entry.get("word", word_clean)
-                
-                # Extract Grammatical Class
+                orth = orth_el.text.strip() if orth_el else entry.get("word", matched_word)
                 gram_el = soup.find("gramGrp")
                 gram = gram_el.text.strip() if gram_el else ""
-                
-                # Map standard abbreviations to friendly Portuguese names
-                gram_friendly = gram
-                gram_lower = gram.lower().strip(" .")
-                if gram_lower == "m":
-                    gram_friendly = "substantivo masculino"
-                elif gram_lower == "f":
-                    gram_friendly = "substantivo feminino"
-                elif gram_lower == "adj":
-                    gram_friendly = "adjetivo"
-                elif gram_lower == "v":
-                    gram_friendly = "verbo"
-                elif gram_lower == "adv":
-                    gram_friendly = "advérbio"
-                
-                # Extract Etymology
+                gram_friendly = _gram_friendly(gram)
                 etym_el = soup.find("etym")
                 etym = etym_el.text.strip() if etym_el else ""
-                # Clean Markdown-like syntax from etymology (e.g. Lat. _tributum_)
                 etym = re.sub(r"_(.+?)_", r"*\1*", etym)
-                
-                # Extract Definitions
                 def_el = soup.find("def")
                 defs = []
                 if def_el:
-                    # Definitions are typically separated by newlines
                     lines = def_el.text.strip().split("\n")
                     for line in lines:
                         cleaned_line = line.strip(" .;-\t\n\r")
                         if cleaned_line:
                             defs.append(cleaned_line)
-                            
                 parsed_entries.append({
                     "orth": orth,
                     "gram": gram_friendly,
@@ -2493,20 +2768,220 @@ def get_dictionary_definition():
             except Exception as parse_err:
                 print(f"Error parsing dictionary XML: {parse_err}")
                 continue
-                
-        return jsonify({
+        return {
             "success": True,
             "word": word_clean,
             "singular": matched_word if matched_word != word_clean else None,
             "definitions": parsed_entries,
-            "results": parsed_entries
+            "results": parsed_entries,
+            "source": source
+        }
+
+    def _lookup_offline(w):
+        offline = _load_offline_dict()
+        key = w.lower().strip()
+        if key in offline:
+            entry = offline[key]
+            return [{
+                "orth": key,
+                "gram": _gram_friendly(entry["gram"]),
+                "class": _gram_friendly(entry["gram"]),
+                "definitions": entry["definitions"],
+                "meanings": entry["definitions"],
+                "etym": entry.get("etym", ""),
+                "etymology": entry.get("etymology", entry.get("etym", ""))
+            }]
+        return None
+
+    def _fetch_word_from_api(w):
+        cached = dict_cache_get(w.lower())
+        if cached is not None:
+            return cached, w, "cache"
+
+        w_url = f"{DICT_API_BASE_URL}/{w.lower()}"
+
+        last_error = None
+        for attempt in range(DICT_API_MAX_RETRIES + 1):
+            try:
+                res = requests.get(w_url, headers=headers, timeout=DICT_API_TIMEOUT)
+                if res.status_code == 200:
+                    try:
+                        raw_text = res.content.decode("utf-8")
+                        data = json.loads(raw_text)
+                    except Exception:
+                        data = res.json()
+                    if data and isinstance(data, list):
+                        dict_cache_set(w.lower(), data)
+                        return data, w, "api"
+                    last_error = "empty_response"
+                elif res.status_code == 404:
+                    last_error = "not_found"
+                    break
+                elif res.status_code >= 500:
+                    last_error = f"server_error_{res.status_code}"
+                else:
+                    last_error = f"http_{res.status_code}"
+            except requests.exceptions.Timeout:
+                last_error = "timeout"
+            except requests.exceptions.ConnectionError:
+                last_error = "connection_error"
+                break
+            except Exception as exc:
+                last_error = f"network_error: {exc}"
+
+            if attempt < DICT_API_MAX_RETRIES:
+                time.sleep(0.5)
+
+        return None, w, f"error:{last_error}"
+
+    def _try_wiktionary(w, source_label="wiktionary"):
+        cached = dict_cache_get(f"wikt:{w.lower()}")
+        if cached is not None:
+            return [{
+                "orth": w,
+                "gram": cached.get("gram", ""),
+                "class": cached.get("class", ""),
+                "definitions": cached.get("definitions", []),
+                "meanings": cached.get("definitions", []),
+                "etym": cached.get("etym", ""),
+                "etymology": cached.get("etymology", ""),
+                "synonyms": cached.get("synonyms", []),
+                "antonyms": cached.get("antonyms", [])
+            }] if cached.get("definitions") else None
+
+        entries = _wikt_fetch_and_parse(w)
+        if entries and entries[0].get("definitions"):
+            dict_cache_set(f"wikt:{w.lower()}", entries[0])
+            return entries
+        return None
+
+    def _try_dicio(w, source_label="dicio"):
+        cached = dict_cache_get(f"dicio:{w.lower()}")
+        if cached is not None:
+            return [{
+                "orth": w,
+                "gram": cached.get("gram", ""),
+                "class": cached.get("class", ""),
+                "definitions": cached.get("definitions", []),
+                "meanings": cached.get("definitions", []),
+                "etym": cached.get("etym", ""),
+                "etymology": cached.get("etymology", ""),
+                "synonyms": cached.get("synonyms", []),
+                "antonyms": cached.get("antonyms", [])
+            }] if cached.get("definitions") else None
+
+        entries = _dicio_fetch_and_parse(w)
+        if entries and entries[0].get("definitions"):
+            dict_cache_set(f"dicio:{w.lower()}", entries[0])
+            return entries
+        return None
+
+    def _make_dict_response(entries, matched_word, source):
+        return {
+            "success": True,
+            "word": word_clean,
+            "singular": matched_word if matched_word != word_clean else None,
+            "definitions": entries,
+            "results": entries,
+            "source": source
+        }
+
+    try:
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        for w in words_to_try:
+            entries_data, matched_word, source = _fetch_word_from_api(w)
+            if entries_data:
+                return jsonify(_parse_xml_entries(entries_data, matched_word, source))
+
+            candidates = get_singular_candidates(w)
+            for cand in candidates:
+                entries_data, matched_word, source = _fetch_word_from_api(cand)
+                if entries_data:
+                    return jsonify(_parse_xml_entries(entries_data, matched_word, source))
+
+        for w in words_to_try:
+            dicio_entries = _try_dicio(w)
+            if dicio_entries:
+                return jsonify(_make_dict_response(dicio_entries, w, "dicio"))
+
+            candidates = get_singular_candidates(w)
+            for cand in candidates:
+                dicio_entries = _try_dicio(cand)
+                if dicio_entries:
+                    return jsonify(_make_dict_response(dicio_entries, cand, "dicio"))
+
+        for w in words_to_try:
+            wikt_entries = _try_wiktionary(w)
+            if wikt_entries:
+                return jsonify(_make_dict_response(wikt_entries, w, "wiktionary"))
+
+            candidates = get_singular_candidates(w)
+            for cand in candidates:
+                wikt_entries = _try_wiktionary(cand)
+                if wikt_entries:
+                    return jsonify(_make_dict_response(wikt_entries, cand, "wiktionary"))
+
+        offline_data = _lookup_offline(word_clean)
+        if offline_data:
+            return jsonify({
+                "success": True,
+                "word": word_clean,
+                "singular": None,
+                "definitions": offline_data,
+                "results": offline_data,
+                "source": "offline"
+            })
+
+        if is_compound:
+            all_results = []
+            for w in words_to_try:
+                offline = _lookup_offline(w)
+                if offline:
+                    all_results.extend(offline)
+            if all_results:
+                return jsonify({
+                    "success": True,
+                    "word": word_clean,
+                    "singular": None,
+                    "definitions": all_results,
+                    "results": all_results,
+                    "source": "offline"
+                })
+
+            return jsonify({
+                "success": True,
+                "word": word_clean,
+                "definitions": [],
+                "message": f"A expressao '{word_clean}' nao foi encontrada no dicionario."
+            })
+
+        return jsonify({
+            "success": True,
+            "word": word_clean,
+            "definitions": [],
+            "message": f"A palavra '{word_clean}' nao foi encontrada no dicionario."
         })
-        
+
     except Exception as e:
+        offline_data = _lookup_offline(word_clean)
+        if offline_data:
+            return jsonify({
+                "success": True,
+                "word": word_clean,
+                "singular": None,
+                "definitions": offline_data,
+                "results": offline_data,
+                "source": "offline"
+            })
+
         print(f"Error in dictionary proxy: {e}")
         return jsonify({
             "success": False,
-            "error": f"Erro ao acessar o dicionário: {str(e)}"
+            "error": f"Erro ao acessar o dicionario: {str(e)}"
         }), 500
 
 
