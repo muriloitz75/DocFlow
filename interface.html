@@ -2132,6 +2132,19 @@
         }
         .dict-syn-tag:hover { text-decoration: underline; }
 
+        .dict-syn-group {
+            margin-top: 4px;
+            padding-left: 4px;
+            font-size: 11px;
+            line-height: 1.7;
+            color: var(--ink);
+        }
+        .dict-syn-group em {
+            color: var(--muted);
+            font-style: normal;
+            font-weight: 700;
+        }
+
         .dict-ant-tag {
             color: #c62828;
             cursor: pointer;
@@ -6161,16 +6174,32 @@
             
             html += `</ul>`;
             
-            const synonyms = results
-                .flatMap(r => r.synonyms || [])
+            const synonymGroups = results
+                .flatMap(r => r.synonym_groups || [])
                 .filter((v, i, a) => v && a.indexOf(v) === i);
-            if (synonyms.length > 0) {
+            if (synonymGroups.length > 0) {
                 html += `<div class="dict-synonyms">`;
-                html += `<strong>Sinonimos:</strong> `;
-                synonyms.forEach((syn, i) => {
-                    html += `<span class="dict-syn-tag" onclick="searchWord('${syn.replace(/'/g, "\\\\'")}')">${syn}</span>${i < synonyms.length - 1 ? ', ' : ''}`;
+                html += `<strong>Sinonimos por sentido:</strong>`;
+                synonymGroups.forEach(g => {
+                    html += `<div class="dict-syn-group"><em>${g.sense}</em>: `;
+                    g.synonyms.forEach((syn, i) => {
+                        html += `<span class="dict-syn-tag" onclick="searchWord('${syn.replace(/'/g, "\\\\'")}')">${syn}</span>${i < g.synonyms.length - 1 ? ', ' : ''}`;
+                    });
+                    html += `</div>`;
                 });
                 html += `</div>`;
+            } else {
+                const synonyms = results
+                    .flatMap(r => r.synonyms || [])
+                    .filter((v, i, a) => v && a.indexOf(v) === i);
+                if (synonyms.length > 0) {
+                    html += `<div class="dict-synonyms">`;
+                    html += `<strong>Sinonimos:</strong> `;
+                    synonyms.forEach((syn, i) => {
+                        html += `<span class="dict-syn-tag" onclick="searchWord('${syn.replace(/'/g, "\\\\'")}')">${syn}</span>${i < synonyms.length - 1 ? ', ' : ''}`;
+                    });
+                    html += `</div>`;
+                }
             }
 
             const antonyms = results

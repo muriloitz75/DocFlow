@@ -2699,6 +2699,69 @@ def _dicio_fetch_and_parse(w):
         return None
 
 
+SINONIMOS_BASE_URL = "https://www.sinonimos.com.br"
+
+
+def _sinonimos_fetch(w):
+    try:
+        url = f"{SINONIMOS_BASE_URL}/{w.lower()}"
+        resp = requests.get(url, timeout=8, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml"
+        })
+        if resp.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        subtitle_divs = soup.find_all("div", class_="content-detail--subtitle")
+        if not subtitle_divs:
+            return None
+
+        grouped_synonyms = []
+        for div in subtitle_divs:
+            sense = div.get_text(" ", strip=True).rstrip(":")
+            parent = div.parent
+            siblings = list(parent.children)
+            try:
+                idx = siblings.index(div)
+            except ValueError:
+                continue
+            if idx + 1 >= len(siblings):
+                continue
+            next_el = siblings[idx + 1]
+            syn_text = ""
+            if hasattr(next_el, "get_text"):
+                syn_text = next_el.get_text(" ", strip=True)
+            else:
+                syn_text = str(getattr(next_el, "string", "") or "")
+
+            words = re.split(r"[,\s]+", syn_text)
+            cleaned = []
+            for wrd in words:
+                wrd = wrd.strip(" .;,\t\n\r0123456789()-")
+                if wrd and len(wrd) > 1:
+                    cleaned.append(wrd)
+            if cleaned:
+                grouped_synonyms.append({
+                    "sense": sense,
+                    "synonyms": cleaned
+                })
+
+        if grouped_synonyms:
+            all_synonyms = []
+            for g in grouped_synonyms:
+                all_synonyms.extend(g["synonyms"])
+            all_synonyms = list(dict.fromkeys(all_synonyms))
+            return {
+                "grouped": grouped_synonyms,
+                "all": all_synonyms
+            }
+        return None
+    except Exception as exc:
+        print(f"Sinonimos fetch error for '{w}': {exc}")
+        return None
+
+
 @app.route("/api/dictionary", methods=["GET"])
 @login_required
 def get_dictionary_definition():
@@ -2877,14 +2940,37 @@ def get_dictionary_definition():
         return None
 
     def _make_dict_response(entries, matched_word, source):
+        enriched = _enrich_synonyms(entries, word_clean) if entries else entries
         return {
             "success": True,
             "word": word_clean,
             "singular": matched_word if matched_word != word_clean else None,
-            "definitions": entries,
-            "results": entries,
+            "definitions": enriched,
+            "results": enriched,
             "source": source
         }
+
+    def _enrich_synonyms(entries, w):
+        if not entries or len(entries) == 0:
+            return entries
+        cached = dict_cache_get(f"syn:{w.lower()}")
+        syn_data = None
+        if cached is not None:
+            syn_data = cached
+        else:
+            syn_data = _sinonimos_fetch(w)
+            if syn_data:
+                dict_cache_set(f"syn:{w.lower()}", syn_data)
+        if not syn_data:
+            return entries
+        for entry in entries:
+            existing = set(entry.get("synonyms", []))
+            for sym in syn_data["all"]:
+                if sym not in existing:
+                    existing.add(sym)
+            entry["synonyms"] = list(existing)
+            entry["synonym_groups"] = syn_data.get("grouped", [])
+        return entries
 
     try:
 
@@ -2931,8 +3017,8 @@ def get_dictionary_definition():
                 "success": True,
                 "word": word_clean,
                 "singular": None,
-                "definitions": offline_data,
-                "results": offline_data,
+                "definitions": _enrich_synonyms(offline_data, word_clean),
+                "results": _enrich_synonyms(offline_data, word_clean),
                 "source": "offline"
             })
 
@@ -2947,8 +3033,8 @@ def get_dictionary_definition():
                     "success": True,
                     "word": word_clean,
                     "singular": None,
-                    "definitions": all_results,
-                    "results": all_results,
+                    "definitions": _enrich_synonyms(all_results, word_clean),
+                    "results": _enrich_synonyms(all_results, word_clean),
                     "source": "offline"
                 })
 
