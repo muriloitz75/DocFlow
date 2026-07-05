@@ -1249,6 +1249,45 @@
             opacity: 0.6;
         }
 
+        .conversion-loader {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader-spinner {
+            width: 100%;
+            height: 100%;
+            border: 4px solid var(--surface);
+            border-top-color: var(--accent);
+            border-right-color: var(--ink);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-label {
+            position: absolute;
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 800;
+            font-style: italic;
+            color: var(--ink);
+            animation: loader-pulse 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes loader-pulse {
+            from { transform: scale(0.95); opacity: 0.7; }
+            to   { transform: scale(1.05); opacity: 1.0; }
+        }
+
         /* STATUS LINE */
         .status-line {
             border: var(--border);
@@ -3350,7 +3389,7 @@
             setLoading(loadingMsg);
             outputArea.classList.remove("abnt-preview", "html-preview");
             outputArea.classList.add("markdown-preview", "preview-empty");
-            outputArea.innerHTML = '<span class="empty-state"><img src="/image/image.gif" alt="Convertendo..." style="max-width:220px;max-height:220px;margin-bottom:24px;"><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
+            outputArea.innerHTML = '<span class="empty-state"><div class="conversion-loader"><div class="loader-spinner"></div><div class="loader-label">DOC</div></div><span><strong>PROCESSANDO</strong><span>Isto pode levar alguns instantes...</span></span></span>';
 
             try {
                 const response = await fetch("/api/convert", { method: "POST", body: formData });
