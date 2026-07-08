@@ -2484,6 +2484,57 @@ def get_singular_candidates(word):
         if candidate not in candidates:
             candidates.append(candidate)
 
+    # Adicionar candidatos morfológicos extras (particípios e gênero)
+    extra_candidates = []
+    all_current = [word] + list(candidates)
+    for c in all_current:
+        # 1. Normalização de gênero (feminino -> masculino)
+        if c.endswith("ada"):
+            masc = c[:-3] + "ado"
+            if masc not in candidates and masc != word:
+                extra_candidates.append(masc)
+        elif c.endswith("adas"):
+            masc = c[:-4] + "ado"
+            if masc not in candidates and masc != word:
+                extra_candidates.append(masc)
+        elif c.endswith("ida"):
+            masc = c[:-3] + "ido"
+            if masc not in candidates and masc != word:
+                extra_candidates.append(masc)
+        elif c.endswith("idas"):
+            masc = c[:-4] + "ido"
+            if masc not in candidates and masc != word:
+                extra_candidates.append(masc)
+
+        # 2. Derivação de infinitivo verbal a partir de particípios
+        # Verbos em -ar
+        if c.endswith("ado") or c.endswith("ada"):
+            verb = c[:-3] + "ar"
+            if verb not in candidates and verb != word:
+                extra_candidates.append(verb)
+        elif c.endswith("ados") or c.endswith("adas"):
+            verb = c[:-4] + "ar"
+            if verb not in candidates and verb != word:
+                extra_candidates.append(verb)
+
+        # Verbos em -er / -ir
+        elif c.endswith("ido") or c.endswith("ida"):
+            verb_er = c[:-3] + "er"
+            verb_ir = c[:-3] + "ir"
+            for v in [verb_er, verb_ir]:
+                if v not in candidates and v != word:
+                    extra_candidates.append(v)
+        elif c.endswith("idos") or c.endswith("idas"):
+            verb_er = c[:-4] + "er"
+            verb_ir = c[:-4] + "ir"
+            for v in [verb_er, verb_ir]:
+                if v not in candidates and v != word:
+                    extra_candidates.append(v)
+
+    for ec in extra_candidates:
+        if ec not in candidates:
+            candidates.append(ec)
+
     return candidates
 
 

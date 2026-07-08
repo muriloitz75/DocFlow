@@ -1133,6 +1133,24 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json["success"])
 
+    def test_get_singular_candidates_with_morphology(self):
+        # 1. Past participles in plural masculine (-ados) -> singular -ado, verb -ar
+        candidates = webapp.get_singular_candidates("industrializados")
+        self.assertIn("industrializado", candidates)
+        self.assertIn("industrializar", candidates)
+
+        # 2. Past participles in plural feminine (-adas) -> singular -ada, masculine -ado, verb -ar
+        candidates = webapp.get_singular_candidates("revogadas")
+        self.assertIn("revogada", candidates)
+        self.assertIn("revogado", candidates)
+        self.assertIn("revogar", candidates)
+
+        # 3. Past participles in plural masculine (-idos) -> singular -ido, verb -er and -ir
+        candidates = webapp.get_singular_candidates("concedidos")
+        self.assertIn("concedido", candidates)
+        self.assertIn("conceder", candidates)
+        self.assertIn("concedir", candidates)
+
     @unittest.mock.patch("requests.get")
     def test_dictionary_malformed_xml_handled_gracefully(self, mock_get):
         self._clear_dict_cache()
