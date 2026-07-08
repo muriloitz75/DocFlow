@@ -17,3 +17,18 @@ Este arquivo serve como memória persistente para que qualquer agente de IA que 
   ```powershell
   .\.venv\Scripts\python -m unittest test_app.py
   ```
+
+## 4. Formatação de Artigos Revogados (Vermelho) e Ativos (Verde)
+* **Backend (`app.py`)**: Para evitar fusão de múltiplos parágrafos de versões revogadas de um mesmo artigo (ex: artigo alterado por emendas consecutivas), isole marcadores markdown (ex: `~~`) usando `_strip_markdown_wrappers` antes de aplicar a formatação legal, e garanta que `_starts_structural_block` e `_is_continuation_candidate` limpem caracteres `~` temporariamente durante a análise.
+* **Frontend (`interface.html`)**: O preview utiliza CSS `:has()` para identificar parágrafos com `<del>` (modo HTML/ABNT) ou as classes `.revogado-line` (modo Markdown Simples) colorindo-os em Vermelho Carmim (`#b91c1c`) com fundo e borda vermelha suave. Artigos/parágrafos vigentes sem rasura são coloridos em Verde Esmeralda (`#047857`) com fundo e borda verde suave.
+
+## 5. Formatação de Incisos Legais (Algarismos Romanos)
+* **Estrutura de Incisos**: Todo inciso deve começar com o número romano, seguido de espaço, traço e espaço (`I - `) e a primeira letra alfabética do texto capitalizada.
+* **Função de Capitalização**: Use `_capitalize_first_letter` para ignorar delimitadores markdown iniciais (ex: `**`, `~~`) e capitalizar a primeira letra correta (incluindo letras acentuadas).
+* **Exibição do Preview**: No frontend (`interface.html`), na função `highlightLegalNodes`, certifique-se de que o callback da substituição de regex do inciso mantenha o grupo `p3` (que representa o traço) no HTML resultante para que os hifens não desapareçam no painel visual.
+
+## 6. Dicionário e Enriquecimento de Sinônimos
+* **Busca de Sinônimos**: A busca de sinônimos (`_sinonimos_fetch`) deve usar sempre a forma singular normalizada (`matched_word` retornada do dicionário) e não o termo original bruto da consulta (`word_clean`), que pode estar no plural ou conter ruídos de pontuação.
+* **APIs Integradas**: Certifique-se de enriquecer os resultados tanto das fontes secundárias (`dicio`, `wiktionary`) quanto da API principal de definições (`Dicionário pt-BR`) chamando `_enrich_synonyms` em todos os fluxos de sucesso.
+* **Prevenção em Testes**: Sob modo de testes unitários (`app.config.get("TESTING")`), ignore a requisição de sinônimos em `_enrich_synonyms` para evitar chamadas reais de rede e manter a integridade dos asserts de contagem de chamadas (`mock_get.call_count`).
+
