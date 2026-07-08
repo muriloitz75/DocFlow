@@ -815,7 +815,7 @@
 
         /* FORMATACAO DE TEXTO JURIDICO */
         .highlight-article {
-            color: var(--accent);
+            color: #047857; /* Verde esmeralda para artigos vigentes */
             font-weight: 800;
         }
 
@@ -832,6 +832,60 @@
         .highlight-alinea {
             color: #9333ea;
             font-weight: 700;
+        }
+
+        /* Estilos para textos revogados (HTML: del/s/strike, Markdown Simples: .revogado-line) */
+        del, s, strike,
+        .revogado-line,
+        del *, s *, strike * {
+            color: #b91c1c !important; /* Vermelho carmim */
+            text-decoration: line-through;
+            text-decoration-color: #b91c1c;
+        }
+
+        /* Bloco de parágrafo revogado (com del/s/strike) no HTML ou ABNT */
+        p:has(del), p:has(s), p:has(strike),
+        div:has(del), div:has(s), div:has(strike) {
+            background-color: rgba(185, 28, 28, 0.04) !important; /* Fundo vermelho suave */
+            border-left: 3px solid #b91c1c !important; /* Borda vermelha */
+            padding: 8px 12px;
+            margin: 12px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Bloco de parágrafo ativo/vigente (com artigo/parágrafo) */
+        p:has(.highlight-article):not(:has(del)):not(:has(s)):not(:has(strike)),
+        p:has(.highlight-paragraph):not(:has(del)):not(:has(s)):not(:has(strike)) {
+            background-color: rgba(4, 120, 87, 0.04) !important; /* Fundo verde suave */
+            border-left: 3px solid #047857 !important; /* Borda verde */
+            padding: 8px 12px;
+            margin: 12px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Linhas revogadas e ativas no modo Markdown Simples */
+        .revogado-line {
+            background-color: rgba(185, 28, 28, 0.04) !important;
+            border-left: 3px solid #b91c1c !important;
+            padding: 8px 12px;
+            margin: 12px 0;
+            border-radius: 0 4px 4px 0;
+            display: block;
+            width: 100%;
+        }
+
+        .ativo-line {
+            background-color: rgba(4, 120, 87, 0.04) !important;
+            border-left: 3px solid #047857 !important;
+            padding: 8px 12px;
+            margin: 12px 0;
+            border-radius: 0 4px 4px 0;
+            display: block;
+            width: 100%;
+        }
+        
+        .ativo-line .highlight-article {
+            color: #047857 !important;
         }
 
         .popover-toast {
@@ -3252,6 +3306,8 @@
 
         function inlineMarkdown(text) {
             text = escapeHtml(text);
+            // Strikethrough (~~text~~)
+            text = text.replace(/~~(.+?)~~/g, '<del>$1</del>');
             // Bold (**text** ou __text__)
             text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
@@ -3394,15 +3450,15 @@
                 nodesToReplace.push(node);
             }
             
-            const artRegex = /^(\s*(?:\*\*|__)?)(Art\.\s*\d+(?:(?:º|o)?-[A-Za-z0-9]+)?(?:º|o)?\.?)/i;
-            const parRegex = /^(\s*(?:\*\*|__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
-            const incisoRegex = /^(\s*(?:\*\*|__)?)(([IVXLCDM]+)(\s*[-–—]))/;
-            const alineaRegex = /^(\s*(?:\*\*|__)?)([a-z])(\))/;
+            const artRegex = /^(\s*(?:\*\*|__|~~|~~\*\*|\*\*\*|~~__)?)(Art\.\s*\d+(?:(?:º|o)?-[A-Za-z0-9]+)?(?:º|o)?\.?)/i;
+            const parRegex = /^(\s*(?:\*\*|__|~~|~~\*\*|\*\*\*|~~__)?)(§\s*\d+(?:º|o)?|Parágrafo único\.?)/i;
+            const incisoRegex = /^(\s*(?:\*\*|__|~~|~~\*\*|\*\*\*|~~__)?)([IVXLCDM]+)(\s*[-–—])/i;
+            const alineaRegex = /^(\s*(?:\*\*|__|~~|~~\*\*|\*\*\*|~~__)?)([a-z])(\))/i;
             
             // Severe rule: check if the node starts a block/line
             function isAtBlockStart(n) {
                 let parent = n.parentNode;
-                while (parent && parent !== rootNode && !['P', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE'].includes(parent.nodeName)) {
+                while (parent && parent !== rootNode && !['P', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'SPAN'].includes(parent.nodeName)) {
                     parent = parent.parentNode;
                 }
                 if (!parent || parent === rootNode) return false;
@@ -3431,7 +3487,7 @@
                 
                 // Severe rule: A real Article or Paragraph header must be bolded (contains ** or __, or is inside strong)
                 const isBolded = textNode.parentNode && (textNode.parentNode.nodeName === 'STRONG' || textNode.parentNode.nodeName === 'B') ||
-                                 /^\s*(\*\*|__)/.test(text);
+                                 /^\s*(\*\*|__|~~)/.test(text);
                                  
                 if (artRegex.test(text) && isBolded) {
                     newHtml = newHtml.replace(artRegex, '$1<span class="highlight-article">$2</span>');
@@ -3442,8 +3498,8 @@
                 }
                 
                 if (incisoRegex.test(text)) {
-                    newHtml = newHtml.replace(incisoRegex, function(match, p1, p2) {
-                        return p1 + `<span class="highlight-inciso">${p2}</span>`;
+                    newHtml = newHtml.replace(incisoRegex, function(match, p1, p2, p3) {
+                        return p1 + `<span class="highlight-inciso">${p2}</span>` + p3;
                     });
                     changed = true;
                 } else if (alineaRegex.test(text)) {
@@ -3490,6 +3546,16 @@
                     span.style.display = "block";
                     span.style.width = "100%";
                     span.style.margin = "8px 0 4px 0";
+                    fragment.appendChild(span);
+                } else if (trimmed.startsWith("~~") && trimmed.endsWith("~~")) {
+                    const span = document.createElement("span");
+                    span.className = "revogado-line";
+                    span.textContent = line;
+                    fragment.appendChild(span);
+                } else if (trimmed.match(/^(?:\*\*|\*|)?(?:Art\.|§|Parágrafo único)/i)) {
+                    const span = document.createElement("span");
+                    span.className = "ativo-line";
+                    span.textContent = line;
                     fragment.appendChild(span);
                 } else {
                     fragment.appendChild(document.createTextNode(line));

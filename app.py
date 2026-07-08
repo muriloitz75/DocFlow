@@ -915,7 +915,7 @@ def _starts_structural_block(line):
     if _heading_from_line(text):
         return True
         
-    clean_text = re.sub(r"^[\*_]+", "", text).strip()
+    clean_text = re.sub(r"^[\*_~]+", "", text).strip()
     
     if CITATION_PATTERN.match(clean_text):
         return False
@@ -929,18 +929,31 @@ def _starts_structural_block(line):
     return False
 
 
+def _strip_markdown_wrappers(text):
+    leading = ""
+    trailing = ""
+    for wrapper in ["~~", "**", "*", "_"]:
+        if text.startswith(wrapper) and text.endswith(wrapper) and len(text) >= 2 * len(wrapper):
+            leading += wrapper
+            trailing = wrapper + trailing
+            text = text[len(wrapper):-len(wrapper)]
+    return leading, text, trailing
+
+
 def _format_article_start(text):
+    leading, inner, trailing = _strip_markdown_wrappers(text)
     # Regex to match article number and suffix precisely without swallowing letters like 'O' and 'A'
     # Handles optional opening and closing bold/italic markdown wrappers
     article_pattern = re.compile(
         r"^(?:\*\*|\*|)?[Aa]rt\.?\s*(\d+(?:-[A-Z])?)(?:\.?(?:[\u00ba\u00b0\u00aa\u015f]|[oa]\b))?\.?(?:\*\*|\*|)?\s*(.*)$"
     )
-    match = article_pattern.match(text)
+    match = article_pattern.match(inner)
     if not match:
         # Check and format Parágrafo único
-        if re.match(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*(.*)$", text, re.I):
-            rest = re.sub(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*", "", text, flags=re.I).strip()
-            return f"**Parágrafo único.** {rest}".strip()
+        if re.match(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*(.*)$", inner, re.I):
+            rest = re.sub(r"^(?:\*\*|\*|)?Par[\u00e1a]grafo\s+[\u00fau]nico\.?(?:\*\*|\*|)?\s*", "", inner, flags=re.I).strip()
+            formatted_inner = f"**Parágrafo único.** {rest}".strip()
+            return f"{leading}{formatted_inner}{trailing}"
         return text
 
     num_str = match.group(1)
@@ -955,26 +968,30 @@ def _format_article_start(text):
     else:
         prefix = f"**Art. {num_str}.**"
         
-    return f"{prefix} {rest}".strip()
+    formatted_inner = f"{prefix} {rest}".strip()
+    return f"{leading}{formatted_inner}{trailing}"
 
 
 def _format_paragraph_start(text):
+    leading, inner, trailing = _strip_markdown_wrappers(text)
     paragraph_pattern = re.compile(
         r"^(?:\*\*|\*|)?\u00a7\s*(\d+)(?:\.?(?:[\u00ba\u00b0\u00aa\u015f]|[oa]\b))?\.?(?:\*\*|\*|)?\s*(.*)$"
     )
-    match = paragraph_pattern.match(text)
+    match = paragraph_pattern.match(inner)
     if not match:
         return text
 
     num_str = match.group(1)
     rest = match.group(2).strip()
     prefix = f"**§ {num_str}º**"
-    return f"{prefix} {rest}".strip()
+    formatted_inner = f"{prefix} {rest}".strip()
+    return f"{leading}{formatted_inner}{trailing}"
 
 
 def _format_alinea_start(text):
+    leading, inner, trailing = _strip_markdown_wrappers(text)
     alinea_pattern = re.compile(r"^([a-z])(?:\)|\s*[-–—])\s+(.*)$")
-    match = alinea_pattern.match(text)
+    match = alinea_pattern.match(inner)
     if not match:
         return text
 
@@ -983,14 +1000,27 @@ def _format_alinea_start(text):
     if not rest:
         return text
 
-    return f"{letter}) {rest}".strip()
+    formatted_inner = f"{letter}) {rest}".strip()
+    return f"{leading}{formatted_inner}{trailing}"
+
+
+def _capitalize_first_letter(text):
+    if not text:
+        return text
+    # Match any leading non-alphabetic formatting characters (like *, _, ~, space)
+    match = re.match(r"^([^a-zA-Z\u00C0-\u00FF]*)([a-zA-Z\u00C0-\u00FF])(.*)$", text)
+    if match:
+        prefix, char, rest = match.groups()
+        return prefix + char.upper() + rest
+    return text
 
 
 def _format_inciso_start(text):
+    leading, inner, trailing = _strip_markdown_wrappers(text)
     inciso_pattern = re.compile(
         r"^(?:\*\*|\*|)?([IVXLCDM]+)(?:\*\*|\*|)?\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])(.*)$", re.I
     )
-    match = inciso_pattern.match(text)
+    match = inciso_pattern.match(inner)
     if not match:
         return text
 
@@ -1002,7 +1032,9 @@ def _format_inciso_start(text):
     if not rest:
         return text
         
-    return f"{roman_num} - {rest}".strip()
+    rest = _capitalize_first_letter(rest)
+    formatted_inner = f"{roman_num} - {rest}".strip()
+    return f"{leading}{formatted_inner}{trailing}"
 
 
 def _roman_for_index(index):
@@ -1017,20 +1049,22 @@ def _roman_for_index(index):
 
 def _restore_orphan_legal_items(text):
     """Recriar incisos quando a extração do PDF removeu os algarismos romanos."""
-    if ":" not in text:
+    leading, inner, trailing = _strip_markdown_wrappers(text)
+    if ":" not in inner:
         return text
-    if re.search(r"(?m)^\s*(?:[IVXLCDM]+\s*[-–—]|[a-z]\))\s+", text, flags=re.I):
+    if re.search(r"(?m)^\s*(?:[IVXLCDM]+\s*[-–—]|[a-z]\))\s+", inner, flags=re.I):
         return text
 
-    prefix, _, tail = text.partition(":")
+    prefix, _, tail = inner.partition(":")
     clean_tail = tail.strip()
-    if clean_tail.count(";") < 2:
+    clean_tail_no_wrappers = re.sub(r"[\*_~]+$", "", clean_tail).strip()
+    if clean_tail_no_wrappers.count(";") < 2:
         return text
 
     if not re.match(r"^(?:\*\*)?(?:Art\.|§|Par[\u00e1a]grafo)", prefix.strip(), flags=re.I):
         return text
 
-    parts = [part.strip() for part in re.split(r";\s*", clean_tail) if part.strip()]
+    parts = [part.strip() for part in re.split(r";\s*", clean_tail_no_wrappers) if part.strip()]
     if len(parts) < 3:
         return text
 
@@ -1043,9 +1077,17 @@ def _restore_orphan_legal_items(text):
         item = part.rstrip(" .;")
         if not item or _starts_structural_block(item):
             return text
-        restored.append(f"{roman} - {item}{terminal}")
+            
+        item = _capitalize_first_letter(item)
+        
+        if leading and trailing:
+            restored.append(f"{leading}{roman} - {item}{terminal}{trailing}")
+        else:
+            restored.append(f"{roman} - {item}{terminal}")
 
-    return f"{prefix.strip()}:\n\n" + "\n\n".join(restored)
+    if leading and trailing:
+        return f"{leading}{prefix.strip()}:{trailing}\n\n" + "\n\n".join(restored)
+    return f"{prefix.strip()}:{tail.partition(':')[1]}\n\n" + "\n\n".join(restored)
 
 
 def _join_wrapped_lines(lines):
@@ -1102,8 +1144,8 @@ def _is_continuation_candidate(previous, current):
     if re.match(r"^(?:REGULAMENTO|DECRETO|LEI\s+COMPLEMENTAR)\b", current, flags=re.I):
         return False
         
-    # Limpar marcações de formatação em negrito/itálico para inspecionar o prefixo limpo
-    clean_current = re.sub(r"^[\*_]+|[\*_]+$", "", current).strip()
+    # Limpar marcações de formatação em negrito/itálico/tachado para inspecionar o prefixo limpo
+    clean_current = re.sub(r"^[\*_~]+|[\*_~]+$", "", current).strip()
     
     # Proibir mesclagem se a linha seguinte começar com termos ou símbolos estruturais de leis
     if re.match(r"^(?:Art\.?\s*\d+|Par[\u00e1a]grafo\s+[\u00fau]nico|\u00a7\s*\d+)(?:\s|$|\b)", clean_current, flags=re.I):
@@ -1121,7 +1163,9 @@ def _is_continuation_candidate(previous, current):
     if clean_current and clean_current[0].islower():
         return True
 
-    previous_has_terminal = bool(re.search(r"[.!?:;]$", previous))
+    # Limpar wrappers de formatação do final da linha anterior antes de checar pontuação terminal
+    clean_previous = re.sub(r"[\*_~]+$", "", previous).strip()
+    previous_has_terminal = bool(re.search(r"[.!?:;)]$", clean_previous))
     if not previous_has_terminal:
         return True
 
@@ -1364,8 +1408,9 @@ def format_pdf_markdown_model2(content):
             index += 1
             continue
 
-        is_art_or_par = (re.match(r"^Art\.?\s*\d+", line, flags=re.I) or re.match(r"^§\s*\d+", line))
-        if is_art_or_par and not CITATION_PATTERN.match(line):
+        clean_line = re.sub(r"^[\*_~]+|[\*_~]+$", "", line).strip()
+        is_art_or_par = (re.match(r"^Art\.?\s*\d+", clean_line, flags=re.I) or re.match(r"^§\s*\d+", clean_line))
+        if is_art_or_par and not CITATION_PATTERN.match(clean_line):
             paragraph_lines = [line]
             index += 1
             while index < len(source_lines):
@@ -1386,7 +1431,7 @@ def format_pdf_markdown_model2(content):
             continue
 
         is_inciso = False
-        roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", line, flags=re.I)
+        roman_match = re.match(r"^([IVXLCDM]+)\b\s*(?:[-–—]\s*)?(?![.,;:?!\)])", clean_line, flags=re.I)
         if roman_match and roman_match.group(1).upper() in VALID_ROMANS:
             is_inciso = True
             
@@ -1407,7 +1452,7 @@ def format_pdf_markdown_model2(content):
             append_block(item_text)
             continue
 
-        is_alinea = re.match(r"^[a-z](?:\)|\s*[-–—])\s+", line)
+        is_alinea = re.match(r"^[a-z](?:\)|\s*[-–—])\s+", clean_line)
         if is_alinea:
             item_lines = [line]
             index += 1

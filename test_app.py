@@ -207,11 +207,11 @@ class WebInterfaceTestCase(unittest.TestCase):
         result = webapp.format_pdf_markdown_model2(content)
 
         self.assertIn("**Art. 223.** Fica dispensada", result)
-        self.assertIn("I - súmula vinculante editada", result)
-        self.assertIn("II - decisões proferidas", result)
-        self.assertIn("III - acórdão proferido pelo Supremo Tribunal Federal", result)
-        self.assertIn("IV - acórdão proferido pelo Superior Tribunal de Justiça", result)
-        self.assertIn("V - enunciado de súmula", result)
+        self.assertIn("I - Súmula vinculante editada", result)
+        self.assertIn("II - Decisões proferidas", result)
+        self.assertIn("III - Acórdão proferido pelo Supremo Tribunal Federal", result)
+        self.assertIn("IV - Acórdão proferido pelo Superior Tribunal de Justiça", result)
+        self.assertIn("V - Enunciado de súmula", result)
 
     def test_convert_real_decreto_pdf_preserves_art_223_incisos(self):
         pdf_path = os.path.join(
@@ -1254,6 +1254,45 @@ class WebInterfaceTestCase(unittest.TestCase):
             self.assertIn("DECRETO Nº 019", response.json["content"])
             self.assertIn("Texto do PDF com layout preservado.", response.json["content"])
             mock_extract.assert_called_once_with(mock_page)
+
+    def test_strip_markdown_wrappers(self):
+        self.assertEqual(webapp._strip_markdown_wrappers("~~Art. 6º~~"), ("~~", "Art. 6º", "~~"))
+        self.assertEqual(webapp._strip_markdown_wrappers("**Art. 6º**"), ("**", "Art. 6º", "**"))
+        self.assertEqual(webapp._strip_markdown_wrappers("~~**Art. 6º**~~"), ("~~**", "Art. 6º", "**~~"))
+        self.assertEqual(webapp._strip_markdown_wrappers("Normal text"), ("", "Normal text", ""))
+
+    def test_format_pdf_markdown_model2_with_revoked_articles(self):
+        content = (
+            "~~Art. 6º São direitos sociais a educação, a saúde, o trabalho, o lazer...~~\n\n"
+            "~~Art. 6º São direitos sociais a educação, a saúde, o trabalho, a moradia... (Redação dada pela Emenda Constitucional nº 26, de 2000)~~\n\n"
+            "~~Art. 6º São direitos sociais a educação, a saúde, a alimentação, o trabalho... (Redação dada pela Emenda Constitucional nº 64, de 2010)~~\n\n"
+            "Art. 6º São direitos sociais a educação, a saúde, a alimentação, o trabalho... (Redação dada pela Emenda Constitucional nº 90, de 2015)"
+        )
+        
+        formatted = webapp.format_pdf_markdown_model2(content)
+        
+        # Verify they are not merged (should have multiple distinct blocks separated by double newlines)
+        self.assertEqual(formatted.count("Art. 6º"), 4)
+        paragraphs = formatted.split("\n\n")
+        self.assertEqual(len(paragraphs), 4)
+        
+        # Verify standard legal formatting is applied inside the wrappers
+        self.assertIn("~~**Art. 6º** São direitos", paragraphs[0])
+        self.assertIn("~~**Art. 6º** São direitos", paragraphs[1])
+        self.assertIn("~~**Art. 6º** São direitos", paragraphs[2])
+        self.assertIn("**Art. 6º** São direitos", paragraphs[3])
+
+    def test_capitalize_first_letter(self):
+        self.assertEqual(webapp._capitalize_first_letter("palavra"), "Palavra")
+        self.assertEqual(webapp._capitalize_first_letter("**palavra**"), "**Palavra**")
+        self.assertEqual(webapp._capitalize_first_letter("~~**palavra**~~"), "~~**Palavra**~~")
+        self.assertEqual(webapp._capitalize_first_letter("123 palavra"), "123 Palavra")
+        self.assertEqual(webapp._capitalize_first_letter(""), "")
+
+    def test_inciso_formatting_with_capitalization(self):
+        self.assertEqual(webapp._format_inciso_start("I - texto minúsculo"), "I - Texto minúsculo")
+        self.assertEqual(webapp._format_inciso_start("~~II - **outro** texto~~"), "~~II - **Outro** texto~~")
+        self.assertEqual(webapp._format_inciso_start("III texto"), "III - Texto")
 
 
 if __name__ == "__main__":
