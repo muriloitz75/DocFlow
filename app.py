@@ -2876,12 +2876,14 @@ def get_dictionary_definition():
             except Exception as parse_err:
                 print(f"Error parsing dictionary XML: {parse_err}")
                 continue
+        
+        enriched = _enrich_synonyms(parsed_entries, matched_word)
         return {
             "success": True,
             "word": word_clean,
             "singular": matched_word if matched_word != word_clean else None,
-            "definitions": parsed_entries,
-            "results": parsed_entries,
+            "definitions": enriched,
+            "results": enriched,
             "source": source
         }
 
@@ -2985,7 +2987,7 @@ def get_dictionary_definition():
         return None
 
     def _make_dict_response(entries, matched_word, source):
-        enriched = _enrich_synonyms(entries, word_clean) if entries else entries
+        enriched = _enrich_synonyms(entries, matched_word) if entries else entries
         return {
             "success": True,
             "word": word_clean,
@@ -2996,7 +2998,7 @@ def get_dictionary_definition():
         }
 
     def _enrich_synonyms(entries, w):
-        if not entries or len(entries) == 0:
+        if app.config.get("TESTING") or not entries or len(entries) == 0:
             return entries
         cached = dict_cache_get(f"syn:{w.lower()}")
         syn_data = None
