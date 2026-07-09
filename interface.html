@@ -2474,8 +2474,56 @@
 
 
 
+        .view-mode-selector {
+            display: none;
+            gap: 8px;
+            margin-bottom: 16px;
+            border: var(--border);
+            background: var(--surface);
+            padding: 4px;
+            box-shadow: 2px 2px 0px var(--ink);
+        }
+        .view-mode-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            font-family: var(--font-sans);
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: transparent;
+            color: var(--ink);
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .view-mode-btn.active {
+            background: var(--ink);
+            color: var(--surface);
+        }
+        .view-mode-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
         @media (max-width: 900px) {
-            .workspace { grid-template-columns: 1fr; }
+            .view-mode-selector {
+                display: flex;
+            }
+            .workspace.show-preview .control-panel {
+                display: none !important;
+            }
+            .workspace.show-adjusts .output-wrapper {
+                display: none !important;
+            }
+            .workspace {
+                grid-template-columns: 1fr;
+            }
             .shell { padding: 12px; }
             .brand-title { font-size: 32px; }
             .preview { max-height: 60vh; }
@@ -2523,7 +2571,19 @@
             </div>
         </header>
 
-        <section class="workspace">
+        <!-- Seletor de exibição para dispositivos móveis -->
+        <div class="view-mode-selector" id="viewModeSelector">
+            <button class="view-mode-btn active" data-view="adjusts" type="button">
+                <svg viewBox="0 0 24 24" class="view-mode-icon"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l-.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                Ajustes
+            </button>
+            <button class="view-mode-btn" data-view="preview" type="button">
+                <svg viewBox="0 0 24 24" class="view-mode-icon"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                Visualização
+            </button>
+        </div>
+
+        <section class="workspace show-adjusts">
             <aside class="panel control-panel">
                 <div class="panel-head">
                     <h2 class="panel-title">Entrada</h2>
@@ -3872,6 +3932,7 @@
                 const modeLabel = data.mode === "abnt" ? "ABNT" : data.mode === "compact" ? "compacto" : "padrão";
                 const fmtLabel = selectedFormat === "html" ? " → HTML" : selectedFormat === "json" ? " → JSON" : "";
                 setStatus(`Conversão concluída em modo ${modeLabel}${fmtLabel}.${suffix}`, "success");
+                switchViewMode("preview");
                 clearInterval(pctInterval);
                 if (pctEl) { pctEl.textContent = "100%"; pctEl.classList.add("complete"); }
                 const loaderEl = document.querySelector(".conversion-loader");
@@ -6567,6 +6628,7 @@
                     buildToc();
                     
                     setStatus("Documento restaurado com sucesso!", "success");
+                    switchViewMode("preview");
                 } else {
                     setStatus("Erro ao carregar: " + (data.error || "Desconhecido"), "error");
                 }
@@ -7002,6 +7064,34 @@
             dictResizeHandle.addEventListener("pointerup", finishDictResize);
             dictResizeHandle.addEventListener("pointercancel", finishDictResize);
         }
+
+        // --- Lógica de Abas para Dispositivos Móveis ---
+        function switchViewMode(mode) {
+            const workspace = document.querySelector(".workspace");
+            if (!workspace) return;
+            
+            const btnAdjusts = document.querySelector('.view-mode-btn[data-view="adjusts"]');
+            const btnPreview = document.querySelector('.view-mode-btn[data-view="preview"]');
+            
+            if (mode === "preview") {
+                workspace.classList.remove("show-adjusts");
+                workspace.classList.add("show-preview");
+                if (btnPreview) btnPreview.classList.add("active");
+                if (btnAdjusts) btnAdjusts.classList.remove("active");
+            } else {
+                workspace.classList.remove("show-preview");
+                workspace.classList.add("show-adjusts");
+                if (btnAdjusts) btnAdjusts.classList.add("active");
+                if (btnPreview) btnPreview.classList.remove("active");
+            }
+        }
+
+        document.querySelectorAll(".view-mode-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const view = btn.dataset.view;
+                switchViewMode(view === "preview" ? "preview" : "adjusts");
+            });
+        });
 
         checkAuthStatus();
     </script>

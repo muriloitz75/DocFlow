@@ -1312,6 +1312,13 @@ class WebInterfaceTestCase(unittest.TestCase):
         self.assertEqual(webapp._format_inciso_start("~~II - **outro** texto~~"), "~~II - **Outro** texto~~")
         self.assertEqual(webapp._format_inciso_start("III texto"), "III - Texto")
 
+    def test_normalize_text_line_removes_squares_and_checkboxes(self):
+        self.assertEqual(webapp._normalize_text_line("I - ▢ As exportações"), "I - As exportações")
+        self.assertEqual(webapp._normalize_text_line("II - ☐ A prestação"), "II - A prestação")
+        self.assertEqual(webapp._normalize_text_line("III - ☑ O valor"), "III - O valor")
+        self.assertEqual(webapp._normalize_text_line("IV - ☒ O valor"), "IV - O valor")
+        self.assertEqual(webapp._normalize_text_line("  Normal   text  with   spaces  "), "Normal text with spaces")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "spec-driven-implementation": {
+      "source": "warpdotdev/common-skills",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/spec-driven-implementation/SKILL.md",
+      "computedHash": "0e586fa2849e33f2d6c1af2110c94a54213777f2594bd34f41409fe637bbbbcd"
+    },
     "systematic-debugging": {
       "source": "obra/superpowers",
       "sourceType": "github",

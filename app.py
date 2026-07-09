@@ -813,6 +813,8 @@ def split_inline_legal_elements(text):
 def _normalize_text_line(line):
     """Normalizar espaços sem remover conteúdo relevante."""
     line = line.replace("\u00a0", " ")
+    # Remove unicode squares and checkbox artifacts commonly extracted from PDFs/Word lists
+    line = re.sub(r"[\u25a2\u2610\u2611\u2612▢☐☑☒]", "", line)
     line = re.sub(r"[ \t]+", " ", line)
     return line.strip()
 
