@@ -2077,6 +2077,14 @@
             display: inline-block;
             vertical-align: middle;
         }
+        .stamp-icon.stamp-emoji {
+            fill: none;
+            font-size: 14px;
+            line-height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
         .icon-select-btn {
             display: inline-flex;
             align-items: center;
@@ -2880,6 +2888,14 @@
                             <button type="button" class="icon-select-btn" data-icon="info" title="Info">
                                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                             </button>
+                            <button type="button" class="icon-select-btn" data-icon="approved" title="Aprovado Emoji" style="font-size: 16px;">✅</button>
+                            <button type="button" class="icon-select-btn" data-icon="rejected" title="Rejeitado Emoji" style="font-size: 16px;">❌</button>
+                            <button type="button" class="icon-select-btn" data-icon="warning_emoji" title="Alerta Emoji" style="font-size: 16px;">⚠️</button>
+                            <button type="button" class="icon-select-btn" data-icon="star_emoji" title="Estrela Emoji" style="font-size: 16px;">⭐</button>
+                            <button type="button" class="icon-select-btn" data-icon="fire" title="Fogo Emoji" style="font-size: 16px;">🔥</button>
+                            <button type="button" class="icon-select-btn" data-icon="like" title="Curtir Emoji" style="font-size: 16px;">👍</button>
+                            <button type="button" class="icon-select-btn" data-icon="dislike" title="Descurtir Emoji" style="font-size: 16px;">👎</button>
+                            <button type="button" class="icon-select-btn" data-icon="rocket" title="Foguete Emoji" style="font-size: 16px;">🚀</button>
                         </div>
                     </div>
                     
@@ -2924,7 +2940,7 @@
                 <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
                 
                 <!-- Ícones -->
-                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%;" id="stampPopoverIconSelector">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; flex-wrap: wrap;" id="stampPopoverIconSelector">
                     <button type="button" class="icon-select-btn active" data-icon="none" style="width:24px; height:24px; font-size:10px; font-family:var(--font-mono); font-weight:bold;" title="Sem Ícone">🛇</button>
                     <button type="button" class="icon-select-btn" data-icon="check" style="width:24px; height:24px;" title="Aprovado">
                         <svg viewBox="0 0 24 24" style="width:12px; height:12px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
@@ -2947,6 +2963,14 @@
                     <button type="button" class="icon-select-btn" data-icon="info" style="width:24px; height:24px;" title="Info">
                         <svg viewBox="0 0 24 24" style="width:12px; height:12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                     </button>
+                    <button type="button" class="icon-select-btn" data-icon="approved" style="width:24px; height:24px; font-size: 11px;" title="Aprovado Emoji">✅</button>
+                    <button type="button" class="icon-select-btn" data-icon="rejected" style="width:24px; height:24px; font-size: 11px;" title="Rejeitado Emoji">❌</button>
+                    <button type="button" class="icon-select-btn" data-icon="warning_emoji" style="width:24px; height:24px; font-size: 11px;" title="Alerta Emoji">⚠️</button>
+                    <button type="button" class="icon-select-btn" data-icon="star_emoji" style="width:24px; height:24px; font-size: 11px;" title="Estrela Emoji">⭐</button>
+                    <button type="button" class="icon-select-btn" data-icon="fire" style="width:24px; height:24px; font-size: 11px;" title="Fogo Emoji">🔥</button>
+                    <button type="button" class="icon-select-btn" data-icon="like" style="width:24px; height:24px; font-size: 11px;" title="Curtir Emoji">👍</button>
+                    <button type="button" class="icon-select-btn" data-icon="dislike" style="width:24px; height:24px; font-size: 11px;" title="Descurtir Emoji">👎</button>
+                    <button type="button" class="icon-select-btn" data-icon="rocket" style="width:24px; height:24px; font-size: 11px;" title="Foguete Emoji">🚀</button>
                 </div>
                 
                 <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
@@ -3084,7 +3108,15 @@
             lock: '<svg class="stamp-icon" data-icon="lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>',
             star: '<svg class="stamp-icon" data-icon="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
             hourglass: '<svg class="stamp-icon" data-icon="hourglass" viewBox="0 0 24 24"><path d="M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6v6h12v-6h-.01L18 16l-4-4 4-4-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zM12 11.5l-4-4V4h8v3.5l-4 4z"/></svg>',
-            info: '<svg class="stamp-icon" data-icon="info" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+            info: '<svg class="stamp-icon" data-icon="info" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
+            approved: '<span class="stamp-icon stamp-emoji" data-icon="approved">✅</span>',
+            rejected: '<span class="stamp-icon stamp-emoji" data-icon="rejected">❌</span>',
+            warning_emoji: '<span class="stamp-icon stamp-emoji" data-icon="warning_emoji">⚠️</span>',
+            star_emoji: '<span class="stamp-icon stamp-emoji" data-icon="star_emoji">⭐</span>',
+            fire: '<span class="stamp-icon stamp-emoji" data-icon="fire">🔥</span>',
+            like: '<span class="stamp-icon stamp-emoji" data-icon="like">👍</span>',
+            dislike: '<span class="stamp-icon stamp-emoji" data-icon="dislike">👎</span>',
+            rocket: '<span class="stamp-icon stamp-emoji" data-icon="rocket">🚀</span>'
         };
 
         const DATE_PLACEHOLDER = "[DATA]";
